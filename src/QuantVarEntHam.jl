@@ -6,7 +6,7 @@ export utilBlocks
 export optimize_LBFGS
 export get_rhoA
 
-using Yao, Parameters
+using Yao, Parameters, Zygote
 
 include("hamiltonians/hamiltonians.jl")
 include("cost.jl")

@@ -1,6 +1,5 @@
 using ThreadedDoubleExponentialFormula
 using LinearAlgebra
-using Zygote
 
 function deviation(j::Int64, rhoA_copy::DensityMatrix,  set::Settings)::Float64
     @unpack observables, meas0 = set
@@ -8,16 +7,16 @@ function deviation(j::Int64, rhoA_copy::DensityMatrix,  set::Settings)::Float64
 end 
 
 function integrand_for_grad(set::Settings, t::AbstractFloat, H_A::Matrix{ComplexF64})
-    @unpack N_A, rhoA, observables, meas0, T_max= set
+    @unpack N_A, rhoA, observables, meas0, T_max, mtrxObs = set
     U = exp(-1im*t*H_A)
     rhoEvolved = U*rhoA.state*U'
-    im_res = sum((tr(Matrix(observables[j])*rhoEvolved) - meas0[j])^2 for j in eachindex(observables))
+    im_res = @inbounds sum((tr(mtrxObs[j]*rhoEvolved) - meas0[j])^2 for j in eachindex(observables))
     return real(im_res)
 end
 
 function cost_for_grad(g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
     @unpack observables, T_max = set 
-    H_A = sum(g[i]*blks.matrices[i] for i in eachindex(g))
+    H_A = @inbounds sum(g[i]*blks.matrices[i] for i in eachindex(g))
     return quadde(t -> integrand_for_grad(set, t, H_A),0,T_max, multithreading = false)[1]/(length(observables)*T_max)
 end 
 

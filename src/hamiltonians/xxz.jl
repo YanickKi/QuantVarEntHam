@@ -2,14 +2,15 @@
     N::Int
     N_A::Int
     Δ::Real
-    T_max::Real
+    T_max::Float64
     r_max::Int = 1
     periodic::Bool = false
     A::UnitRange{Int} = N-N_A+1:N      
     signHam::Int = +1
-    rhoA::DensityMatrix = get_rhoA(H_XXZ(N, Δ, periodic=periodic), A)
-    observables::Vector{AbstractBlock}  = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]
+    rhoA::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}} = get_rhoA(H_XXZ(N, Δ, periodic=periodic), A)
+    observables::Vector{RepeatedBlock{2}}  = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]
     meas0::Vector{Float64}  = [expect(observables[i], rhoA) for i in 1:lastindex(observables)]
+    mtrxObs::Vector{Matrix{ComplexF64}} = Matrix.(observables)
 end
 
 function H_XXZ(N::Integer, Δ::Real; periodic::Bool=false, signHam::Integer = +1)

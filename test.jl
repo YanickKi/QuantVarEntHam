@@ -1,8 +1,7 @@
 using Distributed
 using Yao 
 using Parameters
-#addprocs(5)
-
+using Cthulhu
 include("src/QuantVarEntHam.jl")
 using .QuantVarEntHam
 using BenchmarkTools
@@ -29,7 +28,7 @@ end
 
 
 function test_str()
-    set = Settings_XXZ(N = 12, N_A = 6, T_max = 5, Δ = -0.5, r_max = 1, periodic = true, signHam = +1)
+    set = Settings_XXZ(N = 12, N_A = 5, T_max = 5, Δ = -0.5, r_max = 1, periodic = true, signHam = +1)
     HA_VAR = H_A_not_BW(set) 
     g_init = [0.5, 1., 1., 1.5, 1.5, 1.,1.,0.5,0.5] 
     G = zeros(length(g_init))
@@ -41,7 +40,19 @@ function test_str()
     #println(QuantVarEntHam.cost_with_QuadGK(g_init, set, HA_VAR,  false))
 end 
 
-test_str()
+
+#test_str()
+
+function typ()
+    set = Settings_XXZ(N=4, N_A=2, Δ = 0.5, T_max = 1.)
+    g = [1.,2.]
+    HAVAR = H_A_BW(set)
+    F = 0.
+    G = [0.,0.]
+    @descend QuantVarEntHam.integrand_for_grad(set, 1., sum(g[i]*HAVAR.matrices[i] for i in eachindex(g)))
+end
+
+typ()
 
 function testexmpv()
     set = Settings_XXZ(N=10, N_A = 6, T_max = 10.,  Δ = -0.5)

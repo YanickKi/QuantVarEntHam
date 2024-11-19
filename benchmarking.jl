@@ -2,15 +2,17 @@ include("./src/QuantVarEntHam.jl")
 using .QuantVarEntHam
 using BenchmarkTools
 using Cthulhu
-using StaticArrays
 
 function whole()
     set = Settings_XXZ(N=10, N_A = 5, T_max = 1.,  Δ = -0.5)
-    H_Var(g,set) = H_A_BW(g, set)
+    HAVAR = H_A_BW(set)
     g = [1.,2.,3.,4.,5.]
-    @btime cost($g, $set, $H_Var)
-    println(cost(g, set, H_Var))
+    @btime QuantVarEntHam.cost_for_grad($g, $set, $HAVAR)
+    println(QuantVarEntHam.cost_for_grad(g, set, HAVAR))
 end
+
+whole()
+
 
 function test_owntype()
     set = Settings_XXZ(N=10, N_A = 4, T_max = 1.,  Δ = -0.5)
@@ -38,10 +40,29 @@ function test_cust_block()
     println(cost_cust(g, set, H_A))
 end 
 
-test_owntype()
 #test_cust_block()
 
 #test()
+
+
+
+
+#=
+17.894 ms (21648 allocations: 27.80 MiB)
+0.0007635403506645518
+
+16.908 ms (21241 allocations: 27.79 MiB)
+0.000763540350664588 Improvement: changed Real to Float64 for T_max and added specific density matrix constructor for rhoA
+
+14.044 ms (4537 allocations: 20.61 MiB)
+0.0007635403506645726 #Improvement: saved the matrices for the observables in settings (thus type stable integrand as a byprodudct :-) )
+
+13.777 ms (4537 allocations: 20.61 MiB)
+0.0007635403506646036 Improvement: added @inbounds for the array element accesses
+
+
+=#
+
 
 #=
 18.642 ms (191168 allocations: 40.60 MiB)
