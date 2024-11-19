@@ -1,4 +1,4 @@
-@with_kw struct Settings_XXZ <:Settings
+@with_kw mutable struct Settings_XXZ <:Settings
     N::Int
     N_A::Int
     Δ::Real
