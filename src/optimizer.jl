@@ -45,7 +45,7 @@ end
 
 
 function fg!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
-    C::Float64, ∇::Vector{Float64} =  withgradient(g -> cost_for_grad(g, set, blks), g)
+    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost_for_grad(g, set, blks), g)
     if G !== nothing
         copyto!(G, ∇[1])
     end
@@ -55,7 +55,7 @@ function fg!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractF
 end
 
 function fg_fixed!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var,  g1::AbstractFloat)
-    C::Float64, ∇::Vector{Float64} =  withgradient(g -> cost_for_grad(vcat(g1,g), set, blks), g)
+    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost_for_grad(vcat(g1,g), set, blks), g)
     if G !== nothing
         copyto!(G, ∇[1])
     end
