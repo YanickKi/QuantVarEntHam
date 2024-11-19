@@ -1,6 +1,6 @@
 module QuantVarEntHam
 
-export Settings_XXZ, Settings_TFIM
+export Settings_XXZ, Settings_TFIM, Settings, H_A_Var
 export H_A_BW, H_A_not_BW
 export utilBlocks
 export optimize_LBFGS
