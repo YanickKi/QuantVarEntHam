@@ -1,7 +1,6 @@
 using ThreadedDoubleExponentialFormula
 using LinearAlgebra
 using Zygote
-using QuadGK
 
 function deviation(j::Int64, rhoA_copy::DensityMatrix,  set::Settings)::Float64
     @unpack observables, meas0 = set
@@ -91,7 +90,6 @@ function cost_with_QuadGK(g::Vector{<:AbstractFloat}, set::Settings,get_HA::Func
 end
 
 
-=#
 function cost_with_midpointrule(g::Vector{<:AbstractFloat}, set::Settings, get_HA::Function = H_A_BW)
     @unpack dt, N_T, N_A, rhoA, observables, meas0, T_max = set
     C::Float64 = 0.0
@@ -123,3 +121,5 @@ end
 #    blks = [put(3, i=>Z) for i in 1:3]
 #    mapreduce()
 #end 
+
+=#
