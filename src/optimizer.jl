@@ -7,7 +7,7 @@ function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_
     println("N: ", N)
     println("N_A: ", N_A)
     println("T_max: ", T_max)
-
+    println(set)
     if isnan(g1)
         @assert length(g_init) == length(blks.blocks) "You entered $(length(g_init)) parameters but $(length(blks.blocks)) blocks. 
         The amount of parameters and blocks need to be equal!"
