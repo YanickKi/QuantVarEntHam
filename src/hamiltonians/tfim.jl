@@ -1,4 +1,4 @@
-@with_kw mutable struct Settings_TFIM <:Settings
+@with_kw struct Settings_TFIM <:Settings
     N::Int
     N_A::Int
     Γ::Real

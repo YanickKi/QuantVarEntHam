@@ -55,7 +55,6 @@ function fg!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractF
 end
 
 function fg_fixed!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var,  g1::AbstractFloat)
-    println(set)
     C, ∇ =  withgradient(g -> cost_for_grad(vcat(g1,g), set, blks), g)
     if G !== nothing
         copyto!(G, ∇[1])
