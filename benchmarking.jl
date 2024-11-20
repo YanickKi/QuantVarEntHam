@@ -60,6 +60,11 @@ end
 13.777 ms (4537 allocations: 20.61 MiB)
 0.0007635403506646036 Improvement: added @inbounds for the array element accesses
 
+12.906 ms (4537 allocations: 20.61 MiB)
+0.0007635403506645584 Improvement: added buffer for U in H_A_Var #since zygote needs ignore function it allocates more and is slower...
+
+12.886 ms (4537 allocations: 20.61 MiB)
+0.0007635403506645994 Improvement: addd buffer for rhoAEvolved in H_A_Var #since zygote needs ignore function it allocates more and is slower...
 
 =#
 
