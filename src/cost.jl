@@ -1,4 +1,3 @@
-using ThreadedDoubleExponentialFormula
 using LinearAlgebra
 
 function deviation(j::Int64, rhoA_copy::DensityMatrix,  set::Settings)::Float64
@@ -6,7 +5,7 @@ function deviation(j::Int64, rhoA_copy::DensityMatrix,  set::Settings)::Float64
     return (expect(observables[j], rhoA_copy) - meas0[j])
 end 
 
-function integrand_for_grad(set::Settings, t::AbstractFloat, H_A::Matrix{ComplexF64})
+function integrand(set::Settings, t::AbstractFloat, H_A::Matrix{ComplexF64})
     @unpack N_A, rhoA, observables, meas0, T_max, mtrxObs = set
     U = exp(-1im*t*H_A)
     rhoEvolved = U*rhoA.state*U'
@@ -14,21 +13,35 @@ function integrand_for_grad(set::Settings, t::AbstractFloat, H_A::Matrix{Complex
     return real(im_res)
 end
 
+
+function cost(g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
+    @unpack observables, T_max, q = set 
+    H_A = @inbounds sum(g[i]*blks.matrices[i] for i in eachindex(g))
+    return tanh_sinh(t -> integrand(set, t, H_A),0., T_max, q)[1]/(length(observables)*T_max)
+end 
+
+
+#################################################################################################
+#                                                                                               #
+#        old cost function using ThreadedDoubleExponentialFormula                               #
+#                                                                                               #   
+#################################################################################################
+
+#=
+
 function cost_for_grad(g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
     @unpack observables, T_max = set 
     H_A = @inbounds sum(g[i]*blks.matrices[i] for i in eachindex(g))
     return quadde(t -> integrand_for_grad(set, t, H_A),0,T_max, multithreading = false)[1]/(length(observables)*T_max)
 end 
 
-
-
+=#
 
 #################################################################################################
 #                                                                                               #
 #        old cost function for seperate evaluation of the gradient and cost function            #
 #                                                                                               #   
 #################################################################################################
-
 #=
 function integrand(set::Settings, t::AbstractFloat, blks::H_A_Var)
     @unpack N_A, rhoA, observables, meas0, T_max= set

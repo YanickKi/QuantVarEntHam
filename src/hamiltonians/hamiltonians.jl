@@ -13,7 +13,7 @@ end
 mutable struct H_A_Var
     blocks::Vector{AbstractBlock}
     matrices::Vector{Matrix{ComplexF64}}
-end 
+end  
 
 
 function H_A_BW(set::Settings) 

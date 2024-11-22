@@ -11,6 +11,7 @@
     observables::Vector{RepeatedBlock{2}}  = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]
     meas0::Vector{Float64}  = [expect(observables[i], rhoA) for i in 1:lastindex(observables)]
     mtrxObs::Vector{Matrix{ComplexF64}} = Matrix.(observables)
+    q::QuadTS = integration_tables()
 end
 
 function H_XXZ(N::Integer, Δ::Real; periodic::Bool=false, signHam::Integer = +1)

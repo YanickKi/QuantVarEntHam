@@ -28,7 +28,7 @@ function AD_grad(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, 
 
     println(result)
     println(Optim.minimizer(result))
-    return Optim.minimizer(result), cost_for_grad(Optim.minimizer(result), set, blks)
+    return Optim.minimizer(result), cost(Optim.minimizer(result), set, blks)
 end
 
 function AD_grad_fixed(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, g1::Float64, gtol::AbstractFloat, maxiter::Integer, multithreading::Bool)
@@ -40,12 +40,12 @@ function AD_grad_fixed(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A
 
     println(result)
     println(Optim.minimizer(result))
-    return Optim.minimizer(result), cost_for_grad(vcat(g1, Optim.minimizer(result)), set, blks)
+    return Optim.minimizer(result), cost(vcat(g1, Optim.minimizer(result)), set, blks)
 end
 
 
 function fg!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
-    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost_for_grad(g, set, blks), g)
+    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost(g, set, blks), g)
     if G !== nothing
         copyto!(G, ∇[1])
     end
@@ -55,7 +55,7 @@ function fg!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractF
 end
 
 function fg_fixed!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var,  g1::AbstractFloat)
-    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost_for_grad(vcat(g1,g), set, blks), g)
+    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost(vcat(g1,g), set, blks), g)
     if G !== nothing
         copyto!(G, ∇[1])
     end

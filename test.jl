@@ -24,8 +24,23 @@ function test_owntype()
 
 end
 
+function testintegrate()
+    set = Settings_XXZ(N=10, N_A = 5, T_max = 1.,  Δ = -0.5)
+    HAVAR = H_A_BW(set)
+    g = [1.,2.,3.,4.,5.]
+    optimize_LBFGS(g, set, HAVAR)
+end
 #test_owntype()
 
+testintegrate()
+
+function preintegrate()
+    set = Settings_XXZ(N=10, N_A = 5, T_max = 1.,  Δ = -0.5)
+    HAVAR = H_A_BW(set)
+    g = [1.,2.,3.,4.,5.]
+    @btime QuantVarEntHam.cost_for_grad($g, $set, $HAVAR)
+    println(QuantVarEntHam.cost_for_grad(g, set, HAVAR))
+end
 
 function test_str()
     set = Settings_XXZ(N = 12, N_A = 5, T_max = 5, Δ = -0.5, r_max = 1, periodic = true, signHam = +1)
@@ -52,7 +67,6 @@ function typ()
     @descend QuantVarEntHam.integrand_for_grad(set, 1., sum(g[i]*HAVAR.matrices[i] for i in eachindex(g)))
 end
 
-typ()
 
 function testexmpv()
     set = Settings_XXZ(N=10, N_A = 6, T_max = 10.,  Δ = -0.5)

@@ -66,6 +66,10 @@ end
 12.886 ms (4537 allocations: 20.61 MiB)
 0.0007635403506645994 Improvement: addd buffer for rhoAEvolved in H_A_Var #since zygote needs ignore function it allocates more and is slower...
 
+12.980 ms (4527 allocations: 20.61 MiB)
+0.0007635403506645302 Improvement: generating integration table from beginning of the simulation, maybe slower bc of heated laptop?
+
+
 =#
 
 
