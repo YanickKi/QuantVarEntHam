@@ -25,12 +25,34 @@ function test_owntype()
 end
 
 function testintegrate()
-    set = Settings_XXZ(N=10, N_A = 5, T_max = 1.,  Δ = -0.5)
+    set = Settings_XXZ(N=10, N_A = 5, T_max = 5.,  Δ = -0.5)
     HAVAR = H_A_BW(set)
     g = [1.,2.,3.,4.,5.]
-    optimize_LBFGS(g, set, HAVAR)
+    @unpack q = set 
+    println(q)
 end
 #test_owntype()
+
+
+
+
+function testintegrate()
+    set = Settings_XXZ(N=10, N_A = 5, T_max = 2.,  Δ = -0.5)
+    HAVAR = H_A_BW(set)
+    g = [1.,2.,3.,4.,5.]
+    te = QuantVarEntHam.tes(zeros(ComplexF64, 2^5, 2^5), zeros(ComplexF64, 2^5, 2^5) ,zeros(ComplexF64, 2^5, 2^5) ,zeros(ComplexF64, 2^5, 2^5) ,
+    [zeros(ComplexF64, 2^5, 2^5) for i in 1:4] )
+    println(QuantVarEntHam.cost_with_midpointrule(g, set, HAVAR, te))
+    println(QuantVarEntHam.cost(g, set, HAVAR))
+    H_A = @inbounds sum(g[i]*HAVAR.matrices[i] for i in eachindex(g))
+    @btime copyto!($te.Uhalve, exp(-1im*0.001/2*$H_A))
+
+    @btime QuantVarEntHam.cost_with_midpointrule($g, $set, $HAVAR, $te)
+    @btime QuantVarEntHam.cost($g, $set, $HAVAR)
+
+
+end
+
 
 testintegrate()
 

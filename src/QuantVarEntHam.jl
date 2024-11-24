@@ -6,7 +6,8 @@ export utilBlocks
 export optimize_LBFGS
 export get_rhoA
 
-using Yao, Parameters, Zygote
+using Yao, Parameters
+using Zygote
 
 include("integration/mapsum.jl")
 include("integration/tanh-sinh.jl")

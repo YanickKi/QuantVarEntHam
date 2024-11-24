@@ -20,6 +20,41 @@ function cost(g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
     return tanh_sinh(t -> integrand(set, t, H_A),0., T_max, q)[1]/(length(observables)*T_max)
 end 
 
+mutable struct tes 
+    Uhalve::Matrix{ComplexF64}
+    U::Matrix{ComplexF64}
+    rhoEvolved::Matrix{ComplexF64}
+    rhoright::Matrix{ComplexF64}
+    evolobs::Vector{Matrix{ComplexF64}}
+end 
+
+function cost_with_midpointrule(g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, te::tes)
+    @unpack N_A, rhoA, observables, meas0, T_max, mtrxObs = set
+    dt = 0.005
+    N_T = T_max ÷ dt
+    C::Float64 = 0.0
+    H_A = @inbounds sum(g[i]*blks.matrices[i] for i in eachindex(g))
+    copyto!(te.Uhalve, exp(-1im*dt/2*H_A))
+    mul!(te.U, te.Uhalve, te.Uhalve)
+    mul!(te.rhoright, rhoA.state, te.Uhalve')
+    mul!(te.rhoEvolved, te.Uhalve, te.rhoright)
+    C += real(sum((tr(mtrxObs[j]*te.rhoEvolved) - meas0[j])^2 for j in eachindex(observables)))
+    for _ in 1:N_T-1
+        mul!(te.rhoright, te.rhoEvolved, te.U')
+        mul!(te.rhoEvolved, te.U, te.rhoright)
+        for i in 1:4
+            mul!(te.evolobs[i], mtrxObs[i], te.rhoEvolved)
+        end
+        C += real(sum((tr(te.evolobs[j]) - meas0[j])^2 for j in eachindex(observables)))
+    end
+    return C/(T_max*length(observables))*dt
+end
+
+
+
+
+
+
 
 #################################################################################################
 #                                                                                               #

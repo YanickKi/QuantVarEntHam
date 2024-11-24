@@ -11,7 +11,7 @@ function whole()
     println(QuantVarEntHam.cost_for_grad(g, set, HAVAR))
 end
 
-whole()
+#whole()
 
 
 function test_owntype()
@@ -40,12 +40,21 @@ function test_cust_block()
     println(cost_cust(g, set, H_A))
 end 
 
+
+function ig()
+    set = Settings_XXZ(N=10, N_A = 5, T_max = 1.,  Δ = -0.5)
+    HAVAR = H_A_BW(set)
+    g = [1.,2.,3.,4.,5.]
+    F = 0. 
+    G = zeros(5)
+    @btime QuantVarEntHam.fg!($F, $G , $g, $set, $HAVAR)
+    println(G)
+end 
 #test_cust_block()
 
 #test()
 
-
-
+ig()
 
 #=
 17.894 ms (21648 allocations: 27.80 MiB)
