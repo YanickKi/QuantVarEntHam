@@ -23,7 +23,7 @@ function AD_grad(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, 
     
     result = optimize(Optim.only_fg!((F, G, g) -> fg!(F, G, g, set, blks)) ,g_init, LBFGS(), Optim.Options(g_tol = gtol,
                                                                     store_trace = false,
-                                                                    show_trace = false,
+                                                                    show_trace = true,
                                                                     show_warnings = true, iterations = maxiter))
 
     println(result)
@@ -50,7 +50,6 @@ function fg!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractF
         copyto!(G, ∇[1])
     end
     if F !== nothing
-        println(g)
       return C
     end
 end
