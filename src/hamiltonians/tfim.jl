@@ -6,7 +6,7 @@
     r_max::Int = 1
     periodic::Bool = false
     A::UnitRange{Int} = N-N_A+1:N      
-    rhoA::DensityMatrix = get_rhoA(H_TFIM(N, Γ, periodic), A)
+    rhoA::DensityMatrix = get_rhoA(H_TFIM(N, Γ, periodic), A, N)
     observables::Vector{RepeatedBlock{2, 2, ZGate}}  = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]
     meas0::Vector{Float64}  = [expect(observables[i], rhoA) for i in 1:lastindex(observables)]
     mtrxObs::Vector{Matrix{ComplexF64}} = Matrix.(observables)

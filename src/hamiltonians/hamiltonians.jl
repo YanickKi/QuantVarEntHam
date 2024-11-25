@@ -1,13 +1,22 @@
 abstract type Settings end 
 
 using KrylovKit: eigsolve
+using LinearAlgebra
 
 
 
-function get_rhoA(H::AbstractBlock, A::AbstractRange) 
-    values, vectors = eigsolve(mat(H) ,1 ,:SR, ishermitian=true)
-    rhoA = density_matrix(ArrayReg(vectors[1]), A)
+function get_rhoA(H::AbstractBlock, A::AbstractRange, N::Integer) 
+    if N >= 11 
+        println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
+        values, vectors = eigsolve(mat(H) ,1 ,:SR, ishermitian=true)
+        rhoA = density_matrix(ArrayReg(vectors[1]), A)
     return rhoA
+    else 
+        println("Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix")
+        vectors = eigvecs(Matrix(H))
+        rhoA = density_matrix(ArrayReg(vectors[:,1]), A)
+        return rhoA
+    end 
 end 
 
 mutable struct H_A_Var

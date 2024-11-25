@@ -54,8 +54,10 @@ function testintegrate()
 end
 
 
-testintegrate()
-
+function dia()
+    set = Settings_XXZ(N = 10, N_A = 5, Δ = -0.5, T_max = 1.)
+end 
+dia()
 function preintegrate()
     set = Settings_XXZ(N=10, N_A = 5, T_max = 1.,  Δ = -0.5)
     HAVAR = H_A_BW(set)

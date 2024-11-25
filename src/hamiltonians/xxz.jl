@@ -7,7 +7,7 @@
     periodic::Bool = false
     A::UnitRange{Int} = N-N_A+1:N      
     signHam::Int = +1
-    rhoA::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}} = get_rhoA(H_XXZ(N, Δ, periodic=periodic), A)
+    rhoA::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}} = get_rhoA(H_XXZ(N, Δ, periodic=periodic), A, N)
     observables::Vector{RepeatedBlock{2}}  = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]
     meas0::Vector{Float64}  = [expect(observables[i], rhoA) for i in 1:lastindex(observables)]
     mtrxObs::Vector{Matrix{ComplexF64}} = Matrix.(observables)
