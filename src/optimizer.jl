@@ -1,23 +1,89 @@
 using Optim
 
-function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12
-    , maxiter::Integer = 200, multithreading::Bool = false)
+function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200)
+    @unpack T_max, N, N_A = init.set
+    println("g_init: ", g_init)
+    println("N: ", N)
+    println("N_A: ", N_A)
+    println("T_max: ", T_max)
+    if isnan(g1)
+        @assert length(g_init) == length(init.blks.blocks) "You entered $(length(g_init)) parameters but $(length(init.blks.blocks)) blocks. 
+        The amount of parameters and blocks need to be equal!"
+        optimize_free(g_init, init, gtol, maxiter)
+    else 
+        @assert length(g_init)+1 == length(init.blks.blocks) "You entered $(length(g_init)+1) parameters (from which is one fixed to $(g1)) but $(length(init.blks.blocks)) blocks.
+        The amount of parameters and blocks need to be equal!"
+        optimize_fixed(g_init, init, g1, gtol, maxiter)
+    end
+end
+
+function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer)
+    
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    println(result)
+    println(Optim.minimizer(result))
+    return Optim.minimizer(result), cost_grad!(1.,  Optim.minimizer(result), zeros(length(Optim.minimizer(result))), init)
+end
+
+
+function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64, gtol::AbstractFloat, maxiter::Integer)
+    #CAREFULL NOT NOT RIGHT AT THE MOMENT, IMNPLEMENT THAT ONE PARAMETER CAN BE FIXED
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    println(result)
+    println(Optim.minimizer(result))
+    return Optim.minimizer(result), cost_grad!(1.,  Optim.minimizer(result), zeros(length(Optim.minimizer(result))), init)
+end
+
+function optimize_LBFGS_freeT(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200)
     @unpack T_max, N, N_A = set
     println("g_init: ", g_init)
     println("N: ", N)
     println("N_A: ", N_A)
     println("T_max: ", T_max)
     if isnan(g1)
-        @assert length(g_init) == length(blks.blocks) "You entered $(length(g_init)) parameters but $(length(blks.blocks)) blocks. 
+        @assert length(g_init)-1 == length(blks.blocks) "You entered $(length(g_init)) parameters but $(length(blks.blocks)) blocks. 
         The amount of parameters and blocks need to be equal!"
-        AD_grad(g_init, set, blks, gtol, maxiter, multithreading)
+        AD_grad_freeT(g_init, set, blks, gtol, maxiter, multithreading)
     else 
-        @assert length(g_init)+1 == length(blks.blocks) "You entered $(length(g_init)+1) parameters (from which is one fixed to $(g1)) but $(length(blks.blocks)) blocks.
+        @assert length(g_init) == length(blks.blocks) "You entered $(length(g_init)+1) parameters (from which is one fixed to $(g1)) but $(length(blks.blocks)) blocks.
         The amount of parameters and blocks need to be equal!"
-        AD_grad_fixed(g_init, set, blks, g1, gtol, maxiter, multithreading)
+        AD_grad_fixed_freeT(g_init, set, blks, g1, gtol, maxiter, multithreading)
     end
 end
 
+#=
+function AD_grad_freeT(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, gtol::AbstractFloat, maxiter::Integer, multithreading::Bool)
+    
+    result = optimize(Optim.only_fg!((F, G, g) -> fgfreeT!(F, G, g, set, blks)) ,g_init, LBFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    println(result)
+    println(Optim.minimizer(result))
+    return Optim.minimizer(result), cost_freeT(Optim.minimizer(result), set, blks)
+end
+=#
+#=
+function AD_grad_freeT(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, gtol::AbstractFloat, maxiter::Integer, multithreading::Bool)
+    
+    result = optimize(Optim.only_fg!((F, G, g) -> fgfreeT!(F, G, g, set, blks)) ,g_init, LBFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    println(result)
+    println(Optim.minimizer(result))
+    return Optim.minimizer(result), cost_freeT(Optim.minimizer(result), set, blks)
+end
 
 function AD_grad(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, gtol::AbstractFloat, maxiter::Integer, multithreading::Bool)
     
@@ -43,9 +109,18 @@ function AD_grad_fixed(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A
     return Optim.minimizer(result), cost(vcat(g1, Optim.minimizer(result)), set, blks)
 end
 
+function fgfreeT!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
+    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost_freeT(g, set, blks), g)
+    if G !== nothing
+        copyto!(G, ∇[1])
+    end
+    if F !== nothing
+      return C
+    end
+end
 
 function fg!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var)
-    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost(g, set, blks), g)
+    C::Float64, ∇::Tuple{Vector{Float64}} =  withgradient(g -> cost_forZygote(g, set, blks), g)
     if G !== nothing
         copyto!(G, ∇[1])
     end
@@ -64,7 +139,7 @@ function fg_fixed!(F::AbstractFloat, G::Vector{<:AbstractFloat}, g::Vector{<:Abs
     end
 end
 
-
+=#
 #####################################################################
 #                                                                   #
 #           DOWN BELOW HERE GRAD AND C EVALUATED SEPERATELY         #

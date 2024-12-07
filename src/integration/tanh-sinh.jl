@@ -1,4 +1,5 @@
 using LinearAlgebra
+
 struct QuadTS{N}
     h0::Float64
     origin::Tuple{Float64,Float64}
@@ -34,9 +35,9 @@ function integrate(f::Function, q::QuadTS{N}; atol::Real=0.,
         Σ += mapsum(eval, table)
         h = h0/2^level
         prevI2 = prevI
-        prevI = I
+        prevI = I[1]
         I = h*Σ
-        E = estimate_error(prevI, I, prevI2)
+        E = estimate_error(prevI, I[1], prevI2)
         tol = max(norm(I)*rtol, atol)
         !(E > tol) && break
     end
@@ -93,6 +94,6 @@ function tanh_sinh(f::Function, a::Real, b::Real, q::QuadTS{N};
         s = (_b + _a)/2
         t = (_b - _a)/2
         I, E = integrate(u -> f(s + t*u), q; atol=atol/t, rtol=rtol)
-        return I*t, E*t
+        return I*t
     end
 end 

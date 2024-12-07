@@ -47,7 +47,7 @@ function ig()
     g = [1.,2.,3.,4.,5.]
     F = 0. 
     G = zeros(5)
-    @btime QuantVarEntHam.fg!($F, $G , $g, $set, $HAVAR)
+    @btime QuantVarEntHam.cost($g, $set, $HAVAR)
     println(G)
 end 
 #test_cust_block()

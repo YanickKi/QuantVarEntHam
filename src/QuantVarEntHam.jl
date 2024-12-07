@@ -1,18 +1,20 @@
 module QuantVarEntHam
 
-export Settings_XXZ, Settings_TFIM, Settings, H_A_Var
 export H_A_BW, H_A_not_BW
-export utilBlocks
 export optimize_LBFGS
-export get_rhoA
+export get_rhoA, initialize, XXZ, TFIM
+export universal_ratios, print_H_A, plot_universal_ratios
 
 using Yao, Parameters
 using Zygote
 
-include("integration/mapsum.jl")
 include("integration/tanh-sinh.jl")
+include("integration/mapsum.jl")
 include("hamiltonians/hamiltonians.jl")
+include("initialize.jl")
 include("cost.jl")
 include("optimizer.jl")
+include("utils.jl")
+
 
 end

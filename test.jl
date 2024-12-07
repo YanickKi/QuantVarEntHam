@@ -5,7 +5,7 @@ using Cthulhu
 include("src/QuantVarEntHam.jl")
 using .QuantVarEntHam
 using BenchmarkTools
-
+using LinearAlgebra
 function test_owntype()
     N_A =  3
     set = Settings_XXZ(N=2*N_A, N_A = N_A, T_max = 5.,  Δ = -0.5)
@@ -57,7 +57,7 @@ end
 function dia()
     set = Settings_XXZ(N = 10, N_A = 5, Δ = -0.5, T_max = 1.)
 end 
-dia()
+
 function preintegrate()
     set = Settings_XXZ(N=10, N_A = 5, T_max = 1.,  Δ = -0.5)
     HAVAR = H_A_BW(set)
@@ -69,10 +69,9 @@ end
 function test_str()
     set = Settings_XXZ(N = 12, N_A = 5, T_max = 5, Δ = -0.5, r_max = 1, periodic = true, signHam = +1)
     HA_VAR = H_A_not_BW(set) 
-    g_init = [0.5, 1., 1., 1.5, 1.5, 1.,1.,0.5,0.5] 
+    g_init = [0.5, 0.5, 1., 1., 1.,1.,0.5,0.5] 
     G = zeros(length(g_init))
-    #QuantVarEntHam.fg_fixed!(1.,G, g_init, set, HA_VAR, 1.)
-    optimize_LBFGS(g_init, set, HA_VAR, g1 = 0.5, gtol = 1e-16)
+    @btime QuantVarEntHam.fg!(1.,$G, $g_init, $set, $HA_VAR)
     #@btime QuantVarEntHam.cost($g_init, $set, $HA_VAR, false)
     #@btime QuantVarEntHam.cost_with_QuadGK($g_init, $set, $HA_VAR,  false)
     #println(QuantVarEntHam.cost(g_init, set, HA_VAR, false))
@@ -80,15 +79,13 @@ function test_str()
 end 
 
 
-#test_str()
-
 function typ()
     set = Settings_XXZ(N=4, N_A=2, Δ = 0.5, T_max = 1.)
     g = [1.,2.]
     HAVAR = H_A_BW(set)
     F = 0.
     G = [0.,0.]
-    @descend QuantVarEntHam.integrand_for_grad(set, 1., sum(g[i]*HAVAR.matrices[i] for i in eachindex(g)))
+    @descend QuantVarEntHam.cost(g, set, HAVAR)
 end
 
 
@@ -99,7 +96,7 @@ function testexmpv()
     H = Matrix(sum(g.*blks))
     @btime exponential!(-1im*1.0*$H)
     @btime exp(-1im*1.0*$H)
-
+1., sum(g[i]*HAVAR.matrices[i] for i in eachindex(g))
 end
 
 
@@ -140,6 +137,32 @@ function testBlock()
     @btime te_state(copy($rhoA), $H, $dt)
     @btime te_state_cust(copy($rhoA), $H, $dt)
     @btime yaote(copy($rhoA), $H, $dt)
+
 end 
 
+using ChainRules, ChainRulesCore
 
+function mul_test()
+    init = initialize(TFIM(14, 7, 1., 1.), H_A_BW)
+    g = [1., 2., 3., 4., 5., 6., 7.]
+    G = rand(length(g))
+    #println(typeof(init.set.mtrxObs))
+    @btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
+    #@descend QuantVarEntHam.cost_grad!(1., g, G, init)
+    #@code_warntype QuantVarEntHam.integrand(1., init)
+end 
+#= init = initialize(TFIM(14, 7, 1., 1.), H_A_BW), ginit = [1., 2., 3., 4., 5., 6., 7.]
+vor der nutzung von der struktur der matrizen: 746.306 ms (14631 allocations: 1.05 GiB)
+668.967 ms (20287 allocations: 1.05 GiB) matrobs mit mat aber ohne TS
+661.708 ms (22105 allocations: 1.05 GiB) matrobs mit mat und buffer diagonal ohne TS
+680.973 ms (14631 allocations: 1.05 GiB) matrobs mit mat und buffer diagonal mit TS
+663.747 ms (16163 allocations: 1.05 GiB) auch für die matrices in blocks die mat funktion benutzt ohne TS
+647.123 ms (14695 allocations: 1.05 GiB) done everything and everyting is type stable
+679.109 ms (14695 allocations: 1.05 GiB) everyting type stable and parametric buffers, why slower???????
+=#
+#Everything with T_max = 2. here 
+#before optimizing 40.244 ms (17738 allocations: 66.21 MiB) (type instability)
+#fixing bug with static arrays but type instable: 39.218 ms (14308 allocations: 66.14 MiB)
+#using another buffer 39.284 ms (14294 allocations: 66.14 MiB)
+# for T_max = 1 : 18.798 ms (7047 allocations: 32.49 MiB)
+mul_test()

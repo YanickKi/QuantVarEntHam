@@ -13,17 +13,23 @@ function get_rhoA(H::AbstractBlock, A::AbstractRange, N::Integer)
     return rhoA
     else 
         println("Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix")
-        vectors = eigvecs(Matrix(H))
+        vectors = eigvecs(Hermitian(Matrix(H)))
         rhoA = density_matrix(ArrayReg(vectors[:,1]), A)
         return rhoA
     end 
 end 
 
+#=
 mutable struct H_A_Var
     blocks::Vector{AbstractBlock}
     matrices::Vector{Matrix{ComplexF64}}
-end  
+end 
+=#
 
+struct H_A_Var
+    blocks::Vector{AbstractBlock}
+    matrices::Vector{SparseMatrixCSC{ComplexF64, Int64}}
+end 
 
 function H_A_BW(set::Settings) 
     @unpack N, N_A, r_max, periodic = set
@@ -39,8 +45,8 @@ function H_A_BW(set::Settings)
     if r_max > 1
         corrections!(blks, set)
     end 
-
-    return H_A_Var(blks, Matrix.(blks))
+    matrices =  mat.(blks)
+    return H_A_Var(blks, mat.(blks))
 
 end 
 
@@ -54,11 +60,11 @@ function H_A_not_BW(set::Settings)
     if r_max > 1
         corrections!(blks, set)
     end 
+    matrices = mat.(blks)
 
-    return H_A_Var(blks, Matrix.(blks))
+    return H_A_Var(blks, mat.(blks)){typeof(matrices)}
 
 end 
-
 
 
 function H_A_BW_wo_corrections!(blks::Vector{AbstractBlock}, set::Settings)
@@ -78,9 +84,6 @@ function corrections!(blks::Vector{AbstractBlock}, set::Settings)
     end 
 end 
 
-function print_H_A_Var(g::Vector{<:AbstractFloat}, blks::H_A_Var)
-    println(sum(g[i] * blks.blocks[i] for i in eachindex(g)))
-end 
 
 include("xxz.jl")
 include("tfim.jl")
