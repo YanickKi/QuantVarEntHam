@@ -145,10 +145,15 @@ using ChainRules, ChainRulesCore
 function mul_test()
     init = initialize(TFIM(14, 7, 1., 1.), H_A_BW)
     g = [1., 2., 3., 4., 5., 6., 7.]
+    println(typeof(init.buff.sumobs))
+    println(typeof(init.set.mtrxObs))
+    println(typeof(init.blks.matrices))
     G = rand(length(g))
     #println(typeof(init.set.mtrxObs))
-    @btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
-    #@descend QuantVarEntHam.cost_grad!(1., g, G, init)
+    for i in 1:5
+        @btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
+    end
+        #@descend QuantVarEntHam.cost_grad!(1., g, G, init)
     #@code_warntype QuantVarEntHam.integrand(1., init)
 end 
 #= init = initialize(TFIM(14, 7, 1., 1.), H_A_BW), ginit = [1., 2., 3., 4., 5., 6., 7.]
@@ -159,6 +164,13 @@ vor der nutzung von der struktur der matrizen: 746.306 ms (14631 allocations: 1.
 663.747 ms (16163 allocations: 1.05 GiB) auch für die matrices in blocks die mat funktion benutzt ohne TS
 647.123 ms (14695 allocations: 1.05 GiB) done everything and everyting is type stable
 679.109 ms (14695 allocations: 1.05 GiB) everyting type stable and parametric buffers, why slower???????
+683.174 ms (14695 allocations: 1.05 GiB) before buffer for -1im*t*H_A
+680.699 ms (14392 allocations: 1.03 GiB) after buffer for -1im*t*H_A
+671.513 ms (14190 allocations: 1.03 GiB) after summing to c without sum and broadcasting 
+650.395 ms (14129 allocations: 1.03 GiB) after making blocks dense again 
+649.219 ms (14126 allocations: 1.03 GiB) no Hermitian Matrix constructor in cost_grad anymore 
+665.716 ms (14108 allocations: 1.03 GiB) loop to make H_A not the sum Function
+660.618 ms (14087 allocations: 1.03 GiB) working in place for skalar times matrix
 =#
 #Everything with T_max = 2. here 
 #before optimizing 40.244 ms (17738 allocations: 66.21 MiB) (type instability)

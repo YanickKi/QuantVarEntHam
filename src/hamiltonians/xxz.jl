@@ -1,4 +1,4 @@
-@with_kw struct Settings_XXZ{T, S} <:Settings where T<:AbstractBlock where S<:AbstractMatrix
+@with_kw struct Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
     N::Int
     N_A::Int
     Δ::Float64

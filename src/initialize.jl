@@ -133,6 +133,7 @@ mutable struct Buffers{T<:AbstractMatrix}
     ρ_A_right::Matrix{ComplexF64}
     dAforpb::Matrix{ComplexF64}
     H_A::Matrix{ComplexF64}
+    H_A_forexp::Matrix{ComplexF64}
     sumobs::T
     evolobs::Vector{Matrix{ComplexF64}}
     adjtimesBlockMatrices::Vector{Matrix{ComplexF64}}
@@ -147,6 +148,7 @@ function create_buffers(N_A::Integer, numBlocks::Integer, numObservables::Intege
     zeros(Int, numObservables),
     zeros(ComplexF64, d, d), 
     zeros(ComplexF64, d, d), 
+    zeros(ComplexF64, d, d),
     zeros(ComplexF64, d, d),
     zeros(ComplexF64, d, d),
     zero(test_sumobs_type),

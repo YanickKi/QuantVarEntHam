@@ -1,4 +1,4 @@
-using Optim
+using Optim, LinearAlgebra
 
 function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200)
     @unpack T_max, N, N_A = init.set
@@ -17,6 +17,27 @@ function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::Abstrac
     end
 end
 
+function comm_cost(g::Vector{<:AbstractFloat}, init::Init)
+    get_H_A!(g, init)
+    mul!(init.buff.ρ_A_evolved, init.set.ρ_A.state, init.buff.H_A)
+    mul!(init.buff.ρ_A_right, init.buff.H_A, init.set.ρ_A.state)
+    init.buff.dAforpb .= init.buff.ρ_A_evolved .- init.buff.ρ_A_right
+    return norm(init.buff.dAforpb/(2*norm(init.buff.H_A)*norm(init.set.ρ_A.state)))
+end 
+
+function comm_opt(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN)
+    result = optimize(g -> comm_cost(g,init), g_init, LBFGS(), Optim.Options(g_tol = 1e-12,
+    store_trace = false,
+    show_trace = true,
+    show_warnings = true, iterations = 1000))
+
+    g_opt = Optim.minimizer(result)
+
+    println(result)
+    println(g_opt)
+    return g_opt, comm_cost(g_opt,init)
+end 
+
 function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer)
     
     result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
@@ -24,9 +45,10 @@ function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::Abstra
                                                                     show_trace = true,
                                                                     show_warnings = true, iterations = maxiter))
 
+    g_opt = Optim.minimizer(result)                                                                
     println(result)
-    println(Optim.minimizer(result))
-    return Optim.minimizer(result), cost_grad!(1.,  Optim.minimizer(result), zeros(length(Optim.minimizer(result))), init)
+    println(g_opt)
+    return g_opt, cost_grad!(1.,  g_opt, nothing, init)
 end
 
 

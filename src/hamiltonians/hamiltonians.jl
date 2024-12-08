@@ -1,4 +1,4 @@
-abstract type Settings end 
+abstract type Settings{T<:AbstractBlock,S<:AbstractMatrix} end
 
 using KrylovKit: eigsolve
 using LinearAlgebra
@@ -28,7 +28,7 @@ end
 
 struct H_A_Var
     blocks::Vector{AbstractBlock}
-    matrices::Vector{SparseMatrixCSC{ComplexF64, Int64}}
+    matrices::Vector{Matrix{ComplexF64}}
 end 
 
 function H_A_BW(set::Settings) 
