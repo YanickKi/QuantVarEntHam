@@ -31,11 +31,11 @@ function comm_opt_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Abstrac
     show_trace = true,
     show_warnings = true, iterations = 1000))
 
-    g_opt = vcat(g1, Optim.minimizer(result))
+    g_opt = Optim.minimizer(result)
 
     println(result)
     println(g_opt)
-    return g_opt, comm_cost(g_opt,init)
+    return g_opt, comm_cost(vcat(g1,g_opt),init)
 end 
 
 function comm_opt(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN)
