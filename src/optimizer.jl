@@ -25,11 +25,11 @@ function comm_cost(g::Vector{<:AbstractFloat}, init::Init)
     return norm(init.buff.dAforpb/(2*norm(init.buff.H_A)*norm(init.set.ρ_A.state)))
 end 
 
-function comm_opt_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::AbstractFloat)
-    result = optimize(g -> comm_cost(vcat(g1,g),init), g_init, LBFGS(), Optim.Options(g_tol = 1e-12,
+function comm_opt_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::AbstractFloat, gtol::AbstractFloat, maxiter = 100)
+    result = optimize(g -> comm_cost(vcat(g1,g),init), g_init, LBFGS(), Optim.Options(g_tol = gtol,
     store_trace = false,
     show_trace = true,
-    show_warnings = true, iterations = 1000))
+    show_warnings = true, iterations = maxiter))
 
     g_opt = Optim.minimizer(result)
 
