@@ -19,13 +19,6 @@ function get_rhoA(H::AbstractBlock, A::AbstractRange, N::Integer)
     end 
 end 
 
-#=
-mutable struct H_A_Var
-    blocks::Vector{AbstractBlock}
-    matrices::Vector{Matrix{ComplexF64}}
-end 
-=#
-
 struct H_A_Var
     blocks::Vector{AbstractBlock}
     matrices::Vector{Matrix{ComplexF64}}

@@ -6,7 +6,6 @@ export get_rhoA, initialize, XXZ, TFIM
 export universal_ratios, print_H_A, plot_universal_ratios
 
 using Yao, Parameters
-using Zygote
 
 include("integration/tanh-sinh.jl")
 include("integration/mapsum.jl")

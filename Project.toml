@@ -4,22 +4,28 @@ authors = ["Yanick Kind"]
 version = "1.0.0-DEV"
 
 [deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+ChainRules = "082447d4-558c-5d27-93f4-14fc19e9eca2"
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
-Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
+CairoMakie = "0.12.17"
+ChainRules = "1.72.1"
+ChainRulesCore = "1.25.0"
 KrylovKit = "0.7.1"
+LaTeXStrings = "1.4.0"
 LinearAlgebra = "1.11.0"
 Optim = "1.10.0"
 Parameters = "0.12.3"
 Pkg = "1.11.0"
 Yao = "0.9.0"
-Zygote = "0.6.73"
 julia = "1.6.7"
 
 [extras]

@@ -5,7 +5,7 @@ function calc_universal_ratios(ξ::Vector{<:AbstractFloat}, α0::Integer, α1::I
     return κ
 end
 
-function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0 = 1, α1 = 5)
+function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
     @unpack ρ_A = init.set
     H_A = H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
     H_A_exact = -log(Hermitian(ρ_A.state))
@@ -19,7 +19,7 @@ function print_H_A(g::Vector{<:AbstractFloat}, init::Init)
 end
 
 function get_H_A(g::Vector{<:AbstractFloat}, init::Init)
-    return sum(g[i]*init.blks.matrices[i] for i in eachindex(g))
+    return sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
 end 
 
 function plot_universal_ratios(filename::String, universal_ratios...)
