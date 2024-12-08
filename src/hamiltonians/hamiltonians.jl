@@ -38,7 +38,6 @@ function H_A_BW(set::Settings)
     if r_max > 1
         corrections!(blks, set)
     end 
-    matrices =  mat.(blks)
     return H_A_Var(blks, mat.(blks))
 
 end 
@@ -53,9 +52,8 @@ function H_A_not_BW(set::Settings)
     if r_max > 1
         corrections!(blks, set)
     end 
-    matrices = mat.(blks)
 
-    return H_A_Var(blks, mat.(blks)){typeof(matrices)}
+    return H_A_Var(blks, mat.(blks))
 
 end 
 
