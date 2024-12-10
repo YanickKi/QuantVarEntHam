@@ -39,7 +39,7 @@ function H_XXZ(N::Integer, Δ::Real; periodic::Bool=false, signHam::Integer = +1
     return signHam*(XX_term+Δ*Z_term)
 end 
 
-function hi(i::Integer, set::Settings_XXZ)::AbstractBlock
+function hi(i::Integer, set::Settings_XXZ)
     @unpack N_A, Δ = set
 
     if i > 1 && i < N_A 

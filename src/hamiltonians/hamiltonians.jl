@@ -6,9 +6,9 @@ using LinearAlgebra
 
 
 function get_rhoA(H::AbstractBlock, A::AbstractRange, N::Integer) 
-    if N >= 11 
+    if N>10
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
-        values, vectors = eigsolve(mat(H) ,1 ,:SR, ishermitian=true)
+        values, vectors = eigsolve(mat(H) ,1 ,:SR, ishermitian=true, tol = 1e-16)
         rhoA = density_matrix(ArrayReg(vectors[1]), A)
     return rhoA
     else 

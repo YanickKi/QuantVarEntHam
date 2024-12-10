@@ -51,9 +51,36 @@ function comm_opt(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat
     return g_opt, comm_cost(g_opt,init)
 end 
 
+
+function optimize_T_max_g1_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::AbstractFloat; gtol::AbstractFloat = 1e-12, maxiter::Integer = 200)
+    
+    result = optimize(g -> cost_T_max(vcat(g[1], g1, g[2:end]), init), g_init, BFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    g_opt = Optim.minimizer(result)                                                                
+    println(result)
+    println(g_opt)
+    return g_opt, cost_T_max(g_opt, init)
+end
+
+function optimize_T_max_g1_fixed_custrgad(g_init::Vector{<:AbstractFloat}, init::Init, g1::AbstractFloat; gtol::AbstractFloat = 1e-12, maxiter::Integer = 200)
+    
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad_Tmax_g1_fixed!(F, vcat(g[1],g1,g[2:end]), G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    g_opt = Optim.minimizer(result)                                                                
+    println(result)
+    println(g_opt)
+    return g_opt, cost_grad_Tmax_g1_fixed!(1.,  vcat(g_opt[1],g1,g_opt[2:end]), nothing, init)
+end
+
 function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer)
     
-    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, BFGS(), Optim.Options(g_tol = gtol,
                                                                     store_trace = false,
                                                                     show_trace = true,
                                                                     show_warnings = true, iterations = maxiter))
