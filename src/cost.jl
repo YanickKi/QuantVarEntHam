@@ -9,6 +9,72 @@ function get_H_A!(g::Vector{<:AbstractFloat}, init::Init)
     end 
 end 
 
+function cost_grad!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
+    @unpack observables, T_max, atol, rtol = init.set
+    get_H_A!(g, init)
+    if G !== nothing
+        init.buff.C_G_result .= (tanh_sinh(t -> integrand(t, init),0., T_max, init.q, atol = atol, rtol = rtol)./(length(observables)*T_max))
+        G[:] .= @view  init.buff.C_G_result[2:end]
+    end
+    if F !== nothing 
+        if G === nothing
+            return tanh_sinh(t -> integrand_onlycost(t, init),0., T_max, init.q, atol = atol, rtol = rtol)/(length(observables)*T_max)
+        else 
+            return init.buff.C_G_result[1]
+        end 
+    end
+end 
+
+function integrand(t::AbstractFloat, init::Init)
+    @unpack ρ_A, meas0, mtrxObs = init.set
+    buff = init.buff
+    buff.C_G[1] = 0.
+    mul!(buff.H_A_forexp, -1im*t, buff.H_A)
+    U, pullback =  rrule(exp, buff.H_A_forexp)
+    mul!(buff.ρ_A_right, ρ_A.state, U')
+    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
+
+    @fastmath @inbounds @simd for i in eachindex(mtrxObs)
+        mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
+        buff.dev[i] = real(tr(buff.evolobs[i])) - meas0[i]
+        buff.sumobs .+= buff.dev[i].*mtrxObs[i]
+        buff.C_G[1] += buff.dev[i]^2
+    end 
+
+    mul!(buff.dAforpb, buff.ρ_A_right, buff.sumobs)
+
+    adj = pullback(buff.dAforpb')[2]
+    
+    @fastmath @inbounds @simd for i in eachindex(buff.G_buffer)
+        mul!(buff.adjtimesBlockMatrices[i], adj', init.blks.matrices[i])
+    end     
+
+    @fastmath @inbounds @simd for i in eachindex(buff.G_buffer)
+        buff.G_buffer[i] = 4*t*imag(tr(buff.adjtimesBlockMatrices[i]))
+    end 
+
+    fill!(buff.sumobs, 0)
+    buff.C_G[2:end] .= @view buff.G_buffer[:]
+    return buff.C_G
+end
+
+
+function integrand_onlycost(t::AbstractFloat,  init::Init)
+    @unpack ρ_A, meas0, mtrxObs = init.set
+    buff = init.buff 
+    mul!(buff.H_A_forexp, -t, buff.H_A)
+    U = cis(buff.H_A_forexp)
+    mul!(buff.ρ_A_right, ρ_A.state, U')
+    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
+    c::Float64 = 0.
+    @fastmath @inbounds @simd for i in eachindex(mtrxObs)
+        @inbounds mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
+        @inbounds buff.dev[i] = real(tr(buff.evolobs[i]))- meas0[i]
+        c += buff.dev[i]^2
+    end 
+    return c
+end
+
 #########################################################################################
 #                                                                                       #
 #                                VARYING TMAX                                           #
@@ -82,72 +148,6 @@ end
 #                                                                                       #
 #########################################################################################
 
-
-function cost_grad!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
-    @unpack observables, T_max, atol, rtol = init.set
-    get_H_A!(g, init)
-    if G !== nothing
-        init.buff.C_G_result .= (tanh_sinh(t -> integrand(t, init),0., T_max, init.q, atol = atol, rtol = rtol)./(length(observables)*T_max))
-        G[:] .= @view  init.buff.C_G_result[2:end]
-    end
-    if F !== nothing 
-        if G === nothing
-            return tanh_sinh(t -> integrand_onlycost(t, init),0., T_max, init.q, atol = atol, rtol = rtol)/(length(observables)*T_max)
-        else 
-            return init.buff.C_G_result[1]
-        end 
-    end
-end 
-
-function integrand(t::AbstractFloat, init::Init)
-    @unpack ρ_A, meas0, mtrxObs = init.set
-    buff = init.buff
-    buff.C_G[1] = 0.
-    mul!(buff.H_A_forexp, -1im*t, buff.H_A)
-    U, pullback =  rrule(exp, buff.H_A_forexp)
-    mul!(buff.ρ_A_right, ρ_A.state, U')
-    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
-
-    @fastmath @inbounds @simd for i in eachindex(mtrxObs)
-        mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
-        buff.dev[i] = real(tr(buff.evolobs[i])) - meas0[i]
-        buff.sumobs .+= buff.dev[i].*mtrxObs[i]
-        buff.C_G[1] += buff.dev[i]^2
-    end 
-
-    mul!(buff.dAforpb, buff.ρ_A_right, buff.sumobs)
-
-    adj = pullback(buff.dAforpb')[2]
-    
-    @fastmath @inbounds @simd for i in eachindex(buff.G_buffer)
-        mul!(buff.adjtimesBlockMatrices[i], adj', init.blks.matrices[i])
-    end     
-
-    @fastmath @inbounds @simd for i in eachindex(buff.G_buffer)
-        buff.G_buffer[i] = 4*t*imag(tr(buff.adjtimesBlockMatrices[i]))
-    end 
-
-    fill!(buff.sumobs, 0)
-    buff.C_G[2:end] .= @view buff.G_buffer[:]
-    return buff.C_G
-end
-
-
-function integrand_onlycost(t::AbstractFloat,  init::Init)
-    @unpack ρ_A, meas0, mtrxObs = init.set
-    buff = init.buff 
-    mul!(buff.H_A_forexp, -t, buff.H_A)
-    U = cis(buff.H_A_forexp)
-    mul!(buff.ρ_A_right, ρ_A.state, U')
-    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
-    c::Float64 = 0.
-    @fastmath @inbounds @simd for i in eachindex(mtrxObs)
-        @inbounds mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
-        @inbounds buff.dev[i] = real(tr(buff.evolobs[i]))- meas0[i]
-        c += buff.dev[i]^2
-    end 
-    return c
-end
 
 #=
 function cost!(F::Union{AbstractFloat, nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, nothing}, init::Init)

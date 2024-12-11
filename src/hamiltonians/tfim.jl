@@ -27,7 +27,7 @@ function TFIM(N::Integer, N_A::Integer, Γ::Real, T_max::Real; r_max::Integer = 
     ) 
 end 
 
-function H_TFIM(N::Int64, Γ::Real; periodic::Bool=false, signHam::Integer = -1)
+function H_TFIM(N::Integer, Γ::Real; periodic::Bool=false, signHam::Integer = -1)
 
     ising_term = map(1:(periodic ? N : N-1)) do i
         repeat(N,Z,(i,i%N+1))

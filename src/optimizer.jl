@@ -17,6 +17,33 @@ function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::Abstrac
     end
 end
 
+
+function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer)
+    
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, BFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    g_opt = Optim.minimizer(result)                                                                
+    println(result)
+    println(g_opt)
+    return g_opt, cost_grad!(1.,  g_opt, nothing, init)
+end
+
+
+function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64, gtol::AbstractFloat, maxiter::Integer)
+    #CAREFULL NOT NOT RIGHT AT THE MOMENT, IMNPLEMENT THAT ONE PARAMETER CAN BE FIXED
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    println(result)
+    println(Optim.minimizer(result))
+    return Optim.minimizer(result), cost_grad!(1.,  Optim.minimizer(result), zeros(length(Optim.minimizer(result))), init)
+end
+
 function comm_cost(g::Vector{<:AbstractFloat}, init::Init)
     get_H_A!(g, init)
     mul!(init.buff.ρ_A_evolved, init.set.ρ_A.state, init.buff.H_A)
@@ -78,32 +105,6 @@ function optimize_T_max_g1_fixed_custrgad(g_init::Vector{<:AbstractFloat}, init:
     return g_opt, cost_grad_Tmax_g1_fixed!(1.,  vcat(g_opt[1],g1,g_opt[2:end]), nothing, init)
 end
 
-function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer)
-    
-    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, BFGS(), Optim.Options(g_tol = gtol,
-                                                                    store_trace = false,
-                                                                    show_trace = true,
-                                                                    show_warnings = true, iterations = maxiter))
-
-    g_opt = Optim.minimizer(result)                                                                
-    println(result)
-    println(g_opt)
-    return g_opt, cost_grad!(1.,  g_opt, nothing, init)
-end
-
-
-function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64, gtol::AbstractFloat, maxiter::Integer)
-    #CAREFULL NOT NOT RIGHT AT THE MOMENT, IMNPLEMENT THAT ONE PARAMETER CAN BE FIXED
-    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
-                                                                    store_trace = false,
-                                                                    show_trace = true,
-                                                                    show_warnings = true, iterations = maxiter))
-
-    println(result)
-    println(Optim.minimizer(result))
-    return Optim.minimizer(result), cost_grad!(1.,  Optim.minimizer(result), zeros(length(Optim.minimizer(result))), init)
-end
-
 function optimize_LBFGS_freeT(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200)
     @unpack T_max, N, N_A = set
     println("g_init: ", g_init)
@@ -120,6 +121,8 @@ function optimize_LBFGS_freeT(g_init::Vector{<:AbstractFloat}, init::Init; g1::A
         AD_grad_fixed_freeT(g_init, set, blks, g1, gtol, maxiter, multithreading)
     end
 end
+
+
 
 #=
 function AD_grad_freeT(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, gtol::AbstractFloat, maxiter::Integer, multithreading::Bool)
