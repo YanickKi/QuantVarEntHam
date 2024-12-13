@@ -11,11 +11,12 @@
     mtrxObs::Vector{S}
     atol::Float64
     rtol::Float64 
+    dt::Float64
 end
 
 function TFIM(N::Integer, N_A::Integer, Γ::Real, T_max::Real; r_max::Integer = 1, periodic::Bool = false, atol::Real=0.0, rtol::Real=atol>0 ? 0. : sqrt(eps(Float64)),
     signHam::Int = -1, ρ_A::DensityMatrix{2} = get_rhoA(H_TFIM(N, Γ, periodic = periodic, signHam = signHam),  N-N_A+1:N, N),
-    observables::Vector{<:AbstractBlock} = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
+    observables::Vector{<:AbstractBlock} = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Float64 = 0.01)
 
     mtrxObs = mat.(observables)
 
@@ -23,7 +24,8 @@ function TFIM(N::Integer, N_A::Integer, Γ::Real, T_max::Real; r_max::Integer = 
         N = N, N_A = N_A, Γ = Γ, T_max = T_max, r_max = r_max,  periodic = periodic,
         atol = atol, rtol = rtol,
         ρ_A = ρ_A, observables = observables,
-        mtrxObs = mtrxObs
+        mtrxObs = mtrxObs,
+        dt = dt
     ) 
 end 
 

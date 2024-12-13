@@ -43,7 +43,7 @@ function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64
     println(result)
     println(g_opt)
 
-    return Optim.minimizer(result), cost_grad_fixed!(1.,  vcat(g1,g_opt), nothings, init)
+    return Optim.minimizer(result), cost_grad_fixed!(1.,  vcat(g1,g_opt), nothing, init)
 end
 
 function comm_cost(g::Vector{<:AbstractFloat}, init::Init)
@@ -81,18 +81,7 @@ function comm_opt(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat
 end 
 
 
-function optimize_T_max_g1_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::AbstractFloat; gtol::AbstractFloat = 1e-12, maxiter::Integer = 200)
-    
-    result = optimize(g -> cost_T_max(vcat(g[1], g1, g[2:end]), init), g_init, BFGS(), Optim.Options(g_tol = gtol,
-                                                                    store_trace = false,
-                                                                    show_trace = true,
-                                                                    show_warnings = true, iterations = maxiter))
-
-    g_opt = Optim.minimizer(result)                                                                
-    println(result)
-    println(g_opt)
-    return g_opt, cost_T_max(g_opt, init)
-end
+# FREE TMAX
 
 function optimize_T_max_g1_fixed_custrgad(g_init::Vector{<:AbstractFloat}, init::Init, g1::AbstractFloat; gtol::AbstractFloat = 1e-12, maxiter::Integer = 200)
     
@@ -107,23 +96,18 @@ function optimize_T_max_g1_fixed_custrgad(g_init::Vector{<:AbstractFloat}, init:
     return g_opt, cost_grad_Tmax_g1_fixed!(1.,  vcat(g_opt[1],g1,g_opt[2:end]), nothing, init)
 end
 
-function optimize_LBFGS_freeT(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200)
-    @unpack T_max, N, N_A = set
-    println("g_init: ", g_init)
-    println("N: ", N)
-    println("N_A: ", N_A)
-    println("T_max: ", T_max)
-    if isnan(g1)
-        @assert length(g_init)-1 == length(blks.blocks) "You entered $(length(g_init)) parameters but $(length(blks.blocks)) blocks. 
-        The amount of parameters and blocks need to be equal!"
-        AD_grad_freeT(g_init, set, blks, gtol, maxiter, multithreading)
-    else 
-        @assert length(g_init) == length(blks.blocks) "You entered $(length(g_init)+1) parameters (from which is one fixed to $(g1)) but $(length(blks.blocks)) blocks.
-        The amount of parameters and blocks need to be equal!"
-        AD_grad_fixed_freeT(g_init, set, blks, g1, gtol, maxiter, multithreading)
-    end
-end
+function optimize_midpoint(g_init::Vector{<:AbstractFloat}, init::Init; gtol::AbstractFloat = 1e-12, maxiter::Integer=200)
+    
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad_midpoint!(F, g, G , init)), g_init, BFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
 
+    g_opt = Optim.minimizer(result)                                                                
+    println(result)
+    println(g_opt)
+    return g_opt, cost_grad_midpoint!(1.,  g_opt, nothing, init)
+end
 
 
 #=

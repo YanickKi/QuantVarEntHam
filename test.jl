@@ -146,11 +146,14 @@ function mul_test()
     init = initialize(XXZ(10, 5, 1., 1.), H_A_BW)
     g = [1., 2., 3., 4., 5.]
     G = rand(length(g))
-    println(typeof(init.set.mtrxObs))
-    #@btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
-        #@descend QuantVarEntHam.cost_grad!(1., g, G, init)
+    #println(typeof(init.set.mtrxObs))
+    @btime QuantVarEntHam.cost_grad!(1., $g, nothing, $init)
+    c = QuantVarEntHam.cost_grad!(1., g, nothing, init)
+    println(c)    
+    #@descend QuantVarEntHam.cost_grad!(1., g, G, init)
     #@code_warntype QuantVarEntHam.integrand(1., init)
 end 
+#34.137 ms (13846 allocations: 64.84 MiB)
 #= init = initialize(TFIM(14, 7, 1., 1.), H_A_BW), ginit = [1., 2., 3., 4., 5., 6., 7.]
 vor der nutzung von der struktur der matrizen: 746.306 ms (14631 allocations: 1.05 GiB)
 668.967 ms (20287 allocations: 1.05 GiB) matrobs mit mat aber ohne TS

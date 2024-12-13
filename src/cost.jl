@@ -86,7 +86,7 @@ function cost_grad_fixed!(F::Union{AbstractFloat, Nothing}, g::Vector{<:Abstract
     @unpack observables, T_max, atol, rtol = init.set
     get_H_A!(g, init)
     if G !== nothing
-        init.buff.C_G_result .= (tanh_sinh(t -> integrand(t, init),0., T_max, init.q, atol = atol, rtol = rtol)./(length(observables)*T_max))
+        init.buff.C_G_result[1:end-1] .= (tanh_sinh(t -> integrand_fixed(t, init),0., T_max, init.q, atol = atol, rtol = rtol)./(length(observables)*T_max))
         G[:] .= @view  init.buff.C_G_result[2:end-1]
     end
     if F !== nothing 
@@ -127,10 +127,76 @@ function integrand_fixed(t::AbstractFloat, init::Init)
     @fastmath @inbounds @simd for i in 2:numBlocks
         buff.G_buffer[i-1] = 4*t*imag(tr(buff.adjtimesBlockMatrices[i]))
     end 
-
     fill!(buff.sumobs, 0)
     buff.C_G[2:end-1] .= @view buff.G_buffer[1:end-1]
-    return view(buff.C_G, 1:numBlocks)
+    return view(buff.C_G, 1:numBlocks )
+end
+
+#########################################################################################
+#                                                                                       #
+#                                MIDPOINT RULE                                          #
+#                                                                                       #
+#########################################################################################
+
+function cost_grad_midpoint!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
+    @unpack observables, T_max, atol, rtol, dt = init.set
+    get_H_A!(g, init)
+    fill!(init.buff.C_G, 0)
+    if G !== nothing
+        integrand_midpoint(dt/2, init)
+        times = range(start = 3*dt/2, stop = T_max, step = dt)
+        for t in times
+            integrand_midpoint(t, init)
+        end 
+        init.buff.C_G ./= (length(times) +1) * length(observables)
+        G[:] .= @view init.buff.C_G[2:end]
+    end 
+
+    if F !== nothing 
+        if G === nothing
+
+            C = integrand_onlycost(dt/2, init)
+            times = range(start = 3*dt/2, stop = T_max, step = dt)
+
+            for t in times
+                C += integrand_onlycost(t, init)
+            end
+            return C/((length(times) +1) * length(observables))
+        else 
+            return init.buff.C_G[1]
+        end 
+    end
+end 
+
+function integrand_midpoint(t::AbstractFloat, init::Init)
+    @unpack ρ_A, meas0, mtrxObs = init.set
+    buff = init.buff
+    mul!(buff.H_A_forexp, -1im*t, buff.H_A)
+    U, pullback =  rrule(exp, buff.H_A_forexp)
+    mul!(buff.ρ_A_right, ρ_A.state, U')
+    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
+
+    @fastmath @inbounds @simd for i in eachindex(mtrxObs)
+        mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
+        buff.dev[i] = real(tr(buff.evolobs[i])) - meas0[i]
+        buff.sumobs .+= buff.dev[i].*mtrxObs[i]
+        buff.C_G[1] += buff.dev[i]^2
+    end 
+
+    mul!(buff.dAforpb, buff.ρ_A_right, buff.sumobs)
+
+    adj = pullback(buff.dAforpb')[2]
+    
+    @fastmath @inbounds @simd for i in eachindex(buff.G_buffer)
+        mul!(buff.adjtimesBlockMatrices[i], adj', init.blks.matrices[i])
+    end     
+
+    @fastmath @inbounds @simd for i in eachindex(buff.G_buffer)
+        buff.G_buffer[i] = 4*t*imag(tr(buff.adjtimesBlockMatrices[i]))
+    end 
+
+    fill!(buff.sumobs, 0)
+    buff.C_G[2:end] .+= @view buff.G_buffer[:]
 end
 
 #########################################################################################
