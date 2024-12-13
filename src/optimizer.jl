@@ -33,15 +33,17 @@ end
 
 
 function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64, gtol::AbstractFloat, maxiter::Integer)
-    #CAREFULL NOT NOT RIGHT AT THE MOMENT, IMNPLEMENT THAT ONE PARAMETER CAN BE FIXED
-    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
+
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad_fixed!(F, vcat(g1,g), G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
                                                                     store_trace = false,
                                                                     show_trace = true,
                                                                     show_warnings = true, iterations = maxiter))
 
+    g_opt = Optim.minimizer(result)                                                                
     println(result)
-    println(Optim.minimizer(result))
-    return Optim.minimizer(result), cost_grad!(1.,  Optim.minimizer(result), zeros(length(Optim.minimizer(result))), init)
+    println(g_opt)
+
+    return Optim.minimizer(result), cost_grad_fixed!(1.,  vcat(g1,g_opt), nothings, init)
 end
 
 function comm_cost(g::Vector{<:AbstractFloat}, init::Init)

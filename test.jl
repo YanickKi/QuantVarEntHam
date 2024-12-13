@@ -143,16 +143,11 @@ end
 using ChainRules, ChainRulesCore
 
 function mul_test()
-    init = initialize(TFIM(14, 7, 1., 1.), H_A_BW)
-    g = [1., 2., 3., 4., 5., 6., 7.]
-    println(typeof(init.buff.sumobs))
-    println(typeof(init.set.mtrxObs))
-    println(typeof(init.blks.matrices))
+    init = initialize(XXZ(10, 5, 1., 1.), H_A_BW)
+    g = [1., 2., 3., 4., 5.]
     G = rand(length(g))
-    #println(typeof(init.set.mtrxObs))
-    for i in 1:5
-        @btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
-    end
+    println(typeof(init.set.mtrxObs))
+    #@btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
         #@descend QuantVarEntHam.cost_grad!(1., g, G, init)
     #@code_warntype QuantVarEntHam.integrand(1., init)
 end 
