@@ -1,6 +1,6 @@
 using LinearAlgebra
 using ChainRules, ChainRulesCore
-using QuadGK, StaticArrays
+using QuadGK
 using HCubature
 function get_H_A!(g::Vector{<:AbstractFloat}, init::Init)
     fill!(init.buff.H_A, 0)
