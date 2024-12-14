@@ -14,8 +14,8 @@
     dt::Float64
 end
 
-function XXZ(N::Integer, N_A::Integer, Δ::Real, T_max::Real; r_max::Integer = 1, periodic::Bool = false, atol::Real=0.0, rtol::Real=atol>0 ? 0. : sqrt(eps(Float64)),
-    signHam::Int = +1, ρ_A::DensityMatrix{2} = get_rhoA(H_XXZ(N, Δ, periodic = periodic, signHam =  signHam),  N-N_A+1:N, N),
+function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int = 1, periodic::Bool = false, atol::Real=0.0, rtol::Real=atol>0 ? 0. : sqrt(eps(Float64)),
+    signHam::Integer = +1, ρ_A::DensityMatrix{2} = get_rhoA(H_XXZ(N, Δ, periodic = periodic, signHam =  signHam),  N-N_A+1:N, N),
     observables::Vector{<:AbstractBlock} = [repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Float64 = 0.01)
     
     mtrxObs = mat.(observables)
@@ -29,7 +29,7 @@ function XXZ(N::Integer, N_A::Integer, Δ::Real, T_max::Real; r_max::Integer = 1
     ) 
 end 
 
-function H_XXZ(N::Integer, Δ::Real; periodic::Bool=false, signHam::Integer = +1)
+function H_XXZ(N::Int, Δ::Real; periodic::Bool=false, signHam::Integer = +1)
     
     XX_term::Add{2} = map(1:(periodic ? N : N-1)) do i
         repeat(N,X,(i,i%N+1)) + repeat(N,Y,(i,i%N+1))
@@ -41,7 +41,7 @@ function H_XXZ(N::Integer, Δ::Real; periodic::Bool=false, signHam::Integer = +1
     return signHam*(XX_term+Δ*Z_term)
 end 
 
-function hi(i::Integer, set::Settings_XXZ)
+function hi(i::Int, set::Settings_XXZ)
     @unpack N_A, Δ = set
 
     if i > 1 && i < N_A 
@@ -54,7 +54,7 @@ function hi(i::Integer, set::Settings_XXZ)
 end
 
 
-function correction!(blks::Vector{AbstractBlock}, i::Integer, r::Integer, set::Settings_XXZ)
+function correction!(blks::Vector{AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
     @unpack N_A = set   
     push!(blks, repeat(N_A,X,(i,i+r)) + repeat(N_A,Y,(i,i+r)))
     push!(blks, repeat(N_A,Z,(i,i+r))) 

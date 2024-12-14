@@ -147,9 +147,9 @@ function mul_test()
     g = [1., 2., 3., 4., 5.]
     G = rand(length(g))
     #println(typeof(init.set.mtrxObs))
-    @btime QuantVarEntHam.cost_grad!(1., $g, nothing, $init)
-    c = QuantVarEntHam.cost_grad!(1., g, nothing, init)
-    println(c)    
+    @btime QuantVarEntHam.cost_grad_midpoint!(1., $g, nothing, $init)
+    #c = QuantVarEntHam.cost_grad!(1., g, nothing, init)
+    #println(c)    
     #@descend QuantVarEntHam.cost_grad!(1., g, G, init)
     #@code_warntype QuantVarEntHam.integrand(1., init)
 end 
