@@ -11,7 +11,6 @@ Return the reduced density matrix on subsystem A.
 For composite systems consisting of more than 10 sites, the krylov subspace method from KrylovKit is used for 
 extracting the ground state.
 """
-
 function get_rhoA(H::AbstractBlock, A::AbstractRange, N::Int) 
     if N>10
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
