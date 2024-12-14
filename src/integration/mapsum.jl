@@ -22,15 +22,15 @@
     end
 end
 
-
-"""
-mapsum(f, A::AbstractVector, ifirst::Integer=1, ilast::Integer=length(A))
-
-Return the total summation of items in `A` from `istart`-th through `iend`-th
-with applying a function `f`.
-
-NOTE: This function doesn't check `ifirst` and `ilast`. Be careful to use.
-"""
+#
+#"""
+#mapsum(f, A::AbstractVector, ifirst::Integer=1, ilast::Integer=length(A))
+#
+#Return the total summation of items in `A` from `istart`-th through `iend`-th
+#with applying a function `f`.
+#
+#NOTE: This function doesn't check `ifirst` and `ilast`. Be careful to use.
+#"""
 function mapsum(f, A::AbstractVector, ifirst::Integer=1, ilast::Integer=length(A))
     return mapsum(f, A, ifirst, ilast, 512)
     #if Threads.nthreads() == 1 || multithreading == false

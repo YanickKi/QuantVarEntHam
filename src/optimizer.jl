@@ -109,6 +109,18 @@ function optimize_midpoint(g_init::Vector{<:AbstractFloat}, init::Init; gtol::Ab
     return g_opt, cost_grad_midpoint!(1.,  g_opt, nothing, init)
 end
 
+function optimize_quadgk(g_init::Vector{<:AbstractFloat}, init::Init; gtol::AbstractFloat = 1e-12, maxiter::Integer=200)
+    
+    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad_quadgk!(F, g, G , init)), g_init, BFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = true,
+                                                                    show_warnings = true, iterations = maxiter))
+
+    g_opt = Optim.minimizer(result)                                                                
+    println(result)
+    println(g_opt)
+    return g_opt, cost_grad_quadgk!(1.,  g_opt, nothing, init)
+end
 
 #=
 function AD_grad_freeT(g_init::Vector{<:AbstractFloat}, set::Settings, blks::H_A_Var, gtol::AbstractFloat, maxiter::Integer, multithreading::Bool)

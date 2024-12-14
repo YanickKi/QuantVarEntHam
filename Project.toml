@@ -14,6 +14,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Parameters = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 Yao = "5872b779-8223-5990-8dd0-5abbb0748c8c"
 
 [compat]
@@ -27,6 +28,7 @@ LinearAlgebra = "1.11.0"
 Optim = "1.10.0"
 Parameters = "0.12.3"
 Pkg = "1.11.0"
+QuadGK = "2.11.1"
 Yao = "0.9.0"
 julia = "1.6.7"
 

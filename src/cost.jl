@@ -1,7 +1,7 @@
 using LinearAlgebra
 using ChainRules, ChainRulesCore
-
-
+using QuadGK, StaticArrays
+using HCubature
 function get_H_A!(g::Vector{<:AbstractFloat}, init::Init)
     fill!(init.buff.H_A, 0)
     @fastmath @inbounds @simd for i in eachindex(g)
@@ -141,6 +141,7 @@ end
 function cost_grad_midpoint!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
     @unpack observables, T_max, atol, rtol, dt = init.set
     get_H_A!(g, init)
+    N_T = T_max/dt
     fill!(init.buff.C_G, 0)
     if G !== nothing
         integrand_midpoint(dt/2, init)
@@ -148,7 +149,7 @@ function cost_grad_midpoint!(F::Union{AbstractFloat, Nothing}, g::Vector{<:Abstr
         for t in times
             integrand_midpoint(t, init)
         end 
-        init.buff.C_G ./= (length(times) +1) * length(observables)
+        init.buff.C_G ./= N_T * length(observables)
         G[:] .= @view init.buff.C_G[2:end]
     end 
 
@@ -161,7 +162,7 @@ function cost_grad_midpoint!(F::Union{AbstractFloat, Nothing}, g::Vector{<:Abstr
             for t in times
                 C += integrand_onlycost(t, init)
             end
-            return C/((length(times) +1) * length(observables))
+            return C/(N_T * length(observables))
         else 
             return init.buff.C_G[1]
         end 
@@ -197,6 +198,66 @@ function integrand_midpoint(t::AbstractFloat, init::Init)
 
     fill!(buff.sumobs, 0)
     buff.C_G[2:end] .+= @view buff.G_buffer[:]
+end
+
+#########################################################################################
+#                                                                                       #
+#                                QUADGK                                                 #
+#                                                                                       #
+#########################################################################################
+
+function cost_grad_quadgk!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
+    @unpack observables, T_max, atol, rtol = init.set
+    get_H_A!(g, init)
+    if G !== nothing
+        init.buff.C_G_result .= (quadgk(t -> integrand(t, init),0., T_max)[1]./(length(observables)*T_max))
+        G[:] .= @view  init.buff.C_G_result[2:end]
+    end
+    if F !== nothing 
+        if G === nothing
+            return quadgk(t -> integrand_onlycost(t, init),0., T_max)[1]/(length(observables)*T_max)
+        else 
+            return init.buff.C_G_result[1]
+        end 
+    end
+end 
+
+#########################################################################################
+#                                                                                       #
+#                                HCubature                                              #
+#                                                                                       #
+#########################################################################################
+
+function cost_grad_hcubature!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
+    @unpack observables, T_max, atol, rtol = init.set
+    get_H_A!(g, init)
+    if G !== nothing
+        init.buff.C_G_result .= (hcubature(t -> integrand(t, init),0., T_max)[1]./(length(observables)*T_max))
+        G[:] .= @view  init.buff.C_G_result[2:end]
+    end
+    if F !== nothing 
+        if G === nothing
+            return hcubature(t -> integrand_onlycost_hcubature(t, init),[0.], [T_max])[1]/(length(observables)*T_max)
+        else 
+            return init.buff.C_G_result[1]
+        end 
+    end
+end 
+
+function integrand_onlycost_hcubature(t,  init::Init)
+    @unpack ρ_A, meas0, mtrxObs = init.set
+    buff = init.buff 
+    mul!(buff.H_A_forexp, -t[1], buff.H_A)
+    U = cis(buff.H_A_forexp)
+    mul!(buff.ρ_A_right, ρ_A.state, U')
+    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
+    c::Float64 = 0.
+    @fastmath @inbounds @simd for i in eachindex(mtrxObs)
+        @inbounds mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
+        @inbounds buff.dev[i] = real(tr(buff.evolobs[i]))- meas0[i]
+        c += buff.dev[i]^2
+    end 
+    return c
 end
 
 #########################################################################################
