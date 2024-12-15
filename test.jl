@@ -143,10 +143,10 @@ end
 using ChainRules, ChainRulesCore
 
 function mul_test()
-    init = initialize(TFIM(10, 5, 1., 1., dt = 0.005, r_max = 2), H_A_not_BW)
-    g = [0.15357697372836254, 0.3408948886715219, 0.47697237919053354, 0.5311580160913745, 0.5327981964804108, 0.5173577398403985, 0.4673620860025657, 0.3627325826356595, 0.2590278564896679, 0.02102057152883737, -0.0014341632822164048, 0.017469117693353867]
+    init = initialize(TFIM(10, 5, 1., 1., dt = 0.005, r_max = 4), H_A_not_BW)
+    g = [0.15032823978163978, 0.32842893439104054, 0.43513894414086696, 0.3854386166633004, 0.30558118766559556, 0.34788940462658774, 0.39415184513604046, 0.3444706775479658, 0.28535422477295996, 0.052382155112244914, -0.03769238356834237, 0.028190694554752354, 0., 0., 0.]
     G = zeros(length(g))
-    QuantVarEntHam.optimize_midpoint(g, init, gtol = 1e-16, maxiter = 2000)
+    QuantVarEntHam.optimize_LBFGS(g, init, gtol = 1e-16, maxiter = 2000)
     #println(QuantVarEntHam.cost_grad_quadgk!(1., g, nothing, init))
     #println(QuantVarEntHam.cost_grad!(1., g, nothing, init))
     #println(QuantVarEntHam.cost_grad_hcubature!(1., g, nothing, init))

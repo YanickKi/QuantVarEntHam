@@ -15,7 +15,7 @@ abstract type Settings{T<:AbstractBlock,S<:AbstractMatrix} end
 
 
 """
-    get_rhoA(H::AbstractBlock, A::AbstractVector, N::Int) 
+    get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
 
 Return the reduced density matrix of the ground state of Hamitlonian H for N sites on subsystem A.
 
@@ -53,7 +53,7 @@ This function dispatches on the concrete subtypes of the abstract type `::Settin
 # Example 
 `H_A_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
 """
-function H_A_BW(set::Settings) 
+function H_A_BW(set::Settings{T,S}) where {T<:AbstractBlock, S<:AbstractMatrix} 
     @unpack N, N_A, r_max, periodic = set
     
     if 2*N_A != N && periodic == false 
@@ -82,7 +82,7 @@ This function dispatches on the concrete subtypes of the abstract type `::Settin
 # Example 
 `H_A_not_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following not following the Bisognano-Wichmann-theorem.
 """
-function H_A_not_BW(set::Settings) 
+function H_A_not_BW(set::Settings{T,S}) where {T<:AbstractBlock, S<:AbstractMatrix}
     @unpack N_A, r_max = set
     
     blks = Vector{AbstractBlock}(undef, 0)

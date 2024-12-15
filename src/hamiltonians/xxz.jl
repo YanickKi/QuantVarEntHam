@@ -1,5 +1,5 @@
 """
-    Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
+    Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T,S}
 
 Contains the settings for the XXZ model
 
@@ -23,9 +23,9 @@ working with full complex dense matrices.
 - `dt::Float64=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used.
 
 # Hints
-Use the constructor [`XXZ`](@ref) to instantiate this struct since the types for `observables` and its matrices `mtrxObs` are automatically inferred then. 
+Use the constructor to instantiate this struct since the types for `observables` and its matrices `mtrxObs` are automatically inferred then. 
 """
-@with_kw mutable struct Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
+@with_kw mutable struct Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T,S}
     N::Int
     N_A::Int
     Δ::Float64

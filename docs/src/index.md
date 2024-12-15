@@ -1,7 +1,7 @@
 # QuantVarEntHam.jl Documentation
 
 ```@docs
-get_rhoA(H::AbstractBlock, A::AbstractRange, N::Int)
+get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
 ```
 ```@docs
 XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bool = false, atol::Real=0.0, rtol::Real=atol>0 ? 0. : sqrt(eps(Float64)),
@@ -17,13 +17,13 @@ TFIM(N::Int, N_A::Int, Γ::Real, T_max::Real; r_max::Int=1, periodic::Bool=false
 Settings{T<:AbstractBlock,S<:AbstractMatrix} 
 ```
 ```@docs
-Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
+Settings_XXZ
 ```
 ```@docs
-Settings_TFIM{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
+Settings_TFIM
 ```
 ```@docs
-H_A_BW(set::Settings) {T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
+H_A_BW(set::Settings)
 ```
 ```@docs
 H_A_not_BW(set::Settings) 

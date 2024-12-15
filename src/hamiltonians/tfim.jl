@@ -1,3 +1,30 @@
+"""
+    Settings_TFIM{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T,S}
+
+Contains the settings for the TFIM
+
+The parametric type `T<:AbstractBlock` is introduced for determining the correct concrete type of the Yao Blocks, while 
+`S<:AbstractMatrix` is needed to determine the concrete type of the matrix representation of the Yao Blocks to prevent 
+working with full complex dense matrices.
+
+# Fields 
+- `N::Int`: number of sites in composite system.
+- `N_A::Int`: number of sites in subsystem A.
+- `Γ::Float64`: Anisotropy.
+- `T_max::Float64`: maximum time for evolving the observables i.e. maximum integration time.
+- `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
+- `periodic::Bool`: boundary conditions for the system Hamitlonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
+- `ρ_A::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}}`: reduced density matrix of ground state of the composite system on subsystem A.
+- `observables::Vector{T}`: monitored observables in the cost function.
+- `meas0::Vector{Float64} = [expect(observables[i], ρ_A) for i in eachindex(observables)]`: expectation values of `observables` at time ``t=0``.
+- `mtrxObs::Vector{S}`: matrix representations for the observables
+- `atol::Float64=0.0`: absolute tolerance for the integrator.
+- `rtol::Float64=atol>0 ? 0.: sqrt(eps(Float64))`: relative tolerance for the integrator.
+- `dt::Float64=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used.
+
+# Hints
+Use the constructor to instantiate this struct since the types for `observables` and its matrices `mtrxObs` are automatically inferred then. 
+"""
 @with_kw mutable struct Settings_TFIM{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
     N::Int
     N_A::Int
