@@ -143,17 +143,19 @@ end
 using ChainRules, ChainRulesCore
 
 function mul_test()
-    init = initialize(XXZ(10, 5, 1., 1., dt = 0.00001), H_A_BW)
-    g = [1., 2., 3., 4., 5.]
+    init = initialize(TFIM(10, 5, 1., 1., dt = 0.005, r_max = 2), H_A_not_BW)
+    g = [0.15357697372836254, 0.3408948886715219, 0.47697237919053354, 0.5311580160913745, 0.5327981964804108, 0.5173577398403985, 0.4673620860025657, 0.3627325826356595, 0.2590278564896679, 0.02102057152883737, -0.0014341632822164048, 0.017469117693353867]
     G = zeros(length(g))
-    println(QuantVarEntHam.cost_grad_quadgk!(1., g, nothing, init))
-    println(QuantVarEntHam.cost_grad!(1., g, nothing, init))
-    println(QuantVarEntHam.cost_grad_hcubature!(1., g, nothing, init))
-    println(QuantVarEntHam.cost_grad_midpoint!(1., g, nothing, init))
-    @btime QuantVarEntHam.cost_grad_quadgk!(1., $g, nothing, $init)
-    @btime QuantVarEntHam.cost_grad!(1., $g, nothing, $init)
-    @btime QuantVarEntHam.cost_grad_hcubature!(1., $g, nothing, $init)
-    @btime QuantVarEntHam.cost_grad_midpoint!(1., $g, nothing, $init)
+    QuantVarEntHam.optimize_midpoint(g, init, gtol = 1e-16, maxiter = 2000)
+    #println(QuantVarEntHam.cost_grad_quadgk!(1., g, nothing, init))
+    #println(QuantVarEntHam.cost_grad!(1., g, nothing, init))
+    #println(QuantVarEntHam.cost_grad_hcubature!(1., g, nothing, init))
+    #println(QuantVarEntHam.cost_grad_midpoint!(1., g, nothing, init))
+    #@btime QuantVarEntHam.cost_grad_quadgk!(1., $g, nothing, $init)
+    #@btime QuantVarEntHam.cost_grad!(1., $g, nothing, $init)
+    #@btime QuantVarEntHam.cost_grad_hcubature!(1., $g, nothing, $init)
+    #@btime QuantVarEntHam.cost_grad_midpoint!(1., $g, nothing, $init)
+
     #QuantVarEntHam.optimize_quadgk(g, init)
     #G = rand(length(g))
     #println(typeof(init.set.mtrxObs))

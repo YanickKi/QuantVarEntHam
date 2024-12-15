@@ -1,17 +1,28 @@
-abstract type Settings{T<:AbstractBlock,S<:AbstractMatrix} end
-
 using KrylovKit: eigsolve
 using LinearAlgebra
 
+"""
+    Settings{T<:AbstractBlock,S<:AbstractMatrix}
+
+Abstract type to dispatch on the concrete types for the correct variational Ansätze.
+
+The parametric type `T<:AbstractBlock` is introduced for determining the correct concrete type of the Yao Blocks, while 
+`S<:AbstractMatrix` is needed to determine the concrete type of the matrix representation of the Yao Blocks to prevent 
+working with full complex dense matrices.
+"""
+abstract type Settings{T<:AbstractBlock,S<:AbstractMatrix} end
+
+
 
 """
-    get_rhoA(H::AbstractBlock, A::AbstractRange, N::Int) 
+    get_rhoA(H::AbstractBlock, A::AbstractVector, N::Int) 
 
-Return the reduced density matrix on subsystem A.
+Return the reduced density matrix of the ground state of Hamitlonian H for N sites on subsystem A.
+
 For composite systems consisting of more than 10 sites, the krylov subspace method from KrylovKit is used for 
 extracting the ground state.
 """
-function get_rhoA(H::AbstractBlock, A::AbstractRange, N::Int) 
+function get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
     if N>10
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
         values, vectors = eigsolve(mat(H) ,1 ,:SR, ishermitian=true, tol = 1e-16)
@@ -30,6 +41,18 @@ struct H_A_Var
     matrices::Vector{Matrix{ComplexF64}}
 end 
 
+
+"""
+    H_A_BW(set::Settings) 
+
+Return a Struct of type `::H_A_Var` containing the Yao Blocks and its matrix representation.
+
+The variational Ansatz follows the Bisognano-Wichmann-theorem.
+This function dispatches on the concrete subtypes of the abstract type `::Settings` to get the correct variational Ansatz for the corresponding model. 
+
+# Example 
+`H_A_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
+"""
 function H_A_BW(set::Settings) 
     @unpack N, N_A, r_max, periodic = set
     
@@ -48,6 +71,17 @@ function H_A_BW(set::Settings)
 
 end 
 
+"""
+    H_A_not_BW(set::Settings) 
+
+Return a Struct containing the Yao Blocks and its matrix representation.
+
+The variational Ansatz does not follows the Bisognano-Wichmann-theorem.
+This function dispatches on the concrete subtypes of the abstract type `::Settings` to get the correct variational Ansatz for the corresponding model. 
+
+# Example 
+`H_A_not_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following not following the Bisognano-Wichmann-theorem.
+"""
 function H_A_not_BW(set::Settings) 
     @unpack N_A, r_max = set
     
