@@ -6,6 +6,7 @@ export get_rhoA, initialize, XXZ, TFIM
 export universal_ratios, print_H_A, plot_universal_ratios
 export Settings, Settings_XXZ, Settings_TFIM
 export H_XXZ, H_TFIM
+export Init, H_A_Var
 
 using Yao, Parameters
 

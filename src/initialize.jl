@@ -33,6 +33,11 @@ function create_buffers(N_A::Integer, numBlocks::Integer, numObservables::Intege
     )
 end
 
+"""
+    initialize(Model::Settings, H_A::Function)
+    
+WIP
+"""
 function initialize(Model::Settings, H_A::Function)
     set = Model
     @unpack N_A, observables, r_max, mtrxObs = set
@@ -56,6 +61,11 @@ function initialize(Model::Settings, H_A::Function)
     )
 end
 
+"""
+    Init{T<:Settings, S<:AbstractMatrix}
+
+WIP
+"""
 struct Init{T<:Settings, S<:AbstractMatrix}
     set::T
     blks::H_A_Var

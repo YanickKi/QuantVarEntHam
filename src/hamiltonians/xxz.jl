@@ -7,6 +7,10 @@ The parametric type `T<:AbstractBlock` is introduced for determining the correct
 `S<:AbstractMatrix` is needed to determine the concrete type of the matrix representation of the Yao Blocks to prevent 
 working with full complex dense matrices.
 
+!!! tip
+    Use the constructor [`XXZ`](@ref) to instantiate this struct since the types for `observables` and its matrices `mtrxObs` are automatically inferred then
+    and the default values in [`XXZ`](@ref) are highly recommended.
+
 # Fields 
 - `N::Int`: number of sites in composite system.
 - `N_A::Int`: number of sites in subsystem A.
@@ -22,8 +26,6 @@ working with full complex dense matrices.
 - `rtol::Float64=atol>0 ? 0.: sqrt(eps(Float64))`: relative tolerance for the integrator.
 - `dt::Float64=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used.
 
-# Hints
-Use the constructor to instantiate this struct since the types for `observables` and its matrices `mtrxObs` are automatically inferred then. 
 """
 @with_kw mutable struct Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T,S}
     N::Int
@@ -46,7 +48,7 @@ end
     signHam::Integer=+1, ρ_A::DensityMatrix{2}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam), N-N_A+1:N, N),
     observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Float64 = 0.01)
 
-Return a struct of type `::Settings_XXZ` containing settings for the XXZ Model 
+Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XXZ Model 
 
 # Required Arguments
 - `N::Int`: number of sites in the composite system.
@@ -85,9 +87,9 @@ function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bo
 end 
 
 """
-    H_XXZ(N::Int,  Δ::Real; periodic::Bool=false, signHam::Integer = -1)
+    H_XXZ(N::Int,  Δ::Real; periodic::Bool=false, signHam::Integer = +1)
 
-Returns the XXZ Hamiltonian with N sites and Anisotropy Δ as an AbstractBlock.
+Return the XXZ Hamiltonian ``H=\\sum_{i=1}^{N-1}( X_{i}X_{i+1} + Y_{i}Y_{i+1} + Δ Z_{i}Z_{i+1})`` with `N` sites and Anisotropy `Δ` as an AbstractBlock.
 
 Set `periodic` as true for PBC or as false for OBC and `signHam` for a global sign.
 """

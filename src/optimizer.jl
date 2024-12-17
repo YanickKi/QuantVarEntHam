@@ -1,6 +1,22 @@
 using Optim, LinearAlgebra
 
-function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200)
+"""
+    optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200, show_trace::Bool=true, print_result::Bool = true)
+
+Minimize cost function using the LBFGS-optimizer from `Optim.jl`.
+
+# Required arguments
+- `g_init::Vector{<:AbstractFloat}`: initial parameters.
+- `init::Init`: struct containing settings, variational Ansatz, buffers and integration table for tanh-sinh integration.
+
+# Keyword arguments 
+- `g1::AbstractFloat=NaN`: provide number if the first parameter should be fixed.
+- `gtol::AbstractFloat=1e-12`: maximum gradient norm in order to stop minimizing.
+- `maxiter::Integer = 200`: maximum number of iterations in order to stop minimizing.
+- `show_trace::Bool=true`: true for showing the trace of the minizing procedure, false otherwise.
+- `print_result::Bool = true` true to print optimal parameters, false otherwise 
+"""
+function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200, show_trace::Bool=true, print_result::Bool = true)
     @unpack T_max, N, N_A = init.set
     println("g_init: ", g_init)
     println("N: ", N)
@@ -9,40 +25,43 @@ function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::Abstrac
     if isnan(g1)
         @assert length(g_init) == length(init.blks.blocks) "You entered $(length(g_init)) parameters but $(length(init.blks.blocks)) blocks. 
         The amount of parameters and blocks need to be equal!"
-        optimize_free(g_init, init, gtol, maxiter)
+        optimize_free(g_init, init, gtol, maxiter, show_trace, print_result)
     else 
         @assert length(g_init)+1 == length(init.blks.blocks) "You entered $(length(g_init)+1) parameters (from which is one fixed to $(g1)) but $(length(init.blks.blocks)) blocks.
         The amount of parameters and blocks need to be equal!"
-        optimize_fixed(g_init, init, g1, gtol, maxiter)
+        optimize_fixed(g_init, init, g1, gtol, maxiter, show_trace, print_result)
     end
 end
 
 
-function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer)
+function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer, show_trace::Bool, print_result::Bool)
     
     result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, BFGS(), Optim.Options(g_tol = gtol,
                                                                     store_trace = false,
-                                                                    show_trace = true,
+                                                                    show_trace = show_trace,
                                                                     show_warnings = true, iterations = maxiter))
 
     g_opt = Optim.minimizer(result)                                                                
-    println(result)
-    println(g_opt)
+    if print_result == true                                                   
+        println(result)
+        println(g_opt)
+    end 
     return g_opt, cost_grad!(1.,  g_opt, nothing, init)
 end
 
 
-function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64, gtol::AbstractFloat, maxiter::Integer)
+function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64, gtol::AbstractFloat, maxiter::Integer, show_trace::Bool, print_result::Bool)
 
     result = optimize(Optim.only_fg!((F, G, g) -> cost_grad_fixed!(F, vcat(g1,g), G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
                                                                     store_trace = false,
-                                                                    show_trace = true,
+                                                                    show_trace = show_trace,
                                                                     show_warnings = true, iterations = maxiter))
 
-    g_opt = Optim.minimizer(result)                                                                
-    println(result)
-    println(g_opt)
-
+    g_opt = Optim.minimizer(result)             
+    if print_result == true                                                   
+        println(result)
+        println(g_opt)
+    end 
     return Optim.minimizer(result), cost_grad_fixed!(1.,  vcat(g1,g_opt), nothing, init)
 end
 
