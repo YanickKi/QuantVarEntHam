@@ -14,6 +14,16 @@ function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer =
     return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
 end
 
+function universal_ratios_svd(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
+    @unpack ρ_A = init.set
+    H_A = H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
+    F = svd(ρ_A.state)
+    probs = F.S 
+    ξ_var, v = eigen(Hermitian(H_A))
+    ξ_exact = -log.(probs.^2)
+    return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
+end
+
 function print_H_A(g::Vector{<:AbstractFloat}, init::Init)
     print(sum(g[i]*init.blks.blocks[i] for i in eachindex(g)))
 end

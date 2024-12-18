@@ -143,21 +143,25 @@ end
 using ChainRules, ChainRulesCore
 
 function mul_test()
-    init = initialize(TFIM(14, 7, 1., 1., dt = 0.005, r_max = 1), H_A_BW)
-    g = [1.,2.,3.,4.,5., 6., 7.]
+    init = initialize(TFIM(10, 5, 1., 1., dt = 0.001, r_max = 1), H_A_BW)
+    g = [1.,2.,3.,4.,5.]
     G = zeros(length(g))
-    println(typeof(init.blks.matrices))
-    @btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
+    g, c = optimize_LBFGS(g, init, gtol = 1e-16)
+    κ_var, κ_exact = universal_ratios(g, init)
+    κ_var, κ_svd = QuantVarEntHam.universal_ratios_svd(g, init)
+    plot_universal_ratios("F.pdf", ["κ_var", "κ_exact", "κ_SVD"], κ_var, κ_exact, κ_svd)
+    #println(typeof(init.blks.matrices))
+    #@btime QuantVarEntHam.cost_grad!(1., $g, $G, $init)
 
-    optimize_LBFGS(g, init, gtol = 1e-16, maxiter = 100, print_result = true, show_trace = true)
-    #println(QuantVarEntHam.cost_grad_quadgk!(1., g, nothing, init))
-    #println(QuantVarEntHam.cost_grad!(1., g, nothing, init))
-    #println(QuantVarEntHam.cost_grad_hcubature!(1., g, nothing, init))
-    #println(QuantVarEntHam.cost_grad_midpoint!(1., g, nothing, init))
-    #@btime QuantVarEntHam.cost_grad_quadgk!(1., $g, nothing, $init)
-    #@btime QuantVarEntHam.cost_grad!(1., $g, nothing, $init)
-    #@btime QuantVarEntHam.cost_grad_hcubature!(1., $g, nothing, $init)
-    #@btime QuantVarEntHam.cost_grad_midpoint!(1., $g, nothing, $init)
+    #optimize_LBFGS(g, init, gtol = 1e-16, maxiter = 100, print_result = true, show_trace = true)
+    #println("QuadGK:" , QuantVarEntHam.cost_grad_quadgk!(1., g, nothing, init))
+    #println("tanh-sinh: ", QuantVarEntHam.cost_grad!(1., g, nothing, init))
+    #println("hcubature: ",  QuantVarEntHam.cost_grad_hcubature!(1., g, nothing, init))
+    #println("midpoint: ", QuantVarEntHam.cost_grad_midpoint!(1., g, nothing, init))
+    #println("QuadGK: ",  @btime QuantVarEntHam.cost_grad_quadgk!(1., $g, nothing, $init))
+    #println("tanh-sinh: ",  @btime QuantVarEntHam.cost_grad!(1., $g, nothing, $init))
+    #println("hcubature: ",  @btime QuantVarEntHam.cost_grad_hcubature!(1., $g, nothing, $init))
+    #println("midpoint: ", @btime QuantVarEntHam.cost_grad_midpoint!(1., $g, nothing, $init))
 
     #QuantVarEntHam.optimize_quadgk(g, init)
     #G = rand(length(g))
