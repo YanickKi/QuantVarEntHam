@@ -76,9 +76,9 @@ function estimate_error(prevI::Float64, I::Float64, prevI2::Float64)
     d1byd2 = d1^2/d2
     twod1 = 2*d1
     if twod1 >= d1byd2 
-        return 10^twod1 
+        return 100* 10^twod1 
     else 
-        return 10^d1byd2 
+        return 100*10^d1byd2 
     end
 end
 
