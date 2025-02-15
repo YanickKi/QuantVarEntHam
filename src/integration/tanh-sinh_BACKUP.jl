@@ -21,45 +21,33 @@ end
 
 function integrate(f::Function, q::QuadTS{N}; atol::Real=0.,
     rtol::Real=atol>0 ? 0. : sqrt(eps(Float64))) where {N}
-    
-    eval(t) = f(t[1])*t[2] + f(-t[1])*t[2]
 
-    function eval_withmax(t)
-        f1 = copy(f(t[1]))
-        f2 = copy(f(-t[1]))
-        maxf = max(f1[1], f2[1])
-        val = f1*t[2]+f2*t[2]
-        return val, maxf*t[2]
-    end 
+    eval(t) = f(t[1])*t[2] + f(-t[1])*t[2]
     x0, w0 = q.origin
     Σ = f(x0)*w0 + mapsum(eval, q.table0)
     h0 = q.h0
     I = h0*Σ
     E = 0.
     prevI2 = 0.
-    prevI = I[1]
+    prevI = 0.
     for level in 1:N
-        if level == 1
-            table = q.tables[level]
-            Σ += mapsum(eval, table)
-            h = h0/2^level
-            #prevI2 = prevI
-            #prevI = I[1]
-            I = h*Σ            
-            E = 1.
-        else 
-            table = q.tables[level]
-            frfl, maxlr = eval_withmax(table[1])
-            Σ_level, maxj = mapsum_withmax(eval_withmax, @view table[2:end])
-            Σ += Σ_level+frfl
-            h = h0/2^level
-            prevI2 = prevI
-            prevI = I[1]
-            I = h*Σ
-            E = estimate_error(prevI, I[1], prevI2, maxj, maxlr)
-        end 
-        tol = max(abs(I[1])*rtol, atol)
-        !(E > tol) && break
+        table = q.tables[level]
+        Σ += mapsum(eval, table)
+        h = h0/2^level
+        prevI2 = prevI
+        prevI = I[1]
+        I = h*Σ
+        #if level <= 2
+        #    E = 1.
+        #else 
+        #    E = estimate_error(prevI, I[1], prevI2)
+        #end 
+        #tol = max(norm(I)*rtol, atol)
+        #!(E > tol) && break
+        if level <= 2
+            continue
+        end  
+        !(abs(I[1]-prevI) > 1e-12) && break
     end
     return I, E
 end
@@ -87,21 +75,19 @@ function samplepoint(t::Float64)
     return ϕ, ϕ′
 end
 
-function estimate_error(prevI::Float64, I::Float64, prevI2::Float64, maxj::Float64, maxlr::Float64)
+function estimate_error(prevI::Float64, I::Float64, prevI2::Float64)
     if I-prevI == 0.
         return 0.
     end 
-    d1 = abs(I-prevI)
-    d2 = abs(I-prevI2)
-    d3 = 1e-15*maxj
-    d4 = maxlr
-    #println("d1^2/d2: ", (d1^2/d2))
-    #println("2d1: ", (2*d1))
-    #println("d3: ", d3)
-    #println("d4: ", d4)
-    return max(d1^2/d2, 2*d1, d3, d4)
-    #d = max(d1^2/d2, 2*d1, d3, d4)
-    #return 10^d
+    d1 = log10(norm(I-prevI))
+    d2 = log10(norm(I-prevI2))
+    d1byd2 = d1^2/d2
+    twod1 = 2*d1
+    if twod1 >= d1byd2 
+        return 10^twod1 
+    else 
+        return 10^d1byd2 
+    end
 end
 
 

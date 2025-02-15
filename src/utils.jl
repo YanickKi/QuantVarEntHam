@@ -14,6 +14,23 @@ function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer =
     return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
 end
 
+#=function universal_ratios_scaling(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
+    @unpack ρ_A = init.set
+    H_A = H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
+    
+    p_var, v = eigen(Hermitian(ρ_A.state))
+    
+    for i in eachindex(p)
+        if p_var[i] < 0
+
+    end 
+
+    #H_A_exact = -log(Hermitian(ρ_A.state))
+    ξ_var, v = eigen(Hermitian(H_A))
+    ξ_exact, v =  eigen(Hermitian(H_A_exact))
+    return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
+end
+=#
 function universal_ratios_svd(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
     @unpack ρ_A = init.set
     H_A = H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))

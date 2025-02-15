@@ -16,16 +16,13 @@ Minimize cost function using the LBFGS-optimizer from `Optim.jl`.
 - `show_trace::Bool=true`: true for showing the trace of the minizing procedure, false otherwise.
 - `print_result::Bool = true` true to print optimal parameters, false otherwise 
 """
-function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200, show_trace::Bool=true, print_result::Bool = true)
-    @unpack T_max, N, N_A = init.set
-    println("g_init: ", g_init)
-    println("N: ", N)
-    println("N_A: ", N_A)
-    println("T_max: ", T_max)
+function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat=1e-12, maxiter::Integer = 200, show_trace::Bool=true, print_result::Bool = true,
+    boxed::Bool=false, lower::Vector{<:AbstractFloat} = zeros(length(g_init)), upper::Vector{<:AbstractFloat} = Inf*ones(length(g_init)), maxtime::Real = NaN)
+
     if isnan(g1)
         @assert length(g_init) == length(init.blks.blocks) "You entered $(length(g_init)) parameters but $(length(init.blks.blocks)) blocks. 
         The amount of parameters and blocks need to be equal!"
-        optimize_free(g_init, init, gtol, maxiter, show_trace, print_result)
+        optimize_free(g_init, init, gtol, maxiter, show_trace, print_result, boxed, lower, upper, maxtime)
     else 
         @assert length(g_init)+1 == length(init.blks.blocks) "You entered $(length(g_init)+1) parameters (from which is one fixed to $(g1)) but $(length(init.blks.blocks)) blocks.
         The amount of parameters and blocks need to be equal!"
@@ -34,20 +31,39 @@ function optimize_LBFGS(g_init::Vector{<:AbstractFloat}, init::Init; g1::Abstrac
 end
 
 
-function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer, show_trace::Bool, print_result::Bool)
+function optimize_free(g_init::Vector{<:AbstractFloat}, init::Init, gtol::AbstractFloat, maxiter::Integer, show_trace::Bool, print_result::Bool,
+    boxed::Bool, lower::Vector{<:AbstractFloat}, upper::Vector{<:AbstractFloat}, maxtime::Real)
     
-    result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, BFGS(), Optim.Options(g_tol = gtol,
+    if boxed == true
+
+        result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), lower, upper, g_init, Fminbox(LBFGS()), Optim.Options(g_tol = gtol,
                                                                     store_trace = false,
                                                                     show_trace = show_trace,
                                                                     show_warnings = true, iterations = maxiter))
-
-    g_opt = Optim.minimizer(result)                                                                
-    if print_result == true                                                   
-        println(result)
-        println(g_opt)
+        g_opt = Optim.minimizer(result)                                                                
+        if print_result == true                                                   
+            println(result)
+            println(g_opt)
+        end 
+        return g_opt, cost_grad!(1.,  g_opt, nothing, init)
     end 
-    return g_opt, cost_grad!(1.,  g_opt, nothing, init)
+    
+    if boxed == false
+        result = optimize(Optim.only_fg!((F, G, g) -> cost_grad!(F, g, G , init)), g_init, LBFGS(), Optim.Options(g_tol = gtol,
+                                                                    store_trace = false,
+                                                                    show_trace = show_trace,
+                                                                    show_warnings = true, iterations = maxiter,
+                                                                    time_limit = maxtime),
+                                                                    )
+        g_opt = Optim.minimizer(result)                                                                
+        if print_result == true                                                   
+            println(result)
+            println(g_opt)
+        end 
+        return g_opt, cost_grad!(1.,  g_opt, nothing, init)
+    end 
 end
+
 
 
 function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64, gtol::AbstractFloat, maxiter::Integer, show_trace::Bool, print_result::Bool)
@@ -62,8 +78,42 @@ function optimize_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Float64
         println(result)
         println(g_opt)
     end 
-    return Optim.minimizer(result), cost_grad_fixed!(1.,  vcat(g1,g_opt), nothing, init)
+    return g_opt, cost_grad_fixed!(1.,  vcat(g1,g_opt), nothing, init)
 end
+
+function optimize_relativeEntropy(g_init::Vector{<:AbstractFloat}, init::Init; gtol::AbstractFloat=1e-12, maxiter::Integer = 200, show_trace::Bool=true, print_result::Bool = true)
+
+    function rel_entropy(g::Vector{<:AbstractFloat}, init::Init)
+        @unpack ρ_A  = init.set
+        get_H_A!(g, init) 
+        S1 = tr(ρ_A.state * init.buff.H_A)
+        S2 = log(tr(exp(-init.buff.H_A)))
+        return S1 + S2
+    end 
+
+    function grad_relentropy(G, g::Vector{<:AbstractFloat}, init::Init)
+        @unpack ρ_A  = init.set
+        get_H_A!(g, init) 
+        expHA = exp(- init.buff.H_A)
+        for i in eachindex(g)
+            dS1 = tr(ρ_A.state*init.blks.matrices[i])
+            dS2 = 1/(tr(expHA)) * tr(-expHA*init.blks.matrices[i])
+            G[i] = dS1+dS2
+        end 
+    end 
+    result = optimize(g ->  rel_entropy(g, init), (G, g) ->  grad_relentropy(G, g, init) ,g_init, BFGS(), Optim.Options(g_tol = gtol,
+        store_trace = false,
+        show_trace = show_trace,
+        show_warnings = true, iterations = maxiter))
+
+    g_opt = Optim.minimizer(result)                                                                
+    if print_result == true                                                   
+        println(result)
+        println(g_opt)
+    end 
+    return g_opt, rel_entropy(g_opt, init)
+
+end 
 
 function comm_cost(g::Vector{<:AbstractFloat}, init::Init)
     get_H_A!(g, init)
@@ -86,8 +136,8 @@ function comm_opt_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Abstrac
     return g_opt, comm_cost(vcat(g1,g_opt),init)
 end 
 
-function comm_opt(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN)
-    result = optimize(g -> comm_cost(g,init), g_init, LBFGS(), Optim.Options(g_tol = 1e-12,
+function comm_opt(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat = 1e-12)
+    result = optimize(g -> comm_cost(g,init), g_init, LBFGS(), Optim.Options(g_tol = gtol,
     store_trace = false,
     show_trace = true,
     show_warnings = true, iterations = 1000))

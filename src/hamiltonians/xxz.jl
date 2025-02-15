@@ -17,6 +17,7 @@ working with full complex dense matrices.
 - `Δ::Float64`: Anisotropy.
 - `T_max::Float64`: maximum time for evolving the observables i.e. maximum integration time.
 - `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
+- `signHam::Int` : global minus sign for Hamiltonian
 - `periodic::Bool`: boundary conditions for the system Hamitlonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
 - `ρ_A::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}}`: reduced density matrix of ground state of the composite system on subsystem A.
 - `observables::Vector{T}`: monitored observables in the cost function.
@@ -34,6 +35,7 @@ working with full complex dense matrices.
     T_max::Float64
     r_max::Int
     periodic::Bool 
+    signHam::Int
     ρ_A::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}} 
     observables::Vector{T}
     meas0::Vector{Float64} = [expect(observables[i], ρ_A) for i in eachindex(observables)]
@@ -82,7 +84,8 @@ function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bo
         atol = atol, rtol = rtol,
         ρ_A = ρ_A, observables = observables,
         mtrxObs = mtrxObs,
-        dt = dt 
+        dt = dt,
+        signHam = signHam
     ) 
 end 
 
@@ -95,11 +98,11 @@ Set `periodic` as true for PBC or as false for OBC and `signHam` for a global si
 """
 function H_XXZ(N::Int, Δ::Real; periodic::Bool=false, signHam::Integer = +1)
     
-    XX_term::Add{2} = map(1:(periodic ? N : N-1)) do i
+    XX_term = map(1:(periodic ? N : N-1)) do i
         repeat(N,X,(i,i%N+1)) + repeat(N,Y,(i,i%N+1))
     end |> sum
 
-    Z_term::Add{2} = map(1:(periodic ? N : N-1)) do i
+    Z_term = map(1:(periodic ? N : N-1)) do i
         repeat(N,Z,(i,i%N+1))
     end |> sum
     return signHam*(XX_term+Δ*Z_term)
@@ -118,17 +121,34 @@ function hi(i::Int, set::Settings_XXZ)
 end
 
 
-function correction!(blks::Vector{AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
+function correction!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
     @unpack N_A = set   
     push!(blks, repeat(N_A,X,(i,i+r)) + repeat(N_A,Y,(i,i+r)))
     push!(blks, repeat(N_A,Z,(i,i+r))) 
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{AbstractBlock}, set::Settings_XXZ)
+function correction_XYZ!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
+    @unpack N_A = set   
+    push!(blks, repeat(N_A,X,(i,i+r)))
+    push!(blks, repeat(N_A,Y,(i,i+r)))
+    push!(blks, repeat(N_A,Z,(i,i+r))) 
+end
+
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings_XXZ)
     @unpack N_A, Δ = set
      
     for i ∈ 1:N_A-1 
         push!(blks, repeat(N_A,X,(i,i+1)) + repeat(N_A,Y,(i,i+1)))
+        push!(blks, Δ*repeat(N_A,Z,(i,i+1)))
+    end 
+end
+
+function H_A_XYZ_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings_XXZ)
+    @unpack N_A, Δ = set
+     
+    for i ∈ 1:N_A-1 
+        push!(blks, repeat(N_A,X,(i,i+1)))
+        push!(blks, repeat(N_A,Y,(i,i+1)))
         push!(blks, Δ*repeat(N_A,Z,(i,i+1)))
     end 
 end

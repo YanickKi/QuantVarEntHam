@@ -2,12 +2,14 @@ using LinearAlgebra
 using ChainRules, ChainRulesCore
 using QuadGK
 using HCubature
+
 function get_H_A!(g::Vector{<:AbstractFloat}, init::Init)
     fill!(init.buff.H_A, 0)
     @fastmath @inbounds @simd for i in eachindex(g)
         init.buff.H_A .+= g[i].*init.blks.matrices[i]
     end 
 end 
+
 
 function cost_grad!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
     @unpack observables, T_max, atol, rtol = init.set
@@ -65,7 +67,7 @@ function integrand_onlycost(t::AbstractFloat,  init::Init)
     U = cis(buff.H_A_forexp)
     mul!(buff.ρ_A_right, ρ_A.state, U')
     mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
-    c::Float64 = 0.
+    c = 0.
     @fastmath @inbounds @simd for i in eachindex(mtrxObs)
         @inbounds mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
         @inbounds buff.dev[i] = real(tr(buff.evolobs[i]))- meas0[i]
@@ -74,6 +76,73 @@ function integrand_onlycost(t::AbstractFloat,  init::Init)
     return c
 end
 
+#########################################################################################
+#                                                                                       #
+#                   INTEGRAND AFTER TANH-SINH TRANSFORMATION                            #
+#                                                                                       #
+#########################################################################################
+
+function tanh_sinh_integrand(g::Vector{<:AbstractFloat}, u1::Real, u2::Real, num_points::Int, init::Init)
+    @unpack T_max, observables = init.set
+    u1_ = Float64(u1)
+    u2_ = Float64(u2)
+    u = range(start = u1_, stop = u2_, length = num_points)
+    sinhu = sinh.(u)
+    Φ = tanh.(sinhu .* π/2)
+    ϕ′ = (cosh.(u) .*π/2) ./ (cosh.(sinhu .* π/2)).^2
+    c = Vector{Float64}(undef, length(u))
+    get_H_A!(g, init)
+    for i in eachindex(u) 
+        c[i] = integrand_onlycost(T_max/2*(Φ[i]+1), init) * ϕ′[i]
+    end 
+
+    return c.*T_max/(2*length(observables))
+    #=
+        f(t)_0^t dt 
+        x = 2t/T -1-> x0 = -1, x1 = 1
+        x+1 = 2t/T -> t = T/2(x+1)
+        dx = 2 dt / T -> dt = T/2 dx 
+        -> T/2 f(T/2(x+1))_-1^1 dx 
+        x = phi
+        -> T/2 f(T/2(Φ+1)) Φ'_-infty^infty du  
+
+
+    =#
+    
+end 
+
+
+#########################################################################################
+#                                                                                       #
+#                                COUNT INTEGRAND EVALUTAIONS                            #
+#                                                                                       #
+#########################################################################################
+
+function cost_count!(g::Vector{<:AbstractFloat}, init::Init)
+    @unpack observables, T_max, atol, rtol = init.set
+    init.buff.count = 0
+    get_H_A!(g, init)
+    I = tanh_sinh(t -> integrand_onlycost_count(t, init),0., T_max, init.q, atol = atol, rtol = rtol)/(length(observables)*T_max)
+    #println("Tanh-sinh evaluations: ", init.buff.count)
+    return I, init.buff.count
+end 
+
+function integrand_onlycost_count(t::AbstractFloat,  init::Init)
+    @unpack ρ_A, meas0, mtrxObs = init.set
+    init.buff.count += 1
+    buff = init.buff 
+    mul!(buff.H_A_forexp, -t, buff.H_A)
+    U = cis(buff.H_A_forexp)
+    mul!(buff.ρ_A_right, ρ_A.state, U')
+    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
+    c::Float64 = 0.
+    @fastmath @inbounds @simd for i in eachindex(mtrxObs)
+        @inbounds mul!(buff.evolobs[i], mtrxObs[i], buff.ρ_A_evolved)
+        @inbounds buff.dev[i] = real(tr(buff.evolobs[i]))- meas0[i]
+        c += buff.dev[i]^2
+    end 
+    return c
+end
 
 #########################################################################################
 #                                                                                       #
@@ -145,7 +214,7 @@ function cost_grad_midpoint!(F::Union{AbstractFloat, Nothing}, g::Vector{<:Abstr
     fill!(init.buff.C_G, 0)
     if G !== nothing
         integrand_midpoint(dt/2, init)
-        times = range(start = 3*dt/2, stop = T_max, step = dt)
+        times = range(start = 3*dt/2, stop = T_max-dt/2, step = dt)
         for t in times
             integrand_midpoint(t, init)
         end 
@@ -206,11 +275,18 @@ end
 #                                                                                       #
 #########################################################################################
 
+function custom_norm(vec::AbstractVector{Float64})
+    return abs(vec[1])
+end
+
 function cost_grad_quadgk!(F::Union{AbstractFloat, Nothing}, g::Vector{<:AbstractFloat}, G::Union{Vector{<:AbstractFloat}, Nothing}, init::Init)
     @unpack observables, T_max, atol, rtol = init.set
     get_H_A!(g, init)
     if G !== nothing
-        init.buff.C_G_result .= (quadgk(t -> integrand(t, init),0., T_max)[1]./(length(observables)*T_max))
+        I, E, segment = quadgk_segbuf(t -> integrand_onlycost(t, init),0., T_max)
+        println(I/T_max / length(observables))
+        #println(quadgk(t -> integrand(t, init), 0., T_max, eval_segbuf=segment, maxevals=0))
+        init.buff.C_G_result .= (quadgk(t -> integrand(t, init), 0., T_max, eval_segbuf=segment, maxevals=0)[1]./(length(observables)*T_max))
         G[:] .= @view  init.buff.C_G_result[2:end]
     end
     if F !== nothing 
@@ -220,6 +296,14 @@ function cost_grad_quadgk!(F::Union{AbstractFloat, Nothing}, g::Vector{<:Abstrac
             return init.buff.C_G_result[1]
         end 
     end
+end 
+
+function quadgk_count!(g::Vector{<:AbstractFloat}, init::Init)
+    @unpack observables, T_max, atol, rtol = init.set
+    get_H_A!(g, init)
+    I, E, count =  quadgk_count(t -> integrand_onlycost(t, init),0., T_max)
+    #println("QuadGK evaluations: ", count)
+    return I/(length(observables)*T_max), count 
 end 
 
 #########################################################################################

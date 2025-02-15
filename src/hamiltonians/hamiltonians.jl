@@ -67,7 +67,7 @@ This function dispatches on the concrete subtypes of the abstract type [`Setting
 `H_A_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
 """
 function H_A_BW(set::Settings)
-    @unpack N, N_A, r_max, periodic = set
+    @unpack N, N_A, r_max, periodic, signHam = set
     
     if 2*N_A != N && periodic == false 
         @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
@@ -77,6 +77,10 @@ function H_A_BW(set::Settings)
     
     H_A_BW_wo_corrections!(blks, set)
     
+    blks *= signHam
+
+    blks = convert(Vector{AbstractBlock}, blks)
+
     if r_max > 1
         corrections!(blks, set)
     end 
@@ -96,12 +100,16 @@ This function dispatches on the concrete subtypes of the abstract type [`Setting
 `H_A_not_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following not following the Bisognano-Wichmann-theorem.
 """
 function H_A_not_BW(set::Settings)
-    @unpack N_A, r_max = set
+    @unpack N_A, r_max, signHam = set
     
     blks = Vector{AbstractBlock}(undef, 0)
     
     H_A_notBW_wo_corrections!(blks, set)
     
+    blks *= signHam
+
+    blks = convert(Vector{AbstractBlock}, blks)
+
     if r_max > 1
         corrections!(blks, set)
     end 
@@ -110,7 +118,25 @@ function H_A_not_BW(set::Settings)
 end 
 
 
-function H_A_BW_wo_corrections!(blks::Vector{AbstractBlock}, set::Settings)
+function H_A_XYZ(set::Settings)
+    @unpack N_A, r_max, signHam = set
+    
+    blks = Vector{AbstractBlock}(undef, 0)
+    
+    H_A_XYZ_wo_corrections!(blks, set)
+    
+    blks *= signHam
+
+    blks = convert(Vector{AbstractBlock}, blks)
+
+    if r_max > 1
+        corrections_XYZ!(blks, set)
+    end 
+
+    return H_A_Var(blks, mat.(blks))
+end 
+
+function H_A_BW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
     @unpack N_A = set
     for i in 1:N_A 
         push!(blks, hi(i, set))
@@ -118,7 +144,16 @@ function H_A_BW_wo_corrections!(blks::Vector{AbstractBlock}, set::Settings)
 end
 
 
-function corrections!(blks::Vector{AbstractBlock}, set::Settings)
+function corrections_XYZ!(blks::Vector{<:AbstractBlock}, set::Settings)
+    @unpack N_A, r_max = set
+    for r in 2:r_max
+        for i in 1:N_A-r
+            correction_XYZ!(blks, i, r, set)
+        end
+    end 
+end 
+
+function corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
     @unpack N_A, r_max = set
     for r in 2:r_max
         for i in 1:N_A-r

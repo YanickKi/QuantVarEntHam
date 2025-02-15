@@ -13,6 +13,7 @@ mutable struct Buffers{T<:AbstractMatrix}
     sumobs::T
     evolobs::Vector{Matrix{ComplexF64}}
     adjtimesBlockMatrices::Vector{Matrix{ComplexF64}}
+    count::Int
 end 
 
 function create_buffers(N_A::Integer, numBlocks::Integer, numObservables::Integer, test_sumobs_type::T) where T<:AbstractMatrix
@@ -29,7 +30,8 @@ function create_buffers(N_A::Integer, numBlocks::Integer, numObservables::Intege
     zeros(ComplexF64, d, d),
     zero(test_sumobs_type),
     [zeros(ComplexF64, d, d) for i in 1:numObservables], 
-    [zeros(ComplexF64, d, d) for i in 1:numBlocks], 
+    [zeros(ComplexF64, d, d) for i in 1:numBlocks],
+    0
     )
 end
 
@@ -49,7 +51,7 @@ function initialize(Model::Settings, H_A::Function)
     numBlocks = length(blks.blocks)
     numObservables = length(observables)
 
-    q = integration_tables()
+    q = integration_tables(maxlevel = 12)
 
     test_sumobs_type = sum(rand()*mtrxObs[i] for i in eachindex(mtrxObs))
 
