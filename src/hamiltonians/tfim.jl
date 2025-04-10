@@ -23,8 +23,6 @@ working with full complex dense matrices.
 - `observables::Vector{T}`: monitored observables in the cost function.
 - `meas0::Vector{Float64} = [expect(observables[i], ρ_A) for i in eachindex(observables)]`: expectation values of `observables` at time ``t=0``.
 - `mtrxObs::Vector{S}`: matrix representations for the observables
-- `atol::Float64=0.0`: absolute tolerance for the integrator.
-- `rtol::Float64=atol>0 ? 0.: sqrt(eps(Float64))`: relative tolerance for the integrator.
 - `dt::Float64=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used. 
 """
 @with_kw mutable struct Settings_TFIM{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
@@ -39,8 +37,6 @@ working with full complex dense matrices.
     observables::Vector{T}
     meas0::Vector{Float64}  = [expect(observables[i], ρ_A) for i in eachindex(observables)]
     mtrxObs::Vector{S}
-    atol::Float64
-    rtol::Float64 
     dt::Float64
 end
 
@@ -72,7 +68,7 @@ Convenient constructor for [`Settings_TFIM`](@ref) containing settings for the T
 - use only one type of observables (e.g. X_i X_i+1) since these are then stored as sparse matrices, otherwise dense which leads to higher computation time.
 - be carefull when changing the tolerances for integration (not recommended), a relative tolerance higher than ≈ 1e-7 is not recommended since this can lead to wrong results.
 """
-function TFIM(N::Int, N_A::Int, Γ::Real, T_max::Real; r_max::Int=1, periodic::Bool=false, atol::Real=0.0, rtol::Real=atol>0 ? 0. : sqrt(eps(Float64)),
+function TFIM(N::Int, N_A::Int, Γ::Real, T_max::Real; r_max::Int=1, periodic::Bool=false,
     signHam::Integer=-1, ρ_A::DensityMatrix{2}=get_rhoA(H_TFIM(N, Γ, periodic = periodic, signHam=signHam),  N-N_A+1:N, N),
     observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Real=0.01)
 
@@ -80,7 +76,6 @@ function TFIM(N::Int, N_A::Int, Γ::Real, T_max::Real; r_max::Int=1, periodic::B
 
     return Settings_TFIM{eltype(observables), eltype(mtrxObs)}(
         N = N, N_A = N_A, Γ = Γ, T_max = T_max, r_max = r_max,  periodic = periodic,
-        atol = atol, rtol = rtol,
         ρ_A = ρ_A, observables = observables,
         mtrxObs = mtrxObs,
         dt = dt,

@@ -3,6 +3,7 @@ using Parameters
 mutable struct Buffers{T<:AbstractMatrix}
     C_G::Vector{Float64}
     C_G_result::Vector{Float64}
+    Σ::Vector{Float64}
     G_buffer::Vector{Float64}
     dev::Vector{Float64}
     ρ_A_evolved::Matrix{ComplexF64}
@@ -19,6 +20,7 @@ end
 function create_buffers(N_A::Integer, numBlocks::Integer, numObservables::Integer, test_sumobs_type::T) where T<:AbstractMatrix
     d = 2^N_A
     return Buffers{T}(
+    zeros(Float64, numBlocks+1),
     zeros(Float64, numBlocks+1),
     zeros(Float64, numBlocks+1),
     zeros(Float64, numBlocks),
@@ -51,15 +53,14 @@ function initialize(Model::Settings, H_A::Function)
     numBlocks = length(blks.blocks)
     numObservables = length(observables)
 
-    q = integration_tables(maxlevel = 12)
-
     test_sumobs_type = sum(rand()*mtrxObs[i] for i in eachindex(mtrxObs))
+
 
     return Init{typeof(set), typeof(test_sumobs_type)}(
         set,
         blks,
-        q,
-        create_buffers(N_A, numBlocks, numObservables, test_sumobs_type)
+        create_buffers(N_A, numBlocks, numObservables, test_sumobs_type),
+        ExpBuffer(ComplexF64, 2^N_A)
     )
 end
 
@@ -71,6 +72,6 @@ WIP
 struct Init{T<:Settings, S<:AbstractMatrix}
     set::T
     blks::H_A_Var
-    q::QuadTS{12}
     buff::Buffers{S}
+    exp_buf::ExpBuffer{ComplexF64}
 end 

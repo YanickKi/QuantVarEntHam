@@ -25,30 +25,3 @@ everything needed for the optimization is saved in one variable, which can then 
 
 Finding the optimal parameters for the TFIM with `N=10`, `N_A =5`, `Γ=1` with an maximum integration time of `T_max=1.5` with OBC (default)
 with [`H_A_BW`](@ref) as an variational ansatz.
-
-```jldoctest
-using QuantVarEntHam
-
-init = initialize(TFIM(10, 5, 1., 1.5), H_A_BW)
-g_init = [1.,2.,3.,4.,5.]
-optimize_LBFGS(g_init, init, gtol = 1e-16, maxiter = 100, print_result = false, show_trace = false)
-
-# output
-Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix
-g_init: [1.0, 2.0, 3.0, 4.0, 5.0]
-N: 10
-N_A: 5
-T_max: 1.5
-([0.7998845505676324, 2.339898908834232, 3.4440561575399675, 3.9916008402215475, 4.146669334126589], 1.0913856563696261e-5)
-```
-The output 
-```shell
-Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix
-```
-stems from the function [`get_rhoA`](@ref) giving a hint which method is used to extract the ground state.
-The optimizer prints the most important underlying settings once and the  real output 
-is 
-```shell
-([0.7998845505676324, 2.339898908834232, 3.4440561575399675, 3.9916008402215475, 4.146669334126589], 1.0913856563696261e-5)
-```
-The vector corresponds to the optimal parameters and the second element in the tuple is the cost function value at its minimum

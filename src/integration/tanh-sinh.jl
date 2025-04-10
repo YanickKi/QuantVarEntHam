@@ -1,5 +1,3 @@
-using LinearAlgebra
-
 struct QuadTS{N}
     h0::Float64
     origin::Tuple{Float64,Float64}

@@ -40,8 +40,6 @@ working with full complex dense matrices.
     observables::Vector{T}
     meas0::Vector{Float64} = [expect(observables[i], ρ_A) for i in eachindex(observables)]
     mtrxObs::Vector{S}
-    atol::Float64
-    rtol::Float64 
     dt::Float64
 end
 
@@ -61,8 +59,6 @@ Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XX
 # Keyword arguments
 - `r_max::Int=1`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
 - `periodic::Bool=false`: boundary conditions for the system Hamitlonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
-- `atol::Real=0.0`: absolute tolerance for the integrator.
-- `rtol::Real=atol>0 ? 0.: sqrt(eps(Float64))`: relative tolerance for the integrator.
 - `signHam::Integer=1`: global sign of Hamiltonian, obsolete if an own reduced density matrix ρ_A is provided.
 - `ρ_A::DensityMatrix{2}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam), N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 - `observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]`: monitored observables in the cost function.
@@ -73,7 +69,7 @@ Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XX
 - use only one type of observables (e.g. X_i X_i+1) since these are then stored as sparse or diagonal matrices, otherwise dense which leads to higher computation time.
 - be carefull when changing the tolerances for integration (not recommended), a relative tolerance higher than ≈ 1e-7 is not recommended since this can lead to wrong results.
 """
-function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bool = false, atol::Real=0.0, rtol::Real=atol>0 ? 0. : sqrt(eps(Float64)),
+function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bool = false,
     signHam::Integer=+1, ρ_A::DensityMatrix{2}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam),  N-N_A+1:N, N),
     observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Float64 = 0.01)
     
@@ -81,7 +77,6 @@ function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bo
 
     return Settings_XXZ{eltype(observables), eltype(mtrxObs)}(
         N = N, N_A = N_A, Δ = Δ, T_max = T_max, r_max = r_max, periodic = periodic,
-        atol = atol, rtol = rtol,
         ρ_A = ρ_A, observables = observables,
         mtrxObs = mtrxObs,
         dt = dt,
@@ -122,9 +117,9 @@ end
 
 
 function correction!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
-    @unpack N_A = set   
+    @unpack N_A, Δ = set   
     push!(blks, repeat(N_A,X,(i,i+r)) + repeat(N_A,Y,(i,i+r)))
-    push!(blks, repeat(N_A,Z,(i,i+r))) 
+    push!(blks, Δ*repeat(N_A,Z,(i,i+r))) 
 end
 
 function correction_XYZ!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
@@ -135,7 +130,7 @@ function correction_XYZ!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Set
 end
 
 function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings_XXZ)
-    @unpack N_A, Δ = set
+    @unpack N_A, c = set
      
     for i ∈ 1:N_A-1 
         push!(blks, repeat(N_A,X,(i,i+1)) + repeat(N_A,Y,(i,i+1)))
