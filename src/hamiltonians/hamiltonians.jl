@@ -1,6 +1,7 @@
 using KrylovKit: eigsolve
 using LinearAlgebra
-
+using QuantumOpticsBase
+using QuantumInterface
 """
     Settings{T<:AbstractBlock,S<:AbstractMatrix}
 
@@ -10,9 +11,9 @@ The parametric type `T<:AbstractBlock` is introduced for determining the correct
 `S<:AbstractMatrix` is needed to determine the concrete type of the matrix representation of the Yao Blocks to prevent 
 working with full complex dense matrices.
 """
-abstract type Settings{T<:AbstractBlock,S<:AbstractMatrix} end
+abstract type Settings{T<:Union{AbstractOperator, AbstractBlock},S<:AbstractMatrix} end
 
-
+abstract type Settings_qudits{T<:AbstractOperator, S<:AbstractMatrix} <: Settings{T, S} end
 
 """
     get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
@@ -36,6 +37,27 @@ function get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int)
     end 
 end 
 
+function get_rhoA(H::Operator, A::AbstractVector{Int}, N::Int; S::Rational = 1//1) 
+    if N>6
+        println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
+        values, vectors = eigsolve(H.data, 1 ,:SR, ishermitian=true, tol = 1e-16)
+        b = SpinBasis(S)
+        OPH = [b for i in 1:N]
+        B = tensor(OPH...)
+        gs = Ket(B, vectors[1])
+        ρ_A = ptrace(gs ⊗ dagger(gs),setdiff(1:N,A))
+    return ρ_A
+    else 
+        println("Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix")
+        vectors = eigvecs(Hermitian(Matrix(H.data)))
+        b = SpinBasis(S)
+        OPH = [b for i in 1:N]
+        B = tensor(OPH...)
+        gs = Ket(B, vectors[:,1])
+        ρ_A = ptrace(gs ⊗ dagger(gs),setdiff(1:N,A))
+        return ρ_A
+    end
+end 
 
 """
     H_A_Var
@@ -49,8 +71,8 @@ printing the Entanglement Hamiltonian.
 - `blocks::Vector{AbstractBlock}`: Containing each Hamiltonian Block as an Yao AbstractBlock.
 - `matrices::Vector{Matrix{ComplexF64}}`: Containing each Hamiltonian Block as a matrix.
 """
-struct H_A_Var
-    blocks::Vector{AbstractBlock}
+struct H_A_Var{T<:Union{AbstractBlock, AbstractOperator}}
+    blocks::Vector{T}
     matrices::Vector{Matrix{ComplexF64}}
 end 
 
@@ -84,7 +106,7 @@ function H_A_BW(set::Settings)
     if r_max > 1
         corrections!(blks, set)
     end 
-    return H_A_Var(blks,  mat.(blks))
+    return H_A_Var(blks,  Matrix.(blks))
 
 end 
 
@@ -114,27 +136,10 @@ function H_A_not_BW(set::Settings)
         corrections!(blks, set)
     end 
 
-    return H_A_Var(blks, mat.(blks))
+    return H_A_Var(blks, Matrix.(blks))
 end 
 
-
-function H_A_XYZ(set::Settings)
-    @unpack N_A, r_max, signHam = set
-    
-    blks = Vector{AbstractBlock}(undef, 0)
-    
-    H_A_XYZ_wo_corrections!(blks, set)
-    
-    blks *= signHam
-
-    blks = convert(Vector{AbstractBlock}, blks)
-
-    if r_max > 1
-        corrections_XYZ!(blks, set)
-    end 
-
-    return H_A_Var(blks, mat.(blks))
-end 
+ 
 
 function H_A_BW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
     @unpack N_A = set
@@ -144,24 +149,242 @@ function H_A_BW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
 end
 
 
-function corrections_XYZ!(blks::Vector{<:AbstractBlock}, set::Settings)
-    @unpack N_A, r_max = set
-    for r in 2:r_max
-        for i in 1:N_A-r
-            correction_XYZ!(blks, i, r, set)
-        end
-    end 
-end 
-
 function corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
     @unpack N_A, r_max = set
     for r in 2:r_max
-        for i in 1:N_A-r
+        for i in 1:N_A-rinclude("toric_code.jl")
+            include("kitaev.jl")
             correction!(blks, i, r, set)
         end
     end 
 end 
 
 
+
+function H_A_BW(set::Settings_qudits)
+    @unpack N, N_A, r_max, periodic, signHam = set
+    
+    if 2*N_A != N && periodic == false 
+        @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
+    end 
+    
+    blks = AbstractOperator[]
+    
+    H_A_BW_wo_corrections!(blks, set)
+    
+    blks *= signHam
+
+    if r_max > 1
+        corrections!(blks, set)
+    end 
+
+    MatBlks = Matrix{ComplexF64}[]
+
+    for blk in blks
+        push!(MatBlks, Matrix(blk.data))
+    end 
+
+    return H_A_Var(blks,  MatBlks)
+
+end
+
+function H_A_not_BW(set::Settings_qudits)
+    @unpack N, N_A, r_max, periodic, signHam = set
+    
+    blks = AbstractOperator[]
+
+    H_A_notBW_wo_corrections!(blks, set)
+    
+    blks *= signHam
+
+
+    if r_max > 1
+        corrections!(blks, set)
+    end 
+
+    MatBlks = Matrix{ComplexF64}[]
+
+    for blk in blks
+        push!(MatBlks, Matrix(blk.data))
+    end 
+
+    return H_A_Var(blks, MatBlks)
+end 
+
+function H_A_not_BW_I(set::Settings_qudits)
+    @unpack N, N_A, r_max, periodic, signHam = set
+    
+    blks = AbstractOperator[]
+
+    H_A_notBW_wo_corrections_I!(blks, set)
+    
+    blks *= signHam
+
+
+    if r_max > 1
+        corrections!(blks, set)
+    end 
+
+    MatBlks = Matrix{ComplexF64}[]
+
+    for blk in blks
+        push!(MatBlks, Matrix(blk.data))
+    end 
+
+    return H_A_Var(blks, MatBlks)
+end 
+
+
+function H_A_BW_wo_corrections!(blks::AbstractVector, set::Settings_qudits)
+    @unpack N_A = set
+    for i in 1:N_A 
+        push!(blks, hi(i, set))
+    end     
+end
+
+
 include("xxz.jl")
 include("tfim.jl")
+include("pollmann.jl")
+include("toric_code.jl")
+include("kitaev.jl")
+#=
+
+
+include("toric_code.jl")
+include("kitaev.jl")
+
+
+
+function map_to_subsystem_chain!(objects, A)
+
+
+    for obj in objects
+        for i in eachindex(obj)
+            obj[i] = findfirst(==(obj[i]), A)
+        end 
+    end
+
+end 
+
+
+function H_A_BW_bad(set::Settings_toric)
+    @unpack Nx,Ny, A ,J = set 
+    
+    blks = Vector{AbstractBlock}(undef, 0)
+
+    N_A = length(A)
+
+    for qbit in 1:N_A-1
+        push!(blks, repeat(N_A, Z, (qbit, qbit+1)))
+    end 
+    for qbit in 1:N_A-1
+        push!(blks, repeat(N_A, X, (qbit, qbit+1)))
+    end 
+
+    #for plaquette in plaquets_in_A
+    #    push!(blks, repeat(N_A, Z, plaquette))
+    #end
+
+    blks *= -J 
+    
+    return H_A_Var(blks, mat.(blks))
+end
+
+function H_A_BW(set::Settings_kitaev)
+    @unpack Jz, Jx, Jy = set
+    blks = Vector{AbstractBlock}(undef, 0)
+
+    zterm = -Jz * [
+        repeat(6, Z, (2,4)),
+        repeat(6, Z, (3,5))
+    ]
+
+    xterm = -Jx * [
+        repeat(6, X, (1,2)),
+        repeat(6, X, (5,6))
+        ]
+
+    yterm = -Jy * [
+        repeat(6, Y, (1,3)),
+        repeat(6, Y, (4,6))
+        ]
+
+    for i in 1:2
+        push!(blks, zterm[i])
+    end 
+    for i in 1:2
+        push!(blks, xterm[i])
+    end 
+    for i in 1:2
+        push!(blks, yterm[i])
+    end
+
+    return H_A_Var(blks, mat.(blks)) 
+    
+end 
+function H_A_BW(set::Settings_toric)
+    @unpack Nx,Ny, A ,J = set 
+
+    stars, plaquets = make_all_objects(Nx,Ny)
+
+    blks = Vector{AbstractBlock}(undef, 0)
+
+    N_obj = length(stars)
+    stars_in_A = Vector{Int64}[]
+    plaquets_in_A = Vector{Int64}[]
+    iscomplete = true 
+
+    for i in 1:N_obj    
+        for qbit in stars[i]
+            iscomplete =  qbit ∈ A
+            if iscomplete == false
+                break 
+            end 
+        end 
+        if iscomplete == true 
+            push!(stars_in_A, stars[i])
+        end 
+    end
+    iscomplete = true 
+
+
+    for i in 1:N_obj    
+        for qbit in plaquets[i]
+            iscomplete =  qbit ∈ A
+            if iscomplete == false
+                break 
+            end 
+        end 
+        if iscomplete == true 
+            push!(plaquets_in_A, plaquets[i])
+        end 
+    end 
+
+    map_to_subsystem_chain!(stars_in_A,A)
+    map_to_subsystem_chain!(plaquets_in_A, A)
+    
+    N_A = length(A)
+
+    for star in stars_in_A
+        push!(blks, repeat(N_A, X, star))
+    end 
+
+    for plaquette in plaquets_in_A
+        push!(blks, repeat(N_A, Z, plaquette))
+    end
+
+    
+    N_A = length(A)
+
+    for qbit in 1:N_A
+        push!(blks, put(N_A, qbit => X))
+    end 
+
+    blks *= -J 
+
+
+    return H_A_Var(blks, mat.(blks))
+end
+
+=#

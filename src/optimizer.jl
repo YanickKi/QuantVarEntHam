@@ -112,7 +112,8 @@ function comm_opt_fixed(g_init::Vector{<:AbstractFloat}, init::Init, g1::Abstrac
     return g_opt, comm_cost(vcat(g1,g_opt),init)
 end 
 
-function comm_opt(g_init::Vector{<:AbstractFloat}, init::Init; g1::AbstractFloat=NaN, gtol::AbstractFloat = 1e-12)
+function comm_opt(g_init::Vector{<:Real}, init::Init; gtol::AbstractFloat = 1e-12)
+    g_init = Float64.(g_init)
     result = optimize(g -> comm_cost(g,init), g_init, LBFGS(), Optim.Options(g_tol = gtol,
     store_trace = false,
     show_trace = true,

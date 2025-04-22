@@ -36,11 +36,10 @@ working with full complex dense matrices.
     r_max::Int
     periodic::Bool 
     signHam::Int
-    ρ_A::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}} 
+    ρ_A::Matrix{ComplexF64}
     observables::Vector{T}
-    meas0::Vector{Float64} = [expect(observables[i], ρ_A) for i in eachindex(observables)]
+    meas0::Vector{Float64}
     mtrxObs::Vector{S}
-    dt::Float64
 end
 
 """
@@ -74,13 +73,15 @@ function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bo
     observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Float64 = 0.01)
     
     mtrxObs = mat.(observables)
+    meas0 = [Yao.expect(observables[i], ρ_A) for i in eachindex(observables)]
 
     return Settings_XXZ{eltype(observables), eltype(mtrxObs)}(
         N = N, N_A = N_A, Δ = Δ, T_max = T_max, r_max = r_max, periodic = periodic,
-        ρ_A = ρ_A, observables = observables,
+        ρ_A = ρ_A.state, observables = observables,
         mtrxObs = mtrxObs,
         dt = dt,
-        signHam = signHam
+        signHam = signHam,
+        meas0 = meas0 
     ) 
 end 
 

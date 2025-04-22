@@ -5,10 +5,11 @@ export optimize_LBFGS
 export get_rhoA, initialize, XXZ, TFIM
 export universal_ratios, print_H_A, plot_universal_ratios
 export Settings, Settings_XXZ, Settings_TFIM
-export H_XXZ, H_TFIM
+export H_XXZ, H_TFIM, H_pollmann
 export Init, H_A_Var
 export tanh_sinh 
 export midpoint
+export toric, kitaev, pollmann
 using Yao, Parameters
 using StaticArrays
 
@@ -17,7 +18,6 @@ include("integration/mapsum.jl")
 include("integration/tanh-sinh_vector.jl")
 include("integration/mapsum_vector.jl")
 include("integration/midpoint.jl")
-include("integration/abstractintegrator.jl")
 include("hamiltonians/hamiltonians.jl")
 include("frechet_exp/frechet_exp.jl")
 include("initialize.jl")
