@@ -2,6 +2,9 @@ using KrylovKit: eigsolve
 using LinearAlgebra
 using QuantumOpticsBase
 using QuantumInterface
+using SparseArrays
+
+
 """
     Settings{T<:AbstractBlock,S<:AbstractMatrix}
 
@@ -37,27 +40,34 @@ function get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int)
     end 
 end 
 
-function get_rhoA(H::Operator, A::AbstractVector{Int}, N::Int; S::Rational = 1//1) 
+function get_rhoA(H, A::AbstractVector{Int}, N::Int; S::Rational = 1//1) 
+    N_A = length(A)
     if N>6
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
-        values, vectors = eigsolve(H.data, 1 ,:SR, ishermitian=true, tol = 1e-16)
-        b = SpinBasis(S)
-        OPH = [b for i in 1:N]
-        B = tensor(OPH...)
-        gs = Ket(B, vectors[1])
-        ρ_A = ptrace(gs ⊗ dagger(gs),setdiff(1:N,A))
+        values, vectors = eigsolve(H, 1 ,:SR, ishermitian=true, tol = 1e-16)
+        ρ_A = partial_trace_pure_state(vectors[1],3^(N-N_A), 3^(N_A), trace_subsystem = :A) 
     return ρ_A
     else 
         println("Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix")
-        vectors = eigvecs(Hermitian(Matrix(H.data)))
-        b = SpinBasis(S)
-        OPH = [b for i in 1:N]
-        B = tensor(OPH...)
-        gs = Ket(B, vectors[:,1])
-        ρ_A = ptrace(gs ⊗ dagger(gs),setdiff(1:N,A))
+        vectors = eigvecs(Hermitian(Matrix(H)))
+        ρ_A = partial_trace_pure_state(vectors[:,1],3^(N-N_A), 3^(N_A), trace_subsystem = :A) 
         return ρ_A
     end
 end 
+
+
+function partial_trace_pure_state(ψ::Vector{<:Number}, dimA::Int, dimB::Int; trace_subsystem::Symbol = :B)
+    ψ_tensor = reshape(ψ, (dimA, dimB)) 
+
+    if trace_subsystem == :B
+        return ψ_tensor * ψ_tensor' 
+    elseif trace_subsystem == :A
+        return transpose(ψ_tensor) * conj(ψ_tensor)
+    else
+        error("trace_subsystem must be :A or :B")
+    end
+end
+
 
 """
     H_A_Var

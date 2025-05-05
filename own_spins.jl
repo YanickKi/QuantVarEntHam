@@ -1,3 +1,4 @@
+using LinearAlgebra
 using SparseArrays
 
 function sigmax()
@@ -74,3 +75,11 @@ function repeat_cust(N, sig::Function, loc::AbstractVector{<:Int})
     end
     return M
 end 
+
+function main()
+
+    M = repeat_cust(2, sigmay, [1,2])
+    println(supertype(typeof(M)))
+end 
+
+main()

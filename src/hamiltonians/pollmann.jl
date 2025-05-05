@@ -48,7 +48,7 @@ function H_pollmann(N::Int, J::Real, Bx::Real, Uzz::Real; periodic::Bool=false, 
     Interaction_term = map(1:N) do i
         repeat_cust(N, sigmaz, [i])^2
     end |> sum
-    return signHam*(J*heisenberg_term + Bx*transversal_term + Uzz*Interaction_term) 
+    return signHam*(J*heisenberg_term + Bx*transversal_term + Uzz*Interaction_term)         
 end 
 
 
