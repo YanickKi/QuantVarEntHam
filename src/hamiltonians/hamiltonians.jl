@@ -14,9 +14,7 @@ The parametric type `T<:AbstractBlock` is introduced for determining the correct
 `S<:AbstractMatrix` is needed to determine the concrete type of the matrix representation of the Yao Blocks to prevent 
 working with full complex dense matrices.
 """
-abstract type Settings{T<:Union{AbstractOperator, AbstractBlock},S<:AbstractMatrix} end
-
-abstract type Settings_qudits{T<:AbstractOperator, S<:AbstractMatrix} <: Settings{T, S} end
+abstract type Settings{S<:AbstractMatrix} end
 
 """
     get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
@@ -26,31 +24,19 @@ Return the reduced density matrix of type `YaoAPI.DensityMatrix` of the ground s
 For composite systems consisting of more than 10 sites, the [krylov subspace method from KrylovKit](https://jutho.github.io/KrylovKit.jl/stable/man/eig/#KrylovKit.eigsolve) is used for 
 extracting the ground state.
 """
-function get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
-    if N>10
-        println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
-        values, vectors = eigsolve(mat(H) ,1 ,:SR, ishermitian=true, tol = 1e-16)
-        rhoA = density_matrix(ArrayReg(vectors[1]), A)
-    return rhoA
-    else 
-        println("Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix")
-        vectors = eigvecs(Hermitian(Matrix(H)))
-        rhoA = density_matrix(ArrayReg(vectors[:,1]), A)
-        return rhoA
-    end 
-end 
 
-function get_rhoA(H, A::AbstractVector{Int}, N::Int; S::Rational = 1//1) 
+function get_rhoA(H, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+    d = (Int64(2*S+1))^(N)
     N_A = length(A)
-    if N>6
+    if d > 1024
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
         values, vectors = eigsolve(H, 1 ,:SR, ishermitian=true, tol = 1e-16)
-        ρ_A = partial_trace_pure_state(vectors[1],3^(N-N_A), 3^(N_A), trace_subsystem = :A) 
+        ρ_A = partial_trace_pure_state(vectors[1], (Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A), trace_subsystem = :B) 
     return ρ_A
     else 
         println("Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix")
         vectors = eigvecs(Hermitian(Matrix(H)))
-        ρ_A = partial_trace_pure_state(vectors[:,1],3^(N-N_A), 3^(N_A), trace_subsystem = :A) 
+        ρ_A = partial_trace_pure_state(vectors[:,1],(Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A), trace_subsystem = :B) 
         return ρ_A
     end
 end 
@@ -68,6 +54,13 @@ function partial_trace_pure_state(ψ::Vector{<:Number}, dimA::Int, dimB::Int; tr
     end
 end
 
+function expect(Op::AbstractMatrix, ρ::AbstractMatrix)
+    E = tr(Op*ρ)
+    if abs(imag(E)) > eps(Float64)
+        error("Imaginary part too large for expectation value!")
+    end 
+    return real(E)
+end 
 
 """
     H_A_Var
@@ -81,9 +74,8 @@ printing the Entanglement Hamiltonian.
 - `blocks::Vector{AbstractBlock}`: Containing each Hamiltonian Block as an Yao AbstractBlock.
 - `matrices::Vector{Matrix{ComplexF64}}`: Containing each Hamiltonian Block as a matrix.
 """
-struct H_A_Var{T<:Union{AbstractBlock, AbstractOperator}}
-    blocks::Vector{T}
-    matrices::Vector{Matrix{ComplexF64}}
+struct H_A_Var
+    blocks::Vector{Matrix{ComplexF64}}
 end 
 
 
@@ -105,18 +97,17 @@ function H_A_BW(set::Settings)
         @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
     end 
     
-    blks = Vector{AbstractBlock}(undef, 0)
+    blks = Matrix{ComplexF64}[]
     
     H_A_BW_wo_corrections!(blks, set)
     
     blks *= signHam
 
-    blks = convert(Vector{AbstractBlock}, blks)
 
     if r_max > 1
         corrections!(blks, set)
     end 
-    return H_A_Var(blks,  Matrix.(blks))
+    return H_A_Var(blks)
 
 end 
 
@@ -134,24 +125,22 @@ This function dispatches on the concrete subtypes of the abstract type [`Setting
 function H_A_not_BW(set::Settings)
     @unpack N_A, r_max, signHam = set
     
-    blks = Vector{AbstractBlock}(undef, 0)
+    blks = Matrix{ComplexF64}[]
     
     H_A_notBW_wo_corrections!(blks, set)
     
     blks *= signHam
 
-    blks = convert(Vector{AbstractBlock}, blks)
-
     if r_max > 1
         corrections!(blks, set)
     end 
 
-    return H_A_Var(blks, Matrix.(blks))
+    return H_A_Var(blks)
 end 
 
  
 
-function H_A_BW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
+function H_A_BW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings)
     @unpack N_A = set
     for i in 1:N_A 
         push!(blks, hi(i, set))
@@ -159,72 +148,20 @@ function H_A_BW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
 end
 
 
-function corrections!(blks::Vector{<:AbstractBlock}, set::Settings)
+function corrections!(blks::Vector{<:AbstractMatrix}, set::Settings)
     @unpack N_A, r_max = set
     for r in 2:r_max
-        for i in 1:N_A-rinclude("toric_code.jl")
-            include("kitaev.jl")
+        for i in 1:N_A-r
             correction!(blks, i, r, set)
         end
     end 
 end 
 
 
-
-function H_A_BW(set::Settings_qudits)
+function H_A_not_BW_I(set::Settings)
     @unpack N, N_A, r_max, periodic, signHam = set
     
-    if 2*N_A != N && periodic == false 
-        @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
-    end 
-    
-    blks = AbstractOperator[]
-    
-    H_A_BW_wo_corrections!(blks, set)
-    
-    blks *= signHam
-
-    if r_max > 1
-        corrections!(blks, set)
-    end 
-
-    MatBlks = Matrix{ComplexF64}[]
-
-    for blk in blks
-        push!(MatBlks, Matrix(blk.data))
-    end 
-
-    return H_A_Var(blks,  MatBlks)
-
-end
-
-function H_A_not_BW(set::Settings_qudits)
-    @unpack N, N_A, r_max, periodic, signHam = set
-    
-    blks = AbstractOperator[]
-
-    H_A_notBW_wo_corrections!(blks, set)
-    
-    blks *= signHam
-
-
-    if r_max > 1
-        corrections!(blks, set)
-    end 
-
-    MatBlks = Matrix{ComplexF64}[]
-
-    for blk in blks
-        push!(MatBlks, Matrix(blk.data))
-    end 
-
-    return H_A_Var(blks, MatBlks)
-end 
-
-function H_A_not_BW_I(set::Settings_qudits)
-    @unpack N, N_A, r_max, periodic, signHam = set
-    
-    blks = AbstractOperator[]
+    blks = Matrix{ComplexF64}[]
 
     H_A_notBW_wo_corrections_I!(blks, set)
     
@@ -235,29 +172,23 @@ function H_A_not_BW_I(set::Settings_qudits)
         corrections!(blks, set)
     end 
 
-    MatBlks = Matrix{ComplexF64}[]
-
-    for blk in blks
-        push!(MatBlks, Matrix(blk.data))
-    end 
-
-    return H_A_Var(blks, MatBlks)
+    return H_A_Var(blks)
 end 
 
 
-function H_A_BW_wo_corrections!(blks::AbstractVector, set::Settings_qudits)
+function H_A_BW_wo_corrections!(blks::AbstractVector, set::Settings)
     @unpack N_A = set
     for i in 1:N_A 
         push!(blks, hi(i, set))
     end     
 end
 
-
+include("spinoperators.jl")
 include("xxz.jl")
 include("tfim.jl")
 include("pollmann.jl")
-include("toric_code.jl")
-include("kitaev.jl")
+#include("toric_code.jl")
+#include("kitaev.jl")
 #=
 
 

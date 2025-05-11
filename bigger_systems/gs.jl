@@ -15,4 +15,4 @@ function whole(N)
     get_gs(H,N, J, Bx, Uzz)
 end 
 
-whole(8)
+whole(4)

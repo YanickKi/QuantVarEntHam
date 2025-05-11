@@ -28,18 +28,18 @@ working with full complex dense matrices.
 - `dt::Float64=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used.
 
 """
-@with_kw mutable struct Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T,S}
+@with_kw mutable struct Settings_XXZ{M<:AbstractMatrix} <:Settings{M}
     N::Int
     N_A::Int
     Δ::Float64
+    S::Rational = 1//2
     T_max::Float64
     r_max::Int
     periodic::Bool 
     signHam::Int
     ρ_A::Matrix{ComplexF64}
-    observables::Vector{T}
     meas0::Vector{Float64}
-    mtrxObs::Vector{S}
+    mtrxObs::Vector{M}
 end
 
 """
@@ -69,17 +69,16 @@ Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XX
 - be carefull when changing the tolerances for integration (not recommended), a relative tolerance higher than ≈ 1e-7 is not recommended since this can lead to wrong results.
 """
 function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bool = false,
-    signHam::Integer=+1, ρ_A::DensityMatrix{2}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam),  N-N_A+1:N, N),
-    observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Float64 = 0.01)
+    signHam::Integer=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam),  N-N_A+1:N, N),
+    observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
     
-    mtrxObs = mat.(observables)
-    meas0 = [Yao.expect(observables[i], ρ_A) for i in eachindex(observables)]
+    mtrxObs = [Diagonal(diag(obs)) for obs in observables]
 
-    return Settings_XXZ{eltype(observables), eltype(mtrxObs)}(
+    meas0 = [expect(obs, ρ_A) for obs in observables]
+    return Settings_XXZ{eltype(mtrxObs)}(
         N = N, N_A = N_A, Δ = Δ, T_max = T_max, r_max = r_max, periodic = periodic,
-        ρ_A = ρ_A.state, observables = observables,
+        ρ_A = ρ_A,
         mtrxObs = mtrxObs,
-        dt = dt,
         signHam = signHam,
         meas0 = meas0 
     ) 
@@ -117,21 +116,14 @@ function hi(i::Int, set::Settings_XXZ)
 end
 
 
-function correction!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
+function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, set::Settings_XXZ)
     @unpack N_A, Δ = set   
     push!(blks, repeat(N_A,X,(i,i+r)) + repeat(N_A,Y,(i,i+r)))
     push!(blks, Δ*repeat(N_A,Z,(i,i+r))) 
 end
 
-function correction_XYZ!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_XXZ)
-    @unpack N_A = set   
-    push!(blks, repeat(N_A,X,(i,i+r)))
-    push!(blks, repeat(N_A,Y,(i,i+r)))
-    push!(blks, repeat(N_A,Z,(i,i+r))) 
-end
-
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings_XXZ)
-    @unpack N_A, c = set
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_XXZ)
+    @unpack N_A, Δ = set
      
     for i ∈ 1:N_A-1 
         push!(blks, repeat(N_A,X,(i,i+1)) + repeat(N_A,Y,(i,i+1)))
@@ -139,7 +131,7 @@ function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings_
     end 
 end
 
-function H_A_XYZ_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings_XXZ)
+function H_A_XYZ_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_XXZ)
     @unpack N_A, Δ = set
      
     for i ∈ 1:N_A-1 

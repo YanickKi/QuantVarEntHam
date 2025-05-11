@@ -25,18 +25,18 @@ working with full complex dense matrices.
 - `mtrxObs::Vector{S}`: matrix representations for the observables
 - `dt::Float64=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used. 
 """
-@with_kw mutable struct Settings_TFIM{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T, S}
+@with_kw mutable struct Settings_TFIM{M<:AbstractMatrix} <:Settings{M}
     N::Int
     N_A::Int
     Γ::Float64
     T_max::Float64
+    S::Rational = 1//2
     r_max::Int
     periodic::Bool
     signHam::Int
     ρ_A::Matrix{ComplexF64} 
-    observables::Vector{T}
     meas0::Vector{Float64}
-    mtrxObs::Vector{S}
+    mtrxObs::Vector{M}
 end
 
 """
@@ -68,14 +68,16 @@ Convenient constructor for [`Settings_TFIM`](@ref) containing settings for the T
 - be carefull when changing the tolerances for integration (not recommended), a relative tolerance higher than ≈ 1e-7 is not recommended since this can lead to wrong results.
 """
 function TFIM(N::Int, N_A::Int, Γ::Real, T_max::Real; r_max::Int=1, periodic::Bool=false,
-    signHam::Integer=-1, ρ_A::DensityMatrix{2}=get_rhoA(H_TFIM(N, Γ, periodic = periodic, signHam=signHam),  N-N_A+1:N, N),
-    observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
+    signHam::Integer=-1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_TFIM(N, Γ, periodic = periodic, signHam=signHam),  N-N_A+1:N, N),
+    observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
 
-    mtrxObs = mat.(observables)
-    meas0 = [Yao.expect(observables[i], ρ_A) for i in eachindex(observables)]
-    return Settings_TFIM{eltype(observables), eltype(mtrxObs)}(
+    mtrxObs = [Diagonal(diag(obs)) for obs in observables]
+
+    meas0 = [expect(obs, ρ_A) for obs in observables]
+
+    return Settings_TFIM{eltype(mtrxObs)}(
         N = N, N_A = N_A, Γ = Γ, T_max = T_max, r_max = r_max,  periodic = periodic,
-        ρ_A = ρ_A.state, observables = observables,
+        ρ_A = ρ_A,
         mtrxObs = mtrxObs,
         signHam = signHam,
         meas0 = meas0
@@ -97,7 +99,7 @@ function H_TFIM(N::Int, Γ::Real; periodic::Bool=false, signHam::Integer = -1)
     end |> sum
 
     transversal_term = map(1:N) do i
-        put(N, i =>X)
+        repeat(N, X, i)
     end |> sum
 
     return signHam*(ising_term + Γ*transversal_term) 
@@ -107,30 +109,30 @@ end
 function hi(i::Int, set::Settings_TFIM)
     @unpack N_A, Γ = set
      
-    hi = Γ * put(N_A, i=>X)
+    hi = Γ * repeat(N_A, X, i)
     
     if i > 1
-        hi += 1/2 * put(N_A, i-1=>Z) * put(N_A, i=>Z)
+        hi += 1/2 * repeat(N_A, Z, i-1) * repeat(N_A, Z, i)
     end
     if i < N_A
-        hi += 1/2 * put(N_A, i=>Z) * put(N_A, i+1=>Z)
+        hi += 1/2 * repeat(N_A, Z, i) * repeat(N_A, Z, i+1)
     end    
     return hi
 end
 
-function correction!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_TFIM)
+function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, set::Settings_TFIM)
     @unpack N_A = set   
     push!(blks, repeat(N_A,Z,(i,i+r)))
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractBlock}, set::Settings_TFIM)
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_TFIM)
     @unpack N_A, Γ = set
     
-    push!(blks, Γ*put(N_A, 1 => X))
+    push!(blks, Γ*repeat(N_A, X, 1))
 
     for i ∈ 1:N_A-1 
         push!(blks, repeat(N_A,Z,(i,i+1)))
-        push!(blks, Γ*put(N_A, i+1 => X))
+        push!(blks, Γ*repeat(N_A, X, i+1))
     end 
     
 end

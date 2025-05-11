@@ -34,6 +34,7 @@ function create_buffers(d::Integer, numBlocks::Integer, numObservables::Integer,
     )
 end
 
+#=
 """
     initialize(Model::Settings, H_A::Function)
     
@@ -61,19 +62,18 @@ function initialize(Model::Settings, H_A::Function)
     )
 end
 
-
-function initialize(Model::Settings_qudits, H_A::Function)
-    set = Model
-    @unpack N_A, observables, r_max, S, mtrxObs = set
+=#
+function initialize(set::Settings, H_A::Function)
+    @unpack N_A, r_max, S, mtrxObs = set
     if r_max > N_A-1
     @warn "You entered r_max=$r_max but you have only $N_A sites (r_max needs to be less than N_A). This will still work and give you the maximum order of corrections."
     end
-    blks = H_A(Model)
+    blks = H_A(set)
 
     d = Int(2*S+1)^N_A # composite Hilbert space dimension
 
     numBlocks = length(blks.blocks)
-    numObservables = length(observables)
+    numObservables = length(mtrxObs)
 
     test_sumobs_type = sum(rand()*mtrxObs[i] for i in eachindex(mtrxObs))
 
@@ -85,6 +85,20 @@ function initialize(Model::Settings_qudits, H_A::Function)
         ExpBuffer(ComplexF64, d)
     )
 end
+
+"""
+    Init{T<:Settings, S<:AbstractMatrix}
+
+WIP
+"""
+struct Init{T<:Settings, S<:AbstractMatrix}
+    set::T
+    blks::H_A_Var
+    buff::Buffers{S}
+    exp_buf::ExpBuffer{ComplexF64}
+end 
+
+#=
 
 function initialize(Model::Settings_kitaev, H_A::Function)
     set = Model
@@ -128,14 +142,5 @@ function initialize(Model::Settings_toric, H_A::Function)
     )
 end
 
-"""
-    Init{T<:Settings, S<:AbstractMatrix}
 
-WIP
-"""
-struct Init{T<:Settings, S<:AbstractMatrix}
-    set::T
-    blks::H_A_Var
-    buff::Buffers{S}
-    exp_buf::ExpBuffer{ComplexF64}
-end 
+=#

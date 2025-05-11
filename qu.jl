@@ -1,28 +1,11 @@
-using QuantumOpticsBase
-
-
-function repeat_cust(N, sig::Function, loc::AbstractVector{<:Int}; S::Rational=1//1)
-    b = SpinBasis(S) 
-
-    Ops = []
-    for qudit in 1:N
-        if qudit ∉ loc 
-            push!(Ops, sparse(identityoperator(b)))
-        end
-        if qudit ∈ loc 
-            push!(Ops, sparse(sig(b)))
-        end
-    end
-    TensOp = tensor(Ops...)
-    return TensOp
-end 
-
+using QuantVarEntHam
 
 
 function main()
-
-    M = repeat_cust(2, sigmay, [1,2])
-    println(M.data)
+    init = initialize(TFIM(8, 4, 1, 2), H_A_not_BW)
+    giniit = [1,1,2,2,2,3,3]
+    g,c = optimize_LBFGS(giniit, init)
+    println(g/g[1])
 end 
 
 main()

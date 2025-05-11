@@ -48,7 +48,7 @@ function identity()
 
     I[1,1] = 1.
     I[2,2] = 1.
-    I[3,3] = 3
+    I[3,3] = 1.
 
     return I
 
@@ -56,7 +56,7 @@ end
 
 
 function repeat_cust(N, sig::Function, loc::AbstractVector{<:Int})
-
+    
     M = spzeros(ComplexF64, 3, 3)
 
     if 1 ∉ loc 
@@ -78,8 +78,8 @@ end
 
 function main()
 
-    M = repeat_cust(2, sigmay, [1,2])
-    println(supertype(typeof(M)))
+    M = repeat_cust(2, sigmaz, [1])
+    println(M)
 end 
 
 main()

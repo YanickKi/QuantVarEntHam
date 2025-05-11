@@ -9,8 +9,8 @@ export H_XXZ, H_TFIM, H_pollmann
 export Init, H_A_Var
 export tanh_sinh 
 export midpoint
-export toric, kitaev, pollmann
-using Yao, Parameters
+export pollmann
+using Parameters
 using StaticArrays
 
 include("integration/tanh-sinh.jl")
