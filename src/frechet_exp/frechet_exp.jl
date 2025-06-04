@@ -1,5 +1,7 @@
 using LinearAlgebra
 import LinearAlgebra.BlasFloat
+using ChainRulesCore: add!!
+
 mutable struct ExpBuffer{T}
     Inn::Matrix{T}
     A::Matrix{T}

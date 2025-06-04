@@ -1,9 +1,26 @@
-using LinearAlgebra, CairoMakie, LaTeXStrings
+using LinearAlgebra
 
 function calc_universal_ratios(ξ::Vector{<:AbstractFloat}, α0::Integer, α1::Integer)
     κ = (ξ .- ξ[α0])/(ξ[α1] - ξ[α0])
     return κ
 end
+
+function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
+    @unpack ρ_A = init.set
+    H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
+    H_A_exact = -log(Hermitian(ρ_A))
+    #p_ex = eigen(Hermitian(ρ_A)).values
+    #ξ_exact = - log.(p_ex.+ 2*abs(minimum(p_ex)))
+    ξ_var, v = eigen(Hermitian(H_A))
+    ξ_exact, v =  eigen(Hermitian(H_A_exact))
+    return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
+end
+
+
+function get_H_A(g::Vector{<:AbstractFloat}, init::Init)
+    return sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
+end 
+
 
 #=
 function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
@@ -16,51 +33,9 @@ function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer =
 end
 
 =#
-function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
-    @unpack ρ_A = init.set
-    H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
-    H_A_exact = -log(Hermitian(ρ_A))
-    #p_ex = eigen(Hermitian(ρ_A)).values
-    #ξ_exact = - log.(p_ex.+ 2*abs(minimum(p_ex)))
-    ξ_var, v = eigen(Hermitian(H_A))
-    ξ_exact, v =  eigen(Hermitian(H_A_exact))
-    return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
-end
 
-#=function universal_ratios_scaling(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
-    @unpack ρ_A = init.set
-    H_A = H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
-    
-    p_var, v = eigen(Hermitian(ρ_A.state))
-    
-    for i in eachindex(p)
-        if p_var[i] < 0
+#=
 
-    end 
-
-    #H_A_exact = -log(Hermitian(ρ_A.state))
-    ξ_var, v = eigen(Hermitian(H_A))
-    ξ_exact, v =  eigen(Hermitian(H_A_exact))
-    return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
-end
-=#
-function universal_ratios_svd(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
-    @unpack ρ_A = init.set
-    H_A = H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
-    F = svd(ρ_A)
-    probs = F.S 
-    ξ_var, v = eigen(Hermitian(H_A))
-    ξ_exact = -log.(probs.^2)
-    return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
-end
-
-function print_H_A(g::Vector{<:AbstractFloat}, init::Init)
-    print(sum(g[i]*init.blks.blocks[i] for i in eachindex(g)))
-end
-
-function get_H_A(g::Vector{<:AbstractFloat}, init::Init)
-    return sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
-end 
 
 function plot_universal_ratios(filename::String, universal_ratios...)
     F = Figure()
@@ -80,3 +55,5 @@ function plot_universal_ratios(filename::String, labels::Union{Vector{LaTeXStrin
     axislegend(ax, position = :lt)
     save(filename, F)
 end 
+
+=#

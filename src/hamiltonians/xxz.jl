@@ -1,51 +1,44 @@
 """
-    Settings_XXZ{T<:AbstractBlock, S<:AbstractMatrix} <:Settings{T,S}
+    Settings_XXZ{M<:AbstractMatrix} <:Settings{M}
 
 Contains the settings for the XXZ model
 
-The parametric type `T<:AbstractBlock` is introduced for determining the correct concrete type of the Yao Blocks, while 
-`S<:AbstractMatrix` is needed to determine the concrete type of the matrix representation of the Yao Blocks to prevent 
-working with full complex dense matrices.
+The parametric type `M<:AbstractMatrix` is for determining the correct concrete type of the observables.
 
 !!! tip
-    Use the constructor [`XXZ`](@ref) to instantiate this struct since the types for `observables` and its matrices `mtrxObs` are automatically inferred then
+    Use the constructor [`XXZ`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
     and the default values in [`XXZ`](@ref) are highly recommended.
 
 # Fields 
 - `N::Int`: number of sites in composite system.
 - `N_A::Int`: number of sites in subsystem A.
-- `Δ::Float64`: Anisotropy.
+- `Δ::Float64`: anisotropy.
+- `J::Float64`: global prefactor in Hamiltonian
 - `T_max::Float64`: maximum time for evolving the observables i.e. maximum integration time.
+- `S::Rational`: spin number
 - `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
-- `signHam::Int` : global minus sign for Hamiltonian
-- `periodic::Bool`: boundary conditions for the system Hamitlonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
+- `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
 - `ρ_A::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}}`: reduced density matrix of ground state of the composite system on subsystem A.
-- `observables::Vector{T}`: monitored observables in the cost function.
-- `meas0::Vector{Float64} = [expect(observables[i], ρ_A) for i in eachindex(observables)]`: expectation values of `observables` at time ``t=0``.
-- `mtrxObs::Vector{S}`: matrix representations for the observables
-- `atol::Float64=0.0`: absolute tolerance for the integrator.
-- `rtol::Float64=atol>0 ? 0.: sqrt(eps(Float64))`: relative tolerance for the integrator.
-- `dt::Float64=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used.
-
+- `meas0::Vector{Float64}`: expectation values of `observables` at time ``t=0``.
+- `observables::Vector{M}`: matrix representations for the observables
 """
-@with_kw mutable struct Settings_XXZ{M<:AbstractMatrix} <:Settings{M}
+@with_kw struct Settings_XXZ{M<:AbstractMatrix} <:Settings{M}
     N::Int
     N_A::Int
     Δ::Float64
-    S::Rational = 1//2
+    J::Float64
     T_max::Float64
+    S::Rational
     r_max::Int
     periodic::Bool 
-    signHam::Int
     ρ_A::Matrix{ComplexF64}
     meas0::Vector{Float64}
-    mtrxObs::Vector{M}
+    observables::Vector{M}
 end
-
 """
-    XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bool = false, atol::Real=0.0, rtol::Real=atol>0 ? 0. : sqrt(eps(Float64)),
-    signHam::Integer=+1, ρ_A::DensityMatrix{2}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam), N-N_A+1:N, N),
-    observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1], dt::Float64 = 0.01)
+    XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N),
+    observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
 
 Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XXZ Model 
 
@@ -56,87 +49,87 @@ Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XX
 - `T_max::Real`: maximum time for evolving the observables i.e. maximum integration time.
 
 # Keyword arguments
-- `r_max::Int=1`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
-- `periodic::Bool=false`: boundary conditions for the system Hamitlonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
-- `signHam::Integer=1`: global sign of Hamiltonian, obsolete if an own reduced density matrix ρ_A is provided.
-- `ρ_A::DensityMatrix{2}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam), N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
-- `observables::Vector{<:AbstractBlock}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]`: monitored observables in the cost function.
-- `dt::Real=0.01`: time step for evaluating the cost function via midpoint rule, obsolete if other integration techniques are used.
+- `S::Union{Int64, Rational} = 1//2`: spin number.
+- `J::Real=-1`: global prefactor in the Hamiltonian.
+- `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
+- `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
+- `ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
+- `observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]`: monitored observables in the cost function.
 
 # Recommendations
-- use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most.
-- use only one type of observables (e.g. X_i X_i+1) since these are then stored as sparse or diagonal matrices, otherwise dense which leads to higher computation time.
-- be carefull when changing the tolerances for integration (not recommended), a relative tolerance higher than ≈ 1e-7 is not recommended since this can lead to wrong results.
+- use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most. 
+- use only one type of observables (e.g. X_i X_i+1) since these are then stored as sparse matrices, otherwise dense which leads to higher computation time.
 """
-function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; r_max::Int=1, periodic::Bool = false,
-    signHam::Integer=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, signHam=signHam),  N-N_A+1:N, N),
+function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N),
     observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
     
-    mtrxObs = [Diagonal(diag(obs)) for obs in observables]
-
     meas0 = [expect(obs, ρ_A) for obs in observables]
-    return Settings_XXZ{eltype(mtrxObs)}(
-        N = N, N_A = N_A, Δ = Δ, T_max = T_max, r_max = r_max, periodic = periodic,
+
+    return Settings_XXZ{eltype(observables)}(
+        N = N, N_A = N_A,
+        S = S,
+        Δ = Δ, J = J, 
+        T_max = T_max, r_max = r_max, periodic = periodic,
         ρ_A = ρ_A,
-        mtrxObs = mtrxObs,
-        signHam = signHam,
-        meas0 = meas0 
+        observables = observables, meas0 = meas0 
     ) 
 end 
 
 """
-    H_XXZ(N::Int,  Δ::Real; periodic::Bool=false, signHam::Integer = +1)
+    H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{Int64, Rational} = 1//2)
 
-Return the XXZ Hamiltonian ``H=\\sum_{i=1}^{N-1}( X_{i}X_{i+1} + Y_{i}Y_{i+1} + Δ Z_{i}Z_{i+1})`` with `N` sites and Anisotropy `Δ` as an AbstractBlock.
+Return the XXZ Hamiltonian ``H=J(\\sum_{i=1}^{N-1}( X_{i}X_{i+1} + Y_{i}Y_{i+1} + Δ Z_{i}Z_{i+1}))`` with `N` sites, anisotropy `Δ` and global prefactor `J` as a sparse matrix.
 
-Set `periodic` as true for PBC or as false for OBC and `signHam` for a global sign.
+Set `periodic` as true for PBC or as false for OBC and 
+`S` for the spin number.
 """
-function H_XXZ(N::Int, Δ::Real; periodic::Bool=false, signHam::Integer = +1)
+function H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{Int64, Rational} = 1//2)
     
     XX_term = map(1:(periodic ? N : N-1)) do i
-        repeat(N,X,(i,i%N+1)) + repeat(N,Y,(i,i%N+1))
+        repeat(N,X,(i,i%N+1), S=S) + repeat(N,Y,(i,i%N+1), S=S)
     end |> sum
 
     Z_term = map(1:(periodic ? N : N-1)) do i
-        repeat(N,Z,(i,i%N+1))
+        repeat(N,Z,(i,i%N+1), S=S)
     end |> sum
-    return signHam*(XX_term+Δ*Z_term)
+    return J*(XX_term+Δ*Z_term)
 end 
 
 function hi(i::Int, set::Settings_XXZ)
-    @unpack N_A, Δ = set
+    @unpack N_A, Δ, S= set
 
     if i > 1 && i < N_A 
-        return 1/2*(repeat(N_A,X,(i-1,i)) + repeat(N_A,Y,(i-1,i))+ Δ*repeat(N_A,Z,(i-1,i))) + 1/2*(repeat(N_A,X,(i,i+1)) + repeat(N_A,Y,(i,i+1)) + Δ*repeat(N_A,Z,(i,i+1)))
+        return 1/2*(repeat(N_A,X,(i-1,i), S=S) + repeat(N_A,Y,(i-1,i), S=S)+ Δ*repeat(N_A,Z,(i-1,i), S=S)) + 1/2*(repeat(N_A,X,(i,i+1), S=S) + repeat(N_A,Y,(i,i+1), S=S) + Δ*repeat(N_A,Z,(i,i+1), S=S))
     elseif i > 1
-        return 1/2*(repeat(N_A,X,(i-1,i)) + repeat(N_A,Y,(i-1,i))+ Δ*repeat(N_A,Z,(i-1,i))) 
+        return 1/2*(repeat(N_A,X,(i-1,i), S=S) + repeat(N_A,Y,(i-1,i), S=S)+ Δ*repeat(N_A,Z,(i-1,i), S=S)) 
     elseif i < N_A
-        return 1/2*(repeat(N_A,X,(i,i+1)) + repeat(N_A,Y,(i,i+1)) + Δ*repeat(N_A,Z,(i,i+1)))
+        return 1/2*(repeat(N_A,X,(i,i+1), S=S) + repeat(N_A,Y,(i,i+1), S=S) + Δ*repeat(N_A,Z,(i,i+1), S=S))
     end    
 end
 
 
 function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, set::Settings_XXZ)
-    @unpack N_A, Δ = set   
-    push!(blks, repeat(N_A,X,(i,i+r)) + repeat(N_A,Y,(i,i+r)))
-    push!(blks, Δ*repeat(N_A,Z,(i,i+r))) 
+    @unpack N_A, Δ, S = set   
+    push!(blks, repeat(N_A,X,(i,i+r), S=S) + repeat(N_A,Y,(i,i+r), S=S))
+    push!(blks, Δ*repeat(N_A,Z,(i,i+r), S=S)) 
 end
 
 function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_XXZ)
-    @unpack N_A, Δ = set
+    @unpack N_A, Δ, S = set
      
     for i ∈ 1:N_A-1 
-        push!(blks, repeat(N_A,X,(i,i+1)) + repeat(N_A,Y,(i,i+1)))
-        push!(blks, Δ*repeat(N_A,Z,(i,i+1)))
+        push!(blks, repeat(N_A,X,(i,i+1), S=S) + repeat(N_A,Y,(i,i+1), S=S))
+        push!(blks, Δ*repeat(N_A,Z,(i,i+1), S=S))
     end 
 end
 
 function H_A_XYZ_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_XXZ)
-    @unpack N_A, Δ = set
+    @unpack N_A, Δ, S= set
      
     for i ∈ 1:N_A-1 
-        push!(blks, repeat(N_A,X,(i,i+1)))
-        push!(blks, repeat(N_A,Y,(i,i+1)))
-        push!(blks, Δ*repeat(N_A,Z,(i,i+1)))
+        push!(blks, repeat(N_A,X,(i,i+1), S=S))
+        push!(blks, repeat(N_A,Y,(i,i+1), S=S))
+        push!(blks, Δ*repeat(N_A,Z,(i,i+1), S=S))
     end 
 end

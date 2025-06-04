@@ -1,6 +1,6 @@
 push!(LOAD_PATH,"../src/")
 
-using Documenter, QuantVarEntHam, Yao
+using Documenter, QuantVarEntHam
 
 makedocs(sitename="QuantVarEntHam.jl",  modules = [QuantVarEntHam], 
         pages = [

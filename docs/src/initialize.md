@@ -1,11 +1,8 @@
 # Initialize
 
 ```@docs
-Init{T<:Settings, S<:AbstractMatrix}
+Init 
 ```
-```@docs
+```@docs 
 initialize(Model::Settings, H_A::Function)
-```
-```@docs
-get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
 ```

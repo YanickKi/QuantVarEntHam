@@ -22,11 +22,11 @@ function optimize_LBFGS(g_init::Vector{<:Real}, init::Init; methods = tanh_sinh(
     _g_1 = Float64(g1)
 
     if isnan(g1)
-        @assert length(_g_init) == length(init.blks.blocks) "You entered $(length(_g_init)) parameters but $(length(init.blks.blocks)) blocks. 
+        @assert length(_g_init) == length(init.blocks) "You entered $(length(_g_init)) parameters but $(length(init.blocks)) blocks. 
         The amount of parameters and blocks need to be equal!"
         optimize_free(_g_init, init, gtol, maxiter, show_trace, print_result, methods)
     else 
-        @assert length(_g_init)+1 == length(init.blks.blocks) "You entered $(length(_g_init)+1) parameters (from which is one fixed to $(_g_1)) but $(length(init.blks.blocks)) blocks.
+        @assert length(_g_init)+1 == length(init.blocks) "You entered $(length(_g_init)+1) parameters (from which is one fixed to $(_g_1)) but $(length(init.blocks)) blocks.
         The amount of parameters and blocks need to be equal!"
         optimize_fixed(_g_init, init, _g_1, gtol, maxiter, show_trace, print_result, methods)
     end

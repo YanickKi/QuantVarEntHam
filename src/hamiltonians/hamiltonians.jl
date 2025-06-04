@@ -1,36 +1,32 @@
 using KrylovKit: eigsolve
 using LinearAlgebra
-using QuantumOpticsBase
-using QuantumInterface
 using SparseArrays
 
 
 """
-    Settings{T<:AbstractBlock,S<:AbstractMatrix}
+    Settings{M<:AbstractMatrix}
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
 
-The parametric type `T<:AbstractBlock` is introduced for determining the correct concrete type of the Yao Blocks, while 
-`S<:AbstractMatrix` is needed to determine the concrete type of the matrix representation of the Yao Blocks to prevent 
-working with full complex dense matrices.
+The parametric type `M<:AbstractBlock` is introduced for determining the most efficient representation of observables.
 """
-abstract type Settings{S<:AbstractMatrix} end
+abstract type Settings{M<:AbstractMatrix} end
 
 """
-    get_rhoA(H::AbstractBlock, A::AbstractVector{Int}, N::Int) 
+    get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int) 
 
-Return the reduced density matrix of type `YaoAPI.DensityMatrix` of the ground state of Hamitlonian H for N sites on subsystem A.
+Return the reduced density matrix as either a real or complex matrix of the ground state of Hamiltonian `H` for `N` sites on subsystem A.
 
-For composite systems consisting of more than 10 sites, the [krylov subspace method from KrylovKit](https://jutho.github.io/KrylovKit.jl/stable/man/eig/#KrylovKit.eigsolve) is used for 
-extracting the ground state.
+For a Hilbert space dimension of more than 1024, the [krylov subspace method from KrylovKit](https://jutho.github.io/KrylovKit.jl/stable/man/eig/#KrylovKit.eigsolve) is used for 
+extracting the ground state, exact diagonalization otherwise.
 """
 
-function get_rhoA(H, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+function get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
     d = (Int64(2*S+1))^(N)
     N_A = length(A)
     if d > 1024
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
-        values, vectors = eigsolve(H, 1 ,:SR, ishermitian=true, tol = 1e-16)
+        _, vectors = eigsolve(H, 1 ,:SR, ishermitian=true, tol = 1e-16)
         ρ_A = partial_trace_pure_state(vectors[1], (Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A), trace_subsystem = :B) 
     return ρ_A
     else 
@@ -62,126 +58,77 @@ function expect(Op::AbstractMatrix, ρ::AbstractMatrix)
     return real(E)
 end 
 
-"""
-    H_A_Var
-    
-Struct to save the Yao AbstractBlocks and its matrix representation throughout the optimization.
-
-The optimizing is only done with the matrices in `matrices`. `blocks` is only saved for convenient utiliy functions such as 
-printing the Entanglement Hamiltonian.
-
-# Fields
-- `blocks::Vector{AbstractBlock}`: Containing each Hamiltonian Block as an Yao AbstractBlock.
-- `matrices::Vector{Matrix{ComplexF64}}`: Containing each Hamiltonian Block as a matrix.
-"""
-struct H_A_Var
-    blocks::Vector{Matrix{ComplexF64}}
-end 
-
 
 """
     H_A_BW(set::Settings) 
 
-Return an instance of type [`H_A_Var`](@ref) containing the Yao Blocks and its matrix representation.
+Return a vector of the blocks, which are complex dense matrices.
 
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
 This function dispatches on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model. 
 
 # Example 
-`H_A_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
+`H_A_BW(set::Settings_TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
 """
 function H_A_BW(set::Settings)
-    @unpack N, N_A, r_max, periodic, signHam = set
+    @unpack N, N_A, r_max, periodic, J = set
     
     if 2*N_A != N && periodic == false 
         @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
     end 
     
-    blks = Matrix{ComplexF64}[]
+    blocks = Matrix{ComplexF64}[]
     
-    H_A_BW_wo_corrections!(blks, set)
+    H_A_BW_wo_corrections!(blocks, set)
     
-    blks *= signHam
-
-
     if r_max > 1
-        corrections!(blks, set)
+        corrections!(blocks, set)
     end 
-    return H_A_Var(blks)
+    return J*blocks
 
 end 
 
 """
     H_A_not_BW(set::Settings) 
 
-Return an instance of type [`H_A_Var`](@ref) containing the Yao Blocks and its matrix representation.
+Return a vector of the blocks, which are complex dense matrices.
 
 The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
 This function dispatches on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model. 
 
 # Example 
-`H_A_not_BW(set::Settings_TFIM)` returns the variational Ansatz for the TFIM following not following the Bisognano-Wichmann-theorem.
+`H_A_not_BW(set::Settings_TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
 """
 function H_A_not_BW(set::Settings)
-    @unpack N_A, r_max, signHam = set
+    @unpack N_A, r_max, J = set
     
-    blks = Matrix{ComplexF64}[]
+    blocks = Matrix{ComplexF64}[]
     
-    H_A_notBW_wo_corrections!(blks, set)
+    H_A_notBW_wo_corrections!(blocks, set)
     
-    blks *= signHam
-
     if r_max > 1
-        corrections!(blks, set)
+        corrections!(blocks, set)
     end 
 
-    return H_A_Var(blks)
+    return J*blocks
 end 
 
- 
-
-function H_A_BW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings)
+function H_A_BW_wo_corrections!(blocks::Vector{<:AbstractMatrix}, set::Settings)
     @unpack N_A = set
     for i in 1:N_A 
-        push!(blks, hi(i, set))
+        push!(blocks, hi(i, set))
     end     
 end
 
 
-function corrections!(blks::Vector{<:AbstractMatrix}, set::Settings)
+function corrections!(blocks::Vector{<:AbstractMatrix}, set::Settings)
     @unpack N_A, r_max = set
     for r in 2:r_max
         for i in 1:N_A-r
-            correction!(blks, i, r, set)
+            correction!(blocks, i, r, set)
         end
     end 
 end 
-
-
-function H_A_not_BW_I(set::Settings)
-    @unpack N, N_A, r_max, periodic, signHam = set
-    
-    blks = Matrix{ComplexF64}[]
-
-    H_A_notBW_wo_corrections_I!(blks, set)
-    
-    blks *= signHam
-
-
-    if r_max > 1
-        corrections!(blks, set)
-    end 
-
-    return H_A_Var(blks)
-end 
-
-
-function H_A_BW_wo_corrections!(blks::AbstractVector, set::Settings)
-    @unpack N_A = set
-    for i in 1:N_A 
-        push!(blks, hi(i, set))
-    end     
-end
 
 include("spinoperators.jl")
 include("xxz.jl")
@@ -212,29 +159,29 @@ end
 function H_A_BW_bad(set::Settings_toric)
     @unpack Nx,Ny, A ,J = set 
     
-    blks = Vector{AbstractBlock}(undef, 0)
+    blocks = Vector{AbstractBlock}(undef, 0)
 
     N_A = length(A)
 
     for qbit in 1:N_A-1
-        push!(blks, repeat(N_A, Z, (qbit, qbit+1)))
+        push!(blocks, repeat(N_A, Z, (qbit, qbit+1)))
     end 
     for qbit in 1:N_A-1
-        push!(blks, repeat(N_A, X, (qbit, qbit+1)))
+        push!(blocks, repeat(N_A, X, (qbit, qbit+1)))
     end 
 
     #for plaquette in plaquets_in_A
-    #    push!(blks, repeat(N_A, Z, plaquette))
+    #    push!(blocks, repeat(N_A, Z, plaquette))
     #end
 
-    blks *= -J 
+    blocks *= -J 
     
-    return H_A_Var(blks, mat.(blks))
+    return H_A_Var(blocks, mat.(blocks))
 end
 
 function H_A_BW(set::Settings_kitaev)
     @unpack Jz, Jx, Jy = set
-    blks = Vector{AbstractBlock}(undef, 0)
+    blocks = Vector{AbstractBlock}(undef, 0)
 
     zterm = -Jz * [
         repeat(6, Z, (2,4)),
@@ -252,16 +199,16 @@ function H_A_BW(set::Settings_kitaev)
         ]
 
     for i in 1:2
-        push!(blks, zterm[i])
+        push!(blocks, zterm[i])
     end 
     for i in 1:2
-        push!(blks, xterm[i])
+        push!(blocks, xterm[i])
     end 
     for i in 1:2
-        push!(blks, yterm[i])
+        push!(blocks, yterm[i])
     end
 
-    return H_A_Var(blks, mat.(blks)) 
+    return H_A_Var(blocks, mat.(blocks)) 
     
 end 
 function H_A_BW(set::Settings_toric)
@@ -269,7 +216,7 @@ function H_A_BW(set::Settings_toric)
 
     stars, plaquets = make_all_objects(Nx,Ny)
 
-    blks = Vector{AbstractBlock}(undef, 0)
+    blocks = Vector{AbstractBlock}(undef, 0)
 
     N_obj = length(stars)
     stars_in_A = Vector{Int64}[]
@@ -308,24 +255,24 @@ function H_A_BW(set::Settings_toric)
     N_A = length(A)
 
     for star in stars_in_A
-        push!(blks, repeat(N_A, X, star))
+        push!(blocks, repeat(N_A, X, star))
     end 
 
     for plaquette in plaquets_in_A
-        push!(blks, repeat(N_A, Z, plaquette))
+        push!(blocks, repeat(N_A, Z, plaquette))
     end
 
     
     N_A = length(A)
 
     for qbit in 1:N_A
-        push!(blks, put(N_A, qbit => X))
+        push!(blocks, put(N_A, qbit => X))
     end 
 
-    blks *= -J 
+    blocks *= -J 
 
 
-    return H_A_Var(blks, mat.(blks))
+    return H_A_Var(blocks, mat.(blocks))
 end
 
 =#

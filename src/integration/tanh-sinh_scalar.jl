@@ -1,22 +1,3 @@
-struct QuadTS{N}
-    h0::Float64
-    origin::Tuple{Float64,Float64}
-    table0::Vector{Tuple{Float64,Float64}}
-    tables::NTuple{N,Vector{Tuple{Float64,Float64}}}
-end
-
-function integration_tables(;maxlevel::Integer=12, h0::Float64=1.)
-    origin = samplepoint(0.)
-    table0 = generate_table(h0, 1)
-    tables = Vector{Tuple{Float64,Float64}}[]
-    for level in 1:maxlevel
-        h = h0/2^level
-        table = generate_table(h, 2)
-        push!(tables, table)
-    end
-    return QuadTS{maxlevel}(h0, origin, table0, Tuple(tables))
-end
-
 function integrate(f::Function, q::QuadTS{N}; atol::Real=0.,
     rtol::Real=atol>0 ? 0. : sqrt(eps(Float64))) where {N}
     

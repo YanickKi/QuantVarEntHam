@@ -1,0 +1,24 @@
+This section shows how all components come together to a running optimzation and serves as a walkthrough.
+
+## Walkthrough 
+
+The backbones of this package are the concrete types of [`Settings`](@ref) i.e. the structs containing 
+the settings e.g. number of sites in the composite system `N` or subsystem `N_A`, observables `observables`, reduced density matrix `ρ_A`, etc... 
+For each lattice model there is an own subtype e.g. [`Settings_XXZ`](@ref) for the XXZ-model, which can 
+be conveniently constructed with a constructor e.g. [`XXZ`](@ref).
+Second of all after choosing the lattice model, one needs to choose the variational Ansatz e.g [`H_A_BW`](@ref).
+To keep the code as short as possible for the user, this is passed to a function [`initialize`](@ref) which returns 
+a struct of type [`Init`](@ref) containing the settings, buffers and the blocks of the variational Ansatz s.t.
+everything needed for the optimization is saved in one variable, which can then be passed to the optimizer.
+
+## In short
+
+1. Choose a lattice model and use its corresponding constructor (e.g. [`XXZ`](@ref) for XXZ-model).
+2. Choose a variational Ansatz (e.g. [`H_A_BW`](@ref) for an Ansatz corresponding to the Bisognano-Wichmann-theorem).
+3. Wrap it all up in the initializer function [`initialize`](@ref).
+4. Pass the returned struct form step 3 together with initial parameters to the optimizer and run the optimizer.
+
+## Example 
+
+Finding the optimal parameters for the TFIM with `N=10`, `N_A =5`, `Γ=1` with an maximum integration time of `T_max=1.5` with OBC (default)
+with [`H_A_BW`](@ref) as an variational ansatz.

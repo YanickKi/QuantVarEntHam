@@ -68,7 +68,7 @@ end
 function identity(S::Union{Rational, Int})
     d = Int64(2*S+1)
 
-    I = spzeros(ComplexF64, d, d)
+    I = Diagonal(zeros(Int64,d))
 
     for i in 1:d
         I[i,i] = 1.
