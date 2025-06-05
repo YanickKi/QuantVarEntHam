@@ -1,26 +1,15 @@
 """
     Settings_TFIM{M<:AbstractMatrix} <:Settings{M}
 
-Contains the settings for the TFIM
-
-The parametric type `M<:AbstractMatrix` is for determining the correct concrete type of the observables.
+Concrete type of [`Settings`](@ref), containing the settings for the TFIM
 
 !!! tip
     Use the constructor [`TFIM`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
     and the default values in [`TFIM`](@ref) are highly recommended.
 
 # Fields 
-- `N::Int`: number of sites in composite system.
-- `N_A::Int`: number of sites in subsystem A.
-- `Γ::Float64`: transverse field strength.
-- `J::Float64`: global prefactor in Hamiltonian
-- `T_max::Float64`: maximum time for evolving the observables i.e. maximum integration time.
-- `S::Rational`: spin number
-- `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
-- `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
-- `ρ_A::Matrix{ComplexF64}`: reduced density matrix of ground state of the composite system on subsystem A.
-- `meas0::Vector{Float64}`: expectation values of `observables` at time ``t=0``.
-- `observables::Vector{M}`: matrix representations for the observables
+- see [`Settings`](@ref)
+- `Γ::Real`: transverse field strength 
 """
 @with_kw struct Settings_TFIM{M<:AbstractMatrix} <:Settings{M}
     N::Int

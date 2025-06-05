@@ -8,7 +8,20 @@ using SparseArrays
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
 
-The parametric type `M<:AbstractBlock` is introduced for determining the most efficient representation of observables.
+The parametric type `M<:AbstractBlock` is for determining the most efficient representation of observables.
+All physical models have their own concrete type of `Settings` (e.g. `Settings_TFIM`).
+In general the concrete types will have the same fields besides the model specific Hamiltonian parameters, which are: 
+ 
+- `N::Int`: number of sites in composite system.
+- `N_A::Int`: number of sites in subsystem A.
+- `J::Float64`: global prefactor in Hamiltonian
+- `T_max::Float64`: maximum time for evolving the observables i.e. maximum integration time.
+- `S::Rational`: spin number
+- `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
+- `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
+- `ρ_A::Matrix{ComplexF64}`: reduced density matrix of ground state of the composite system on subsystem A.
+- `meas0::Vector{Float64}`: expectation values of `observables` at time ``t=0``.
+- `observables::Vector{M}`: matrix representations of the observables
 """
 abstract type Settings{M<:AbstractMatrix} end
 
@@ -65,7 +78,8 @@ end
 Return a vector of the blocks, which are complex dense matrices.
 
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
-This function dispatches on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model. 
+This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.
+
 
 # Example 
 `H_A_BW(set::Settings_TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
@@ -94,7 +108,7 @@ end
 Return a vector of the blocks, which are complex dense matrices.
 
 The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
-This function dispatches on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model. 
+This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.
 
 # Example 
 `H_A_not_BW(set::Settings_TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.

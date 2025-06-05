@@ -1,28 +1,17 @@
 """
     Settings_pollmann{M<:AbstractMatrix} <:Settings{M}
 
-Contains the settings for the pollmann Hamiltonian
-
-The parametric type `M<:AbstractMatrix` is for determining the correct concrete type of the observables.
+Concrete type of [`Settings`](@ref), containing the settings for the Pollmann model
 
 !!! tip
     Use the constructor [`pollmann`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
     and the default values in [`pollmann`](@ref) are highly recommended.
 
 # Fields 
-- `N::Int`: number of sites in composite system.
-- `N_A::Int`: number of sites in subsystem A.
+- see [`Settings`](@ref)
 - `J_Heis::Float64`: Heisenberg coupling strength.
 - `Bx::Float64`: transverse field strength
 - `Uzz::Float64`: square term prefactor
-- `J::Float64`: global prefactor in Hamiltonian
-- `T_max::Float64`: maximum time for evolving the observables i.e. maximum integration time.
-- `S::Rational`: spin number
-- `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
-- `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
-- `ρ_A::DensityMatrix{2, ComplexF64, Matrix{ComplexF64}}`: reduced density matrix of ground state of the composite system on subsystem A.
-- `meas0::Vector{Float64}`: expectation values of `observables` at time ``t=0``.
-- `observables::Vector{M}`: matrix representations for the observables
 """
 @with_kw struct Settings_pollmann{M<:AbstractMatrix} <: Settings{M}
     N::Int
@@ -49,15 +38,15 @@ Convenient constructor for [`Settings_pollmann`](@ref) containing settings for t
 
 # Required Arguments
 - `N::Int`: number of sites in the composite system.
-- `J_Heis::Float64`: Heisenberg coupling strength.
-- `Bx::Float64`: transverse field strength
-- `Uzz::Float64`: square term prefactor
 - `N_A::Int`: number of sites in subsystem A.
+- `J_Heis::Real`: Heisenberg coupling strength.
+- `Bx::Real`: transverse field strength
+- `Uzz::Real`: square term prefactor
 - `T_max::Real`: maximum time for evolving the observables i.e. maximum integration time.
 
 # Keyword arguments
 - `S::Union{Int64, Rational} = 1`: spin number.
-- `J::Real=-1`: global prefactor in the Hamiltonian.
+- `J::Real=+1`: global prefactor in the Hamiltonian.
 - `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
 - `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
 - `ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
@@ -86,7 +75,7 @@ end
 """
     H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=false, J::Real = 1, S::Union{Int64, Rational}=1)
 
-Return the pollmann Hamiltonian ``H= J(J_Heis \\sum_{i=1}^{N-1} \\vec{S}_i * \\vec{S}_{i+1} + B_x \\sum_{i=1}^{N} S^x_i + U_{zz} \\sum_{i=1}^{N} (S^z_i)^2 )`` with `N` sites, Heisenberg coupling `J_Heis`,  
+Return the pollmann Hamiltonian ``H= J(J_\text{Heis} \\sum_{i=1}^{N-1} \\vec{S}_i \\cdot \\vec{S}_{i+1} + B_x \\sum_{i=1}^{N} X_i + U_{zz} \\sum_{i=1}^{N} (Z_i)^2 )`` with `N` sites, Heisenberg coupling `J_Heis`,  
 , transverse field strength `B_x`, quare term prefactor `U_{zz}` and global prefactor `J` as a sparse matrix.
 
 Set `periodic` as true for PBC or as false for OBC and 
