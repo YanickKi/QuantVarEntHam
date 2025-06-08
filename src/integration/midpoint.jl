@@ -11,7 +11,7 @@ function midpoint(f::Function, a::Real, b::Real, dt::Real)
     return I*dt
 end 
 
-function midpoint!(f::Function, a::Real, b::Real, dt::Real, I::AbstractVector)
+function midpoint!(I::AbstractVector, f::Function, a::Real, b::Real, dt::Real)
     _a = Float64(a)
     _b = Float64(b)
     _dt = Float64(dt)

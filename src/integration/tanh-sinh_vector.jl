@@ -1,12 +1,12 @@
-function integrate(f::Function, q::QuadTS{N}, I::AbstractVector, Σ::AbstractVector; atol::Real=0.,
+function integrate!(I::AbstractVector, f::Function, q::QuadTS{N}, Σ::AbstractVector; atol::Real=0.,
     rtol::Real=atol>0 ? 0. : sqrt(eps(Float64))) where {N}
     
-    function eval(t, Σ)
+    function eval!(Σ, t)
         Σ .+= f(t[1]).*t[2]
         Σ .+= f(-t[1]).*t[2]
     end
 
-    function eval_withmax(t, Σ)
+    function eval_withmax!(Σ, t)
         f1 = f(t[1])
         f11 = f1[1]
         Σ .+= f1 .* t[2]
@@ -22,7 +22,7 @@ function integrate(f::Function, q::QuadTS{N}, I::AbstractVector, Σ::AbstractVec
     x0, w0 = q.origin
     h0 = q.h0
     Σ .+= f(x0).*w0 
-    mapsum(eval, q.table0, Σ)
+    mapsum!(Σ, eval!, q.table0)
     I .*= Σ.*h0
     E = 0.
     prevI2 = 0.
@@ -31,13 +31,13 @@ function integrate(f::Function, q::QuadTS{N}, I::AbstractVector, Σ::AbstractVec
         if level == 1
             table = q.tables[level]
             h = h0/2^level
-            mapsum(eval, table, Σ)
+            mapsum!(Σ, eval!, table)
             I .= Σ.*h
             E = 1.
         else 
             table = q.tables[level]
-            maxlr = eval_withmax(table[1], Σ)
-            maxj = mapsum_withmax(eval_withmax, Σ, @view table[2:end])
+            maxlr = eval_withmax!(Σ, table[1])
+            maxj = mapsum_withmax!(Σ, eval_withmax!, @view table[2:end])
             h = h0/2^level
             prevI2 = prevI
             prevI = I[1]
@@ -49,7 +49,7 @@ function integrate(f::Function, q::QuadTS{N}, I::AbstractVector, Σ::AbstractVec
     end
 end
 
-function tanh_sinh!(f::Function, a::Real, b::Real, q::QuadTS{N}, I::AbstractVector, Σ::AbstractVector;
+function tanh_sinh!(I::AbstractVector, f::Function, a::Real, b::Real, q::QuadTS{N}, Σ::AbstractVector;
     atol::Real=0.0,
     rtol::Real=atol>0 ? 0. : sqrt(eps(Float64))) where {N}
     if a == b
@@ -59,7 +59,7 @@ function tanh_sinh!(f::Function, a::Real, b::Real, q::QuadTS{N}, I::AbstractVect
         _b = Float64(b)
         s = (_b + _a)/2
         t = (_b - _a)/2
-        integrate(u -> f(s + t*u), q, I, Σ; atol=atol/t, rtol=rtol)
+        integrate!(I, u -> f(s + t*u), q, Σ; atol=atol/t, rtol=rtol)
         I .*= t 
     end
     fill!(Σ, 0.)

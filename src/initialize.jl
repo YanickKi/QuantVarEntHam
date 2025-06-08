@@ -13,7 +13,6 @@ mutable struct Buffers{T<:AbstractMatrix}
     sumobs::T
     evolob::Matrix{ComplexF64}
     frechTimesBlock::Matrix{ComplexF64}
-    count::Int
 end 
 
 function create_buffers(d::Integer, numBlocks::Integer, test_sumobs_type::T) where T<:AbstractMatrix
@@ -30,7 +29,6 @@ function create_buffers(d::Integer, numBlocks::Integer, test_sumobs_type::T) whe
     zero(test_sumobs_type),
     zeros(ComplexF64, d, d), 
     zeros(ComplexF64, d, d),
-    0
     )
 end
 

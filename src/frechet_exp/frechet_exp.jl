@@ -95,7 +95,7 @@ function exp_bufered!(A::StridedMatrix{T}, buf::ExpBuffer{T}) where {T<:BlasFloa
         k2 = 2 * k
         mul!(buf.tempP, buf.P, buf.A2)
         buf.P .= buf.tempP
-        buf.Apows[k] .= buf.P
+        buf.Apows[k] .= buf.P # CARE, APOWS MIGHT BE TOO SHORT
         buf.W .+= C[k2 + 2] .* buf.P
         buf.V .+= C[k2 + 1] .* buf.P
     end
@@ -110,11 +110,7 @@ function exp_bufered!(A::StridedMatrix{T}, buf::ExpBuffer{T}) where {T<:BlasFloa
         for t in 1:si
             mul!(buf.tempX, buf.X, buf.X)
             buf.X .= buf.tempX
-            if t < length(buf.Xpows)
-                buf.Xpows[t+1] .= buf.X
-            else 
-                push!(buf.Xpows, copy(buf.X))
-            end
+            buf.Xpows[t+1] .= buf.X # CARE, XPOWS MIGHT BE TOO SHORT
         end
     end
     sizeXpows = si+1

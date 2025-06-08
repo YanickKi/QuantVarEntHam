@@ -75,7 +75,7 @@ end
 """
     H_A_BW(set::Settings) 
 
-Return a vector of the blocks, which are complex dense matrices.
+Return a vector with of the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
 This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.
@@ -105,7 +105,7 @@ end
 """
     H_A_not_BW(set::Settings) 
 
-Return a vector of the blocks, which are complex dense matrices.
+Return a vector with of the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
 This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.
