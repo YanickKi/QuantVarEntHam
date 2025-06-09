@@ -10,6 +10,9 @@ function get_H_A!(g::Vector{<:AbstractFloat}, init::Init)
     end 
 end 
 
+function QCFL(;integration_method = tanh_sinh(), g1::Real=NaN)
+    return (F, G, g, init) -> fg!(F, G, g, init, integration_method, fix_first_index = !isnan(g1)), Float64(g1)
+end 
 
 function fg!(F::Union{AbstractFloat, Nothing}, G::Union{Vector{<:AbstractFloat}, Nothing}, g::Vector{<:Real}, init::Init, integration_method; fix_first_index::Bool = false)
     @unpack observables, T_max = init.set
@@ -104,74 +107,16 @@ function gradient_component(init::Init, index_parameter, t::Real)
     return 4*t*imag(tr(buff.frechTimesBlock))
 end
 
-#########################################################################################
-#                                                                                       #
-#                                FIXED G1                                               #
-#                                                                                       #
-#########################################################################################
-
-
-function fg_fixed!(F::Union{AbstractFloat, Nothing}, G::Union{Vector{<:AbstractFloat}, Nothing}, g::Vector{<:AbstractFloat}, init::Init, integration_method)
-    @unpack observables, T_max= init.set
-    get_H_A!(g, init)
-    init.buff.H_A .*= -1im
-    method_scalar, method_vector = integration_method
-    if G !== nothing
-        method_vector(t -> integrand_gradient_fixed(t, init), T_max, init.buff.C_G_result, init.buff.Σ)
-        init.buff.C_G_result ./= length(observables)*T_max
-        G[:] .= @view init.buff.C_G_result[2:end-1]
-    end
-    if F !== nothing 
-        if G === nothing
-            return method_scalar(t -> integrand_cost(t, init), T_max)/(length(observables)*T_max)
-        else 
-            return init.buff.C_G_result[1]
-        end 
-    end
-end 
-
-
-function integrand_gradient_fixed(t::AbstractFloat, init::Init)
-    @unpack ρ_A, meas0, observables = init.set
-    numBlocks = length(init.blocks)
-
-    buff = init.buff
-    buff.C_G[1] = 0.
-    buff.H_A .*= t
-    pullback =  own_rrule(exp, buff.H_A_forexp, init.exp_buf)
-    U = init.exp_buf.X
-    mul!(buff.ρ_A_right, ρ_A, U')
-    mul!(buff.ρ_A_evolved, U, buff.ρ_A_right)
-
-    @fastmath @inbounds @simd for i in eachindex(observables)
-        mul!(buff.evolob, observables[i], buff.ρ_A_evolved)
-        dev = real(tr(buff.evolob)) - meas0[i]
-        buff.sumobs .+= dev[i].*observables[i]
-        buff.C_G[1] += dev[i]^2
-    end 
-
-    mul!(buff.dAforpb, buff.ρ_A_right, buff.sumobs)
-
-    pullback(buff.dAforpb)
-    frech = init.exp_buf.∂X
-    
-    @fastmath @inbounds @simd for i in 2:numBlocks
-        mul!(buff.frechTimesBlock, frech, init.blocks[i])
-    end     
-
-    @fastmath @inbounds @simd for i in 2:numBlocks
-        buff.G_buffer[i-1] = 4*t*imag(tr(buff.frechTimesBlock))
-    end 
-    fill!(buff.sumobs, 0)
-    buff.C_G[2:end-1] .= @view buff.G_buffer[1:end-1]
-    return buff.C_G
-end
 
 #########################################################################################
 #                                                                                       #
 #                   Commutator cost function                                            #
 #                                                                                       #
 #########################################################################################
+
+function commutator()
+    return (F, G, g, init) -> comm_fg!(F, G, g, init), NaN 
+end 
 
 function comm_fg!(F::Union{AbstractFloat, Nothing}, G::Union{Vector{<:AbstractFloat}, Nothing}, g::Vector{<:Real}, init::Init)
  
@@ -235,11 +180,16 @@ function had!(buf::AbstractMatrix, A::AbstractMatrix,B::AbstractMatrix)
     return buf
 end
 
+
 #########################################################################################
 #                                                                                       #
 #                   Relative entropy                                                    #
 #                                                                                       #
 #########################################################################################
+
+function relative_entropy()
+    return (F, G, g, init) -> relative_entropy_fg!(F, G, g, init), NaN
+end 
 
 function relative_entropy_fg!(F::Union{AbstractFloat, Nothing}, G::Union{Vector{<:AbstractFloat}, Nothing}, g::Vector{<:Real}, init::Init)
  
@@ -250,7 +200,7 @@ function relative_entropy_fg!(F::Union{AbstractFloat, Nothing}, G::Union{Vector{
     end
     if F !== nothing 
         if G === nothing
-            C = relative_entropy(init)
+            C = relative_entropy_cost(init)
             return C
         else 
             return C
@@ -258,7 +208,7 @@ function relative_entropy_fg!(F::Union{AbstractFloat, Nothing}, G::Union{Vector{
     end
 end 
 
-function relative_entropy(init::Init)
+function relative_entropy_cost(init::Init)
     @unpack ρ_A  = init.set
     buff = init.buff
     
@@ -352,7 +302,6 @@ function quadgk_count!(g::Vector{<:AbstractFloat}, init::Init)
     get_H_A!(g, init)
     init.buff.H_A .*= -1im
     I, E, count =  quadgk_count(t -> integrand_onlycost(t, init),0., T_max)
-    #println("QuadGK evaluations: ", count)
     return I/(length(observables)*T_max), count 
 end 
 
