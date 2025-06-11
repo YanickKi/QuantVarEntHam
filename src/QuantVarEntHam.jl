@@ -8,6 +8,7 @@ export Init, initialize, get_rhoA
 export tanh_sinh, midpoint
 export optimize_LBFGS
 export universal_ratios
+export QCFL, commutator, relative_entropy
 
 using Parameters
 

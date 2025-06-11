@@ -5,16 +5,17 @@ struct QuadTS{N}
     tables::NTuple{N,Vector{Tuple{Float64,Float64}}}
 end
 
-function integration_tables(;maxlevel::Integer=12, h0::Float64=1.)
+function integration_tables(;maxlevel::Integer=12, h0::Real=1)
+    _h0 = Float64(h0)
     origin = samplepoint(0.)
-    table0 = generate_table(h0, 1)
+    table0 = generate_table(_h0, 1)
     tables = Vector{Tuple{Float64,Float64}}[]
     for level in 1:maxlevel
-        h = h0/2^level
+        h = _h0/2^level
         table = generate_table(h, 2)
         push!(tables, table)
     end
-    return QuadTS{maxlevel}(h0, origin, table0, Tuple(tables))
+    return QuadTS{maxlevel}(_h0, origin, table0, Tuple(tables))
 end
 
 include("mapsum.jl")

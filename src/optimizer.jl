@@ -18,7 +18,6 @@ Minimize cost function using the LBFGS-optimizer from `Optim.jl`.
 """
 function optimize_LBFGS(g_init::Vector{<:Real}, init::Init; cost = QCFL(), gtol::AbstractFloat=1e-16, maxiter::Integer = 200, show_trace::Bool=true, print_result::Bool = true)
 
-   
     cost_function, g1 = cost
     
     _g_init = Float64.(g_init)
