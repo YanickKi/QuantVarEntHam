@@ -2,7 +2,7 @@ using LinearAlgebra
 import LinearAlgebra.BlasFloat
 using ChainRulesCore: add!!
 
-mutable struct ExpBuffer{T}
+mutable struct Exp_frech_buffer{T}
     Inn::Matrix{T}
     A::Matrix{T}
     A2::Matrix{T}
@@ -14,8 +14,6 @@ mutable struct ExpBuffer{T}
     U::Matrix{T}
     X::Matrix{T}
     tempX::Matrix{T}
-    temp2X::Matrix{T}
-    VminU::Matrix{T}
     ∂A2::Matrix{T}
     ΔAA::Matrix{T}
     AΔA::Matrix{T}
@@ -28,16 +26,51 @@ mutable struct ExpBuffer{T}
     C::Vector{Vector{T}}
 end
 
-function ExpBuffer(T::Type, n::Int)
+mutable struct Exp_buffer{T}
+    Inn::Matrix{T}
+    A::Matrix{T}
+    A2::Matrix{T}
+    P::Matrix{T}
+    tempP::Matrix{T}
+    W::Matrix{T}
+    V::Matrix{T}
+    tempV::Matrix{T}
+    U::Matrix{T}
+    X::Matrix{T}
+    tempX::Matrix{T}
+    C::Vector{Vector{T}}
+end 
+
+function generate_coefficients(T)
     C1 = T[17643225600.0,8821612800.0,2075673600.0,302702400.0,30270240.0,2162160.0,110880.0,3960.0,90.0,1.0,]
     C2 = T[17297280.0, 8648640.0, 1995840.0, 277200.0, 25200.0, 1512.0, 56.0, 1.0]
     C3 = T[30240.0, 15120.0, 3360.0, 420.0, 30.0, 1.0]
     C4 = T[120.0, 60.0, 12.0, 1.0]
     C5 = T[64764752532480000.0,32382376266240000.0,7771770303897600.0,1187353796428800.0,129060195264000.0,10559470521600.0,670442572800.0,33522128640.0,1323241920.0,40840800.0,960960.0,16380.0,182.0,1.0,]
-    return ExpBuffer(
+    return [C1,C2,C3,C4,C5]
+end 
+
+function make_exp_buffer(T::Type, n::Int)
+    return Exp_buffer(
         Matrix{T}(I, n, n),
         zeros(T, n, n),
         zeros(T, n, n),
+        zeros(T, n, n),
+        zeros(T, n, n),
+        zeros(T, n, n),
+        zeros(T, n, n),
+        zeros(T, n, n),
+        zeros(T, n, n),
+        zeros(T, n, n),
+        zeros(T, n, n),
+        generate_coefficients(T)
+    )
+end
+
+function make_exp_frech_buffer(T::Type, n::Int)
+   
+    return Exp_frech_buffer(
+        Matrix{T}(I, n, n),
         zeros(T, n, n),
         zeros(T, n, n),
         zeros(T, n, n),
@@ -57,11 +90,64 @@ function ExpBuffer(T::Type, n::Int)
         zeros(T, n, n),
         Matrix{T}[zeros(T,n,n) for i in 1:6],  # Apows
         Matrix{T}[zeros(T,n,n) for i in 1:5],  # Xpows
-        [C1,C2,C3,C4,C5]
+        generate_coefficients(T)
     )
 end
 
-function exp_bufered!(A::StridedMatrix{T}, buf::ExpBuffer{T}) where {T<:BlasFloat}    
+function exp_only_buffered!(A::StridedMatrix{T}, buf::Union{Exp_frech_buffer{T}, Exp_buffer{T}}) where {T<:BlasFloat}    
+    n = LinearAlgebra.checksquare(A)
+    ilo, ihi, scale = LAPACK.gebal!('B', A)  # modifies A
+    nA = opnorm(A, 1)
+    ## For sufficiently small nA, use lower order Padé-Approximations
+    if (nA <= 2.1)
+        if nA > 0.95
+            C = buf.C[1]
+        elseif nA > 0.25
+            C = buf.C[2]
+        elseif nA > 0.015
+            C = buf.C[3]
+        else
+            C = buf.C[4]
+        end
+        si = 0
+    else
+        C = buf.C[5]
+        s = log2(nA / 5.4)  # power of 2 later reversed by squaring
+        si = ceil(Int, s)
+    end
+    if si > 0
+        A ./= convert(T, 2^si)
+    end
+
+    mul!(buf.A2, A, A)  # A2 = A * A
+    buf.P .= buf.Inn  # P = I
+    buf.W .= C[2] .* buf.P
+    buf.V .= C[1] .* buf.P
+    sizeApows = (div(size(C, 1), 2) - 1)
+    for k in 1:sizeApows
+        k2 = 2 * k
+        mul!(buf.tempP, buf.P, buf.A2)
+        buf.P .= buf.tempP
+        buf.W .+= C[k2 + 2] .* buf.P
+        buf.V .+= C[k2 + 1] .* buf.P
+    end
+    mul!(buf.U, A, buf.W)
+    buf.X .= buf.V .+ buf.U
+    buf.V .= buf.V .- buf.U
+    buf.tempV .= buf.V
+    F = lu!(buf.tempV)  # NOTE: use lu! instead of LAPACK.gesv! so we can reuse factorization
+    ldiv!(F, buf.X)
+    if si > 0  # squaring to reverse dividing by power of 2
+        for t in 1:si
+            mul!(buf.tempX, buf.X, buf.X)
+            buf.X .= buf.tempX
+        end
+    end
+    _unbalance!(buf.X, ilo, ihi, scale, n)
+    return
+end
+
+function exp_buffered!(A::StridedMatrix{T}, buf::Exp_frech_buffer{T}) where {T<:BlasFloat}    
     n = LinearAlgebra.checksquare(A)
     ilo, ihi, scale = LAPACK.gebal!('B', A)  # modifies A
     nA = opnorm(A, 1)
@@ -168,10 +254,10 @@ function _unbalance!(X, ilo, ihi, scale, n)
 end
 
 
-function own_rrule(::typeof(exp), A0::StridedMatrix{<:BlasFloat}, buf::ExpBuffer)
+function own_rrule(::typeof(exp), A0::StridedMatrix{<:BlasFloat}, buf::Exp_frech_buffer)
     # TODO: try to make this more type-stable
     buf.A .= A0
-    intermediates = exp_bufered!(buf.A, buf)
+    intermediates = exp_buffered!(buf.A, buf)
     function exp_pullback(ΔX)
         _matfun_frechet!(exp, ΔX, buf.A, intermediates, buf)
     end
@@ -180,7 +266,7 @@ end
 
 
 function _matfun_frechet!(
-    ::typeof(exp), ΔA, A::StridedMatrix{T}, (ilo, ihi, scale, C, si, F, sizeApows, sizeXpows), buf::ExpBuffer
+    ::typeof(exp), ΔA, A::StridedMatrix{T}, (ilo, ihi, scale, C, si, F, sizeApows, sizeXpows), buf::Exp_frech_buffer
 ) where {T<:BlasFloat}
     n = LinearAlgebra.checksquare(A)
     _balance!(ΔA, ilo, ihi, scale, n)

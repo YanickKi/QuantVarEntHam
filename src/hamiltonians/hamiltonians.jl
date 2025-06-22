@@ -4,18 +4,16 @@ using SparseArrays
 
 
 """
-    Settings{M<:AbstractMatrix}
+    Settings
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
 
-The parametric type `M<:AbstractBlock` is for determining the most efficient representation of observables.
 All physical models have their own concrete type of `Settings` (e.g. `Settings_TFIM`).
 In general the concrete types will have the same fields besides the model specific Hamiltonian parameters, which are: 
  
 - `N::Int`: number of sites in composite system.
 - `N_A::Int`: number of sites in subsystem A.
 - `J::Float64`: global prefactor in Hamiltonian
-- `T_max::Float64`: maximum time for evolving the observables i.e. maximum integration time.
 - `S::Rational`: spin number
 - `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
 - `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
@@ -23,7 +21,7 @@ In general the concrete types will have the same fields besides the model specif
 - `meas0::Vector{Float64}`: expectation values of `observables` at time ``t=0``.
 - `observables::Vector{M}`: matrix representations of the observables
 """
-abstract type Settings{M<:AbstractMatrix} end
+abstract type Settings end
 
 """
     get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int) 
@@ -75,7 +73,7 @@ end
 """
     H_A_BW(set::Settings) 
 
-Return a vector with of the blocks as its entries, which are complex dense matrices.
+Return a vector with the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
 This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.
@@ -105,7 +103,7 @@ end
 """
     H_A_not_BW(set::Settings) 
 
-Return a vector with of the blocks as its entries, which are complex dense matrices.
+Return a vector with the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
 This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.

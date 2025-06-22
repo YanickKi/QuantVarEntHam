@@ -1,5 +1,5 @@
 """
-    Settings_XXZ{M<:AbstractMatrix} <:Settings{M}
+    Settings_XXZ
 
 Concrete type of [`Settings`](@ref), containing the settings for the XXZ model
 
@@ -11,23 +11,19 @@ Concrete type of [`Settings`](@ref), containing the settings for the XXZ model
 - see [`Settings`](@ref)
 - `Δ::Real`: anisotropy 
 """
-@with_kw struct Settings_XXZ{M<:AbstractMatrix} <:Settings{M}
+@with_kw struct Settings_XXZ <: Settings
     N::Int
     N_A::Int
     Δ::Float64
     J::Float64
-    T_max::Float64
     S::Rational
     r_max::Int
     periodic::Bool 
     ρ_A::Matrix{ComplexF64}
-    meas0::Vector{Float64}
-    observables::Vector{M}
 end
 """
-    XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N),
-    observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
+    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
 
 Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XXZ Model 
 
@@ -35,7 +31,6 @@ Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XX
 - `N::Int`: number of sites in the composite system.
 - `Δ::Real`: anisotropy 
 - `N_A::Int`: number of sites in subsystem A.
-- `T_max::Real`: maximum time for evolving the observables i.e. maximum integration time.
 
 # Keyword arguments
 - `S::Union{Int64, Rational} = 1//2`: spin number.
@@ -43,25 +38,19 @@ Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XX
 - `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
 - `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
 - `ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
-- `observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1]`: monitored observables in the cost function.
 
 # Recommendations
 - use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most. 
-- use only one type of observables (e.g. X_i X_i+1) since these are then stored as sparse matrices, otherwise dense which leads to higher computation time.
 """
-function XXZ(N::Int, N_A::Int, Δ::Real, T_max::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N),
-    observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1)) for i in 1:N_A-1])
+function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
     
-    meas0 = [expect(obs, ρ_A) for obs in observables]
-
-    return Settings_XXZ{eltype(observables)}(
+    return Settings_XXZ(
         N = N, N_A = N_A,
         S = S,
         Δ = Δ, J = J, 
-        T_max = T_max, r_max = r_max, periodic = periodic,
-        ρ_A = ρ_A,
-        observables = observables, meas0 = meas0 
+        r_max = r_max, periodic = periodic,
+        ρ_A = ρ_A
     ) 
 end 
 

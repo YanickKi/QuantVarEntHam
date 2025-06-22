@@ -69,7 +69,7 @@ observables::Vector{<:AbstractMatrix}=[repeat(N_A, Z, (i,i+1), S=S) for i in 1:N
 ### Ansätze
 The BW Ansatz has the blocks 
 ```math
-\hat{h}_i = J ( \frac{J_\text{Heis}}{2} \sum_{j \in \langle j,i \rangle \cap \text{A}} (\vec{S}_i \cdot \vec{S}_{i+1} + B_x X_i + U_{zz} Z_i^2) )
+\hat{h}_i = J ( \frac{J_\text{Heis}}{2} \sum_{j \in \langle j,i \rangle \cap \text{A}} \vec{S}_i \cdot \vec{S}_{j} + B_x X_i + U_{zz} Z_i^2)
 ```
 The BW violating Ansatz has the blocks 
 ```math

@@ -1,41 +1,25 @@
 using Parameters
 
-mutable struct Buffers{T<:AbstractMatrix}
-    C_G::Vector{Float64}
-    C_G_result::Vector{Float64}
-    Σ::Vector{Float64}
-    G_buffer::Vector{Float64}
-    ρ_A_evolved::Matrix{ComplexF64}
-    ρ_A_right::Matrix{ComplexF64}
-    dAforpb::Matrix{ComplexF64}
-    H_A::Matrix{ComplexF64}
-    H_A_forexp::Matrix{ComplexF64}
-    sumobs::T
-    evolob::Matrix{ComplexF64}
-    frechTimesBlock::Matrix{ComplexF64}
-end 
-
-function create_buffers(d::Integer, numBlocks::Integer, test_sumobs_type::T) where T<:AbstractMatrix
-    return Buffers{T}(
-    zeros(Float64, numBlocks+1),
-    zeros(Float64, numBlocks+1),
-    zeros(Float64, numBlocks+1),
-    zeros(Float64, numBlocks),
-    zeros(ComplexF64, d, d), 
-    zeros(ComplexF64, d, d), 
-    zeros(ComplexF64, d, d),
-    zeros(ComplexF64, d, d),
-    zeros(ComplexF64, d, d),
-    zero(test_sumobs_type),
-    zeros(ComplexF64, d, d), 
-    zeros(ComplexF64, d, d),
-    )
-end
 
 """
     initialize(Model::Settings, H_A::Function)
     
-WIP
+Convenient constructor for [Init](@ref). 
+Automatically pre allocates the correct buffer and constructs the correct blocks for the given model `Model` and given variational Ansatz `H_A`  
+
+# Arguments
+
+- `Model::Settings`: struct containing the settings for the model 
+- `H_A::Function`: the variational Ansatz
+
+# Example
+Constructing the settings, buffer and blocks for the TFIM with ``N=8``, ``N_\\text{A}=4``, OBC, ``Γ=1`` and ``T_\\text{max} = 2`` with
+the variational Ansatz ``H_\\text{A}^\\text{BW}``.
+
+```julia
+init = initialize(TFIM(8, 4, 1, 2), H_A_BW)
+```
+
 """
 function initialize(set::Settings, H_A::Function)
     @unpack N_A, r_max, S, observables = set
@@ -62,11 +46,22 @@ end
 """
     Init{T<:Settings, S<:AbstractMatrix}
 
-WIP
+Struct containing all settings, buffers and blocks for the variational Ansatz.
+
+!!! tip
+    Use the constructor [initialize](@ref) for constructing this struct, since it automatically constructs the correct buffers and blocks for the 
+    variational Ansatz.
+
+# Fields 
+
+- `set::T`: settings of the model (see [Settings](@ref))
+- `blocks::Vector{Matrix{ComplexF64}}`: the blocks of the variational Ansatz
+- `buff::Buffers{S}`: buffer for minimizing runtime during cost function computation (not public)
+- `exp_buf::ExpBuffer{ComplexF64}`: buffer for minimizing runtime during computation of matrix exponential and its Frechet derivative (not public)
 """
 struct Init{T<:Settings, S<:AbstractMatrix}
     set::T
     blocks::Vector{Matrix{ComplexF64}}
-    buff::Buffers{S}
-    exp_buf::ExpBuffer{ComplexF64}
+    buff::BufferOnlyQCFL{S}
+    exp_buf::BufferExp{ComplexF64}
 end
