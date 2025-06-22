@@ -4,11 +4,11 @@ using SparseArrays
 
 
 """
-    Settings
+    AbstractModel
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
 
-All physical models have their own concrete type of `Settings` (e.g. `Settings_TFIM`).
+All physical AbstractModels have their own concrete type of `AbstractModel` (e.g. `TFIM`).
 In general the concrete types will have the same fields besides the model specific Hamiltonian parameters, which are: 
  
 - `N::Int`: number of sites in composite system.
@@ -21,7 +21,7 @@ In general the concrete types will have the same fields besides the model specif
 - `meas0::Vector{Float64}`: expectation values of `observables` at time ``t=0``.
 - `observables::Vector{M}`: matrix representations of the observables
 """
-abstract type Settings end
+abstract type AbstractModel end
 
 """
     get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int) 
@@ -71,18 +71,18 @@ end
 
 
 """
-    H_A_BW(set::Settings) 
+    H_A_BW(set::AbstractModel) 
 
 Return a vector with the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
-This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.
+This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`AbstractModel`](@ref) to get the correct variational Ansatz for the corresponding AbstractModel.
 
 
 # Example 
-`H_A_BW(set::Settings_TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
+`H_A_BW(set::TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
 """
-function H_A_BW(set::Settings)
+function H_A_BW(set::AbstractModel)
     @unpack N, N_A, r_max, periodic, J = set
     
     if 2*N_A != N && periodic == false 
@@ -101,17 +101,17 @@ function H_A_BW(set::Settings)
 end 
 
 """
-    H_A_not_BW(set::Settings) 
+    H_A_not_BW(set::AbstractModel) 
 
 Return a vector with the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
-This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`Settings`](@ref) to get the correct variational Ansatz for the corresponding model.
+This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`AbstractModel`](@ref) to get the correct variational Ansatz for the corresponding AbstractModel.
 
 # Example 
-`H_A_not_BW(set::Settings_TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
+`H_A_not_BW(set::TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
 """
-function H_A_not_BW(set::Settings)
+function H_A_not_BW(set::AbstractModel)
     @unpack N_A, r_max, J = set
     
     blocks = Matrix{ComplexF64}[]
@@ -125,7 +125,7 @@ function H_A_not_BW(set::Settings)
     return J*blocks
 end 
 
-function H_A_BW_wo_corrections!(blocks::Vector{<:AbstractMatrix}, set::Settings)
+function H_A_BW_wo_corrections!(blocks::Vector{<:AbstractMatrix}, set::AbstractModel)
     @unpack N_A = set
     for i in 1:N_A 
         push!(blocks, hi(i, set))
@@ -133,7 +133,7 @@ function H_A_BW_wo_corrections!(blocks::Vector{<:AbstractMatrix}, set::Settings)
 end
 
 
-function corrections!(blocks::Vector{<:AbstractMatrix}, set::Settings)
+function corrections!(blocks::Vector{<:AbstractMatrix}, set::AbstractModel)
     @unpack N_A, r_max = set
     for r in 2:r_max
         for i in 1:N_A-r
@@ -168,7 +168,7 @@ function map_to_subsystem_chain!(objects, A)
 end 
 
 
-function H_A_BW_bad(set::Settings_toric)
+function H_A_BW_bad(set::AbstractModel_toric)
     @unpack Nx,Ny, A ,J = set 
     
     blocks = Vector{AbstractBlock}(undef, 0)
@@ -191,7 +191,7 @@ function H_A_BW_bad(set::Settings_toric)
     return H_A_Var(blocks, mat.(blocks))
 end
 
-function H_A_BW(set::Settings_kitaev)
+function H_A_BW(set::AbstractModel_kitaev)
     @unpack Jz, Jx, Jy = set
     blocks = Vector{AbstractBlock}(undef, 0)
 
@@ -223,7 +223,7 @@ function H_A_BW(set::Settings_kitaev)
     return H_A_Var(blocks, mat.(blocks)) 
     
 end 
-function H_A_BW(set::Settings_toric)
+function H_A_BW(set::AbstractModel_toric)
     @unpack Nx,Ny, A ,J = set 
 
     stars, plaquets = make_all_objects(Nx,Ny)

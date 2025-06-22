@@ -32,27 +32,13 @@ Constructs the cost function for the QCFL with the given integration method and 
 
 This function allows one to conveniently hand the cost function to be minimized to [`optimize_LBFGS`](@ref).
 """
-function QCFL(set::Settings, T_max::Real, H_A::Function; 
-    observables::Vector{<:AbstractMatrix}=[repeat(set.N_A, Z, (i,i+1), S = set.S) for i in 1:set.N_A-1], integration_method = tanh_sinh(), g1::Real=NaN,
-    buffer::Union{Nothing, QCFL_buffer} = nothing)
-    @unpack ρ_A = set
-    
-    meas0 = [expect(observable, ρ_A) for observable in observables]
-
-    blocks = H_A(set)
-
-    buff = something(buffer, make_QCFL_buffer(set, length(blocks)-!isnan(g1), observables))
- 
-    return (F, G, g) -> fg!(F, G, g, integration_method, T_max, ρ_A, observables, meas0, blocks, buff, fix_first_index = !isnan(g1)), Float64(g1), length(blocks)
-end 
 
 
 
 function fg!(F, G::Union{Vector{<:AbstractFloat}, Nothing}, g::Vector{<:Real}, integration_method, T_max::Real, ρ_A::AbstractMatrix, 
     observables::Vector{<:AbstractMatrix}, meas0::Vector{<:AbstractFloat}, blocks::Vector{<:AbstractMatrix}, buff; fix_first_index::Bool = false)
 
-    get_H_A!(buff.qcfl_buff.H_A, g, blocks)
-    buff.qcfl_buff.H_A .*= -1im
+
     method_scalar, method_vector, need_buffer = integration_method
     if G !== nothing
         if need_buffer == true
@@ -73,67 +59,6 @@ function fg!(F, G::Union{Vector{<:AbstractFloat}, Nothing}, g::Vector{<:Real}, i
     end
 end 
 
-
-function integrand_gradient(t::AbstractFloat, ρ_A::AbstractMatrix, observables::Vector{<:AbstractMatrix}, meas0::Vector{<:AbstractFloat}, blocks, buff, fix_first_index::Bool)
-    
-    qcfl_buff = buff.qcfl_buff
-
-    qcfl_buff.H_A_forexp .=  t .* qcfl_buff.H_A 
-    pullback =  own_rrule(exp, qcfl_buff.H_A_forexp, buff.exp_buff)
-    
-    evolve(ρ_A, buff.exp_buff.X, qcfl_buff)  
-    
-    δ = dev(observables[1], meas0[1], qcfl_buff)
-    qcfl_buff.sumobs .= δ.*observables[1]
-    qcfl_buff.C_G[1] = δ^2
-
-    @fastmath @inbounds @simd for i in 2:lastindex(observables)
-        δ = dev(observables[i], meas0[i], qcfl_buff)
-        qcfl_buff.sumobs .+= δ.*observables[i]
-        qcfl_buff.C_G[1] += δ^2
-    end 
-
-    pullback(mul!(qcfl_buff.dAforpb, qcfl_buff.ρ_A_right, qcfl_buff.sumobs))
-
-    @fastmath @inbounds @simd for i in 1+fix_first_index:lastindex(qcfl_buff.C_G)-1+fix_first_index
-        qcfl_buff.C_G[i+1-fix_first_index] = gradient_component(buff, blocks[i], t)
-    end    
-    
-    return qcfl_buff.C_G
-end
-
-function integrand_cost(t::AbstractFloat,  ρ_A::AbstractMatrix, observables::Vector{<:AbstractMatrix}, meas0::Vector{<:AbstractFloat}, buff)
-
-    qcfl_buff = buff.qcfl_buff
-
-    qcfl_buff.H_A_forexp .=  t .* qcfl_buff.H_A 
-    exp_only_buffered!(qcfl_buff.H_A_forexp, buff.exp_buff)
-
-    evolve(ρ_A, buff.exp_buff.X, qcfl_buff)  
-
-    c = 0.
-    @fastmath @inbounds @simd for i in eachindex(observables)
-        c += dev(observables[i], meas0[i], qcfl_buff)^2
-    end 
-    return c
-end
-
-function evolve(ρ_A::AbstractMatrix, U::AbstractMatrix, qcfl_buff)
-    mul!(qcfl_buff.ρ_A_evolved, U, mul!(qcfl_buff.ρ_A_right, ρ_A, U'))
-end 
-
-function dev(observable::AbstractMatrix, expect_at_0::AbstractFloat, qcfl_buff)
-    @inbounds mul!(qcfl_buff.evolob, observable, qcfl_buff.ρ_A_evolved)
-    @inbounds δ = real(tr(qcfl_buff.evolob))- expect_at_0
-    return δ
-end 
-
-function gradient_component(buff, block::AbstractMatrix, t::Real)
-    qcfl_buff = buff.qcfl_buff
-    frech = buff.exp_buff.∂X
-    mul!(qcfl_buff.frechTimesBlock, frech, block)
-    return 4*t*imag(tr(qcfl_buff.frechTimesBlock))
-end
 
 
 #########################################################################################
@@ -157,7 +82,7 @@ Constructs the commutator as cost function.
 
 This function allows one to conveniently hand the cost function to be minimized to [optimize_LBFGS](@ref).
 """
-function commutator(set::Settings, H_A::Function; buff::Union{Nothing, Commutator_buffer}=nothing)
+function commutator(set::Model, H_A::Function; buff::Union{Nothing, Commutator_buffer}=nothing)
     @unpack ρ_A = set
     
     blocks = H_A(set)
@@ -254,13 +179,13 @@ Constructs the commutator as cost function.
 
 This function allows one to conveniently hand the cost function to be minimized to [`optimize_LBFGS`](@ref).
 """
-function relative_entropy(set::Settings, H_A::Function; buff::Union{Nothing, Relative_entropy_buffer} = nothing)
+function relative_entropy(set::Model, H_A::Function; buff::Union{Nothing, Relative_entropy_buffer} = nothing)
     @unpack ρ_A = set
 
     blocks = H_A(set)
 
     buff = something(buff, make_relative_entropy_buffer(set))
-    
+
     return (F, G, g) -> relative_entropy_fg!(F, G, g, ρ_A, blocks, buff), NaN, length(blocks)
 end 
 

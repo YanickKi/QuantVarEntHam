@@ -1,17 +1,17 @@
 """
-    Settings_XXZ
+    XXZ
 
-Concrete type of [`Settings`](@ref), containing the settings for the XXZ model
+Concrete type of [`AbstractModel`](@ref), containing the settings for the XXZ model
 
 !!! tip
     Use the constructor [`XXZ`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
     and the default values in [`XXZ`](@ref) are highly recommended.
 
 # Fields 
-- see [`Settings`](@ref)
+- see [`AbstractModel`](@ref)
 - `Δ::Real`: anisotropy 
 """
-@with_kw struct Settings_XXZ <: Settings
+@with_kw struct XXZ <: AbstractModel
     N::Int
     N_A::Int
     Δ::Float64
@@ -25,7 +25,7 @@ end
     XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
     J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
 
-Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XXZ Model 
+Convenient constructor for [`XXZ`](@ref) containing settings for the XXZ Model 
 
 # Required Arguments
 - `N::Int`: number of sites in the composite system.
@@ -45,7 +45,7 @@ Convenient constructor for [`Settings_XXZ`](@ref) containing settings for the XX
 function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
     J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
     
-    return Settings_XXZ(
+    return XXZ(
         N = N, N_A = N_A,
         S = S,
         Δ = Δ, J = J, 
@@ -74,8 +74,8 @@ function H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{In
     return J*(XX_term+Δ*Z_term)
 end 
 
-function hi(i::Int, set::Settings_XXZ)
-    @unpack N_A, Δ, S= set
+function hi(i::Int, model::XXZ)
+    @unpack N_A, Δ, S= model
 
     if i > 1 && i < N_A 
         return 1/2*(repeat(N_A,X,(i-1,i), S=S) + repeat(N_A,Y,(i-1,i), S=S)+ Δ*repeat(N_A,Z,(i-1,i), S=S)) + 1/2*(repeat(N_A,X,(i,i+1), S=S) + repeat(N_A,Y,(i,i+1), S=S) + Δ*repeat(N_A,Z,(i,i+1), S=S))
@@ -87,14 +87,14 @@ function hi(i::Int, set::Settings_XXZ)
 end
 
 
-function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, set::Settings_XXZ)
-    @unpack N_A, Δ, S = set   
+function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, model::XXZ)
+    @unpack N_A, Δ, S = model   
     push!(blks, repeat(N_A,X,(i,i+r), S=S) + repeat(N_A,Y,(i,i+r), S=S))
     push!(blks, Δ*repeat(N_A,Z,(i,i+r), S=S)) 
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_XXZ)
-    @unpack N_A, Δ, S = set
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, model::XXZ)
+    @unpack N_A, Δ, S = model
      
     for i ∈ 1:N_A-1 
         push!(blks, repeat(N_A,X,(i,i+1), S=S) + repeat(N_A,Y,(i,i+1), S=S))
@@ -102,8 +102,8 @@ function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings
     end 
 end
 
-function H_A_XYZ_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_XXZ)
-    @unpack N_A, Δ, S= set
+function H_A_XYZ_wo_corrections!(blks::Vector{<:AbstractMatrix}, model::XXZ)
+    @unpack N_A, Δ, S= model
      
     for i ∈ 1:N_A-1 
         push!(blks, repeat(N_A,X,(i,i+1), S=S))

@@ -42,9 +42,9 @@ function optimize_LBFGS(g_init::Vector{<:Real}, cost; ∇_tol::AbstractFloat=1e-
     end
 end
 
-function optimize_free(g_init::Vector{<:AbstractFloat}, ∇_tol::AbstractFloat, maxiter::Integer, show_trace::Bool, print_result::Bool, cost_function::Function)
+function optimize_free(cost::AbstractCostFunction, g_init::Vector{<:AbstractFloat}; ∇_tol::AbstractFloat=1e-16, maxiter::Integer=1000, show_trace::Bool=true, print_result::Bool= true)
     
-    result = optimize(Optim.only_fg!((F, G, g) -> cost_function(F, G, g)), g_init, LBFGS(), Optim.Options(g_tol = ∇_tol,
+    result = optimize(g -> cost(g), (G,g) -> gradient!(G, cost, g), g_init, LBFGS(), Optim.Options(g_tol = ∇_tol,
                                                                 store_trace = false,
                                                                 show_trace = show_trace,
                                                                 show_warnings = true, iterations = maxiter))
@@ -53,7 +53,7 @@ function optimize_free(g_init::Vector{<:AbstractFloat}, ∇_tol::AbstractFloat, 
         println(result)
         println(g_opt)
     end 
-    return g_opt, cost_function(1., nothing,  g_opt) 
+    return g_opt, cost(g_opt) 
 end
 
 

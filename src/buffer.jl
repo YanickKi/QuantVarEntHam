@@ -36,8 +36,8 @@ struct QCFL_buffer
     exp_buff::Exp_frech_buffer{ComplexF64}
 end 
 
-function make_QCFL_buffer(set::Settings, numBlocks::Integer, observables::Vector{<:AbstractMatrix})
-    d = size(set.ρ_A)[1] # Hilbert space dimension
+function make_QCFL_buffer(model::AbstractModel, numBlocks::Integer, observables::Vector{<:AbstractMatrix})
+    d = size(model.ρ_A)[1] # Hilbert space dimension
     return QCFL_buffer(make_qcfl_only_buffer(d, numBlocks, observables), make_exp_frech_buffer(ComplexF64, d))
 end 
 
@@ -49,8 +49,8 @@ struct Commutator_buffer
 end 
 
 
-function make_commutator_buffer(set::Settings)
-    d = size(set.ρ_A)[1]
+function make_commutator_buffer(model::AbstractModel)
+    d = size(model.ρ_A)[1]
     return Commutator_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
 end 
 
@@ -62,9 +62,9 @@ struct Relative_entropy_buffer
     exp_buff::Exp_buffer{ComplexF64}
 end 
 
-function make_relative_entropy_buffer(set::Settings)
+function make_relative_entropy_buffer(model::AbstractModel)
 
-    d = size(set.ρ_A)[1]
+    d = size(model.ρ_A)[1]
     return Relative_entropy_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), 
             make_exp_buffer(ComplexF64, d))
 end 

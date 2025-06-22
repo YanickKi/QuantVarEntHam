@@ -18,6 +18,25 @@ function integration_tables(;maxlevel::Integer=12, h0::Real=1)
     return QuadTS{maxlevel}(_h0, origin, table0, Tuple(tables))
 end
 
+struct Tanh_sinh <: AbstractIntegrator
+    integration_table::QuadTS
+    atol::Float64
+    rtol::Float64
+    buffer::Vector{Float64}
+    scalar_integrate::Function 
+    vector_integrate::Function
+end
+
+function Tanh_sinh(length_buffer::Int; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Float64=1.0)
+    q = integration_tables(maxlevel = maxlevel, h0 = h0)
+    buffer = zeros(length_buffer)
+    scalar_integrate = (f, T_max) -> tanh_sinh(f, 0, T_max, q, atol=atol, rtol=rtol)
+    vector_integrate = (I, f, T_max) -> tanh_sinh!(I, f, 0, T_max, q, buffer, atol=atol, rtol=rtol)
+
+    return Tanh_sinh(q, atol, rtol, buffer, scalar_integrate, vector_integrate)
+
+end 
+
 include("mapsum.jl")
 include("mapsum_vector.jl")
 include("tanh-sinh_scalar.jl")

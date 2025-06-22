@@ -1,19 +1,19 @@
 """
-    Settings_pollmann
+    Pollmann
 
-Concrete type of [`Settings`](@ref), containing the settings for the Pollmann model
+Concrete type of [`AbstractModel`](@ref), containing the settings for the Pollmann model
 
 !!! tip
     Use the constructor [`pollmann`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
     and the default values in [`pollmann`](@ref) are highly recommended.
 
 # Fields 
-- see [`Settings`](@ref)
+- see [`AbstractModel`](@ref)
 - `J_Heis::Float64`: Heisenberg coupling strength.
 - `Bx::Float64`: transverse field strength
 - `Uzz::Float64`: square term prefactor
 """
-@with_kw struct Settings_pollmann <: Settings
+@with_kw struct Pollmann <: AbstractModel
     N::Int
     N_A::Int
     J_Heis::Float64
@@ -30,7 +30,7 @@ end
     pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int64, Rational}=1//1, r_max::Int=1, periodic::Bool=false,
     J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
 
-Convenient constructor for [`Settings_pollmann`](@ref) containing settings for the pollmann model
+Convenient constructor for [`Pollmann`](@ref) containing settings for the pollmann model
 
 # Required Arguments
 - `N::Int`: number of sites in the composite system.
@@ -52,7 +52,7 @@ Convenient constructor for [`Settings_pollmann`](@ref) containing settings for t
 function pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int64, Rational}=1, r_max::Int=1, periodic::Bool=false,
     J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
     
-    return Settings_pollmann(
+    return Pollmann(
         N = N, N_A = N_A,
         S=S, 
         J_Heis = J_Heis, Bx = Bx, Uzz = Uzz, J = J,
@@ -88,7 +88,7 @@ function H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=fa
 end 
 
 
-function hi(i::Int, set::Settings_pollmann)
+function hi(i::Int, set::Pollmann)
     @unpack N_A, J_Heis, Bx, Uzz, S = set
      
     hi = Bx*repeat(N_A, X, i, S=S) + Uzz*repeat(N_A, Z, i, S=S)^2
@@ -108,7 +108,7 @@ function hi(i::Int, set::Settings_pollmann)
     return hi
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_pollmann)
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Pollmann)
     @unpack N_A, J_Heis, Bx, Uzz, S = set
     
     if iszero(Bx) == false  
@@ -132,7 +132,7 @@ function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings
     
 end
 
-function H_A_notBW_wo_corrections_I!(blks::Vector{<:AbstractMatrix}, set::Settings_pollmann)
+function H_A_notBW_wo_corrections_I!(blks::Vector{<:AbstractMatrix}, set::Pollmann)
     @unpack N_A, J_Heis, Bx, Uzz, S = set
     
     
@@ -158,7 +158,7 @@ end
 
 #=
 
-function correction!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Settings_TFIM)
+function correction!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Model_TFIM)
     @unpack N_A = set   
     push!(blks, repeat(N_A,Z,(i,i+r)))
 end

@@ -1,17 +1,17 @@
 """
-    Settings_TFIM
+    TFIM
 
-Concrete type of [`Settings`](@ref), containing the settings for the TFIM
+Concrete type of [`AbstractModel`](@ref), containing the settings for the TFIM
 
 !!! tip
     Use the constructor [`TFIM`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
     and the default values in [`TFIM`](@ref) are highly recommended.
 
 # Fields 
-- see [`Settings`](@ref)
+- see [`AbstractModel`](@ref)
 - `Γ::Real`: transverse field strength 
 """
-@with_kw struct Settings_TFIM <: Settings
+@with_kw struct TFIM <: AbstractModel
     N::Int
     N_A::Int
     Γ::Float64
@@ -26,7 +26,7 @@ end
     TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
-Convenient constructor for [`Settings_TFIM`](@ref) containing settings for the TFIM
+Convenient constructor for [`TFIM`](@ref) containing settings for the TFIM
 
 # Required Arguments
 - `N::Int`: number of sites in the composite system.
@@ -46,7 +46,7 @@ Convenient constructor for [`Settings_TFIM`](@ref) containing settings for the T
 function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
-    return Settings_TFIM(
+    return TFIM(
         N = N, N_A = N_A,
         S = S,
         Γ = Γ, J = J, 
@@ -78,7 +78,7 @@ function H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{I
 end 
 
 
-function hi(i::Int, set::Settings_TFIM)
+function hi(i::Int, set::TFIM)
     @unpack N_A, Γ, S = set
      
     hi = Γ * repeat(N_A, X, i, S=S)
@@ -92,12 +92,12 @@ function hi(i::Int, set::Settings_TFIM)
     return hi
 end
 
-function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, set::Settings_TFIM)
+function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, set::TFIM)
     @unpack N_A, S = set   
     push!(blks, repeat(N_A,Z,(i,i+r), S=S))
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Settings_TFIM)
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::TFIM)
     @unpack N_A, Γ, S = set
     
     push!(blks, Γ*repeat(N_A, X, 1, S=S))
