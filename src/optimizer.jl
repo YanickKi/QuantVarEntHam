@@ -44,7 +44,7 @@ end
 
 function optimize_free(cost::AbstractCostFunction, g_init::Vector{<:AbstractFloat}; ∇_tol::AbstractFloat=1e-16, maxiter::Integer=1000, show_trace::Bool=true, print_result::Bool= true)
     
-    result = optimize(g -> cost(g), (G,g) -> gradient!(G, cost, g), g_init, LBFGS(), Optim.Options(g_tol = ∇_tol,
+    result = optimize(Optim.only_fg!((F, G, g) ->  fg!(F, G, cost, g)), g_init, LBFGS(), Optim.Options(g_tol = ∇_tol,
                                                                 store_trace = false,
                                                                 show_trace = show_trace,
                                                                 show_warnings = true, iterations = maxiter))

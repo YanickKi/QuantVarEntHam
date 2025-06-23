@@ -1,14 +1,16 @@
-struct Relative_entropy{M} <: AbstractCostFunction
+mutable struct Relative_entropy{M} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
     buff::Relative_entropy_buffer
+    trace_exp_H_A::Float64 # cached variable to save intermediate calculations in gradient for cost
 end 
 
 function Relative_entropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
     return Relative_entropy(
         model, 
         blocks, 
-        make_relative_entropy_buffer(model)
+        make_relative_entropy_buffer(model),
+        0.
     )
 end 
 
@@ -16,7 +18,7 @@ function (c::Relative_entropy)(g)
     buff = c.buff
     ρ_A = c.model.ρ_A
 
-    get_H_A!(buff.H_A, g, c.blocks)
+    get_H_A!(c, g)
     buff.H_A_forexp  .= -1 .* buff.H_A
     exp_only_buffered!(buff.H_A_forexp, buff.exp_buff)
     exp_H_A = buff.exp_buff.X
@@ -29,29 +31,73 @@ end
 
 function gradient!(G, c::Relative_entropy, g::Vector{<:Real})
     
-    H_A = c.buff.H_A
+    get_H_A!(c, g)
+
+    pre_computations_gradient(c)
+
+    @fastmath @inbounds @simd for i in eachindex(G)
+        G[i] = gradient_component(c, i)
+    end
+
+    return G 
+end 
+
+function gradient!(G, fc::FixedCost{C}, g::Vector{<:Real}) where {C<:Relative_entropy}
+    
+    get_H_A!(fc, g)
+
+    pre_computations_gradient(fc.c)
+    @fastmath @inbounds @simd for i in eachindex(fc.free_indices)
+        G[i] = gradient_component(fc.c, fc.free_indices[i])
+    end
+
+    return G 
+end 
+
+function pre_computations_gradient(c::Relative_entropy)
+    
     H_A_forexp = c.buff.H_A_forexp
-    ρ_A_times_H_A = c.buff.ρ_A_times_H_A
     exp_buff = c.buff.exp_buff
-    ρ_A = c.model.ρ_A
-
-    get_H_A!(H_A, g, c.blocks)
    
-    H_A_forexp .= -1 .*H_A
-
-
-    ρ_A_times_block = ρ_A_times_H_A # just a renaming so it's more readable
+    H_A_forexp .= -1 .* c.buff.H_A
 
     exp_only_buffered!(H_A_forexp, exp_buff)
     exp_H_A = exp_buff.X
-    γ = -1/(tr(exp_H_A))
+    
+    c.trace_exp_H_A = tr(exp_H_A)
 
-    @fastmath @inbounds @simd for i in eachindex(G)
-        ∂S1 = tr(mul!(ρ_A_times_block, ρ_A, c.blocks[i]))
-        ∂S2 = γ * tr(mul!(ρ_A_times_block, exp_H_A, c.blocks[i]))
-        G[i] = ∂S1+∂S2
-    end
+end 
 
-    S1 = tr(mul!(ρ_A_times_block, ρ_A, H_A))
-    S2 = log(tr(exp_H_A))
+function gradient_component(c::Relative_entropy, index::Integer)
+
+    ρ_A_times_block = c.buff.ρ_A_times_H_A # renaming for readability 
+    exp_H_A = c.buff.exp_buff.X    # renaming for readability 
+
+    γ = - 1/c.trace_exp_H_A
+
+    ∂S1 = tr(mul!(ρ_A_times_block, c.model.ρ_A, c.blocks[index]))
+    ∂S2 = γ * tr(mul!(ρ_A_times_block, exp_H_A, c.blocks[index]))
+    return ∂S1+∂S2
+end 
+
+function fg!(F, G::Union{Vector{<:Real}, Nothing}, c::Union{C, FixedCost{C}}, g::Vector{<:Real}) where {C<:Relative_entropy}
+    if !isnothing(G)
+        gradient!(G, c, g)
+        if !isnothing(F)
+            return cost_from_gradient_intermediates(c)
+        end 
+    end 
+    if !isnothing(F)
+        return c(g)
+    end 
+end 
+
+function cost_from_gradient_intermediates(c::Relative_entropy)
+    S1 = tr(mul!(c.buff.ρ_A_times_H_A, c.model.ρ_A, c.buff.H_A))
+    S2 = log(c.trace_exp_H_A)
+    return S1+S2
+end 
+
+function cost_from_gradient_intermediates(fc::FixedCost{C}) where {C<:Relative_entropy}
+    cost_from_gradient_intermediates(fc.c)
 end 

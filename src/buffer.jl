@@ -1,12 +1,9 @@
 mutable struct BufferOnlyQCFL{T<:AbstractMatrix}
     C_G::Vector{Float64}
     C_G_result::Vector{Float64}
-    Σ::Vector{Float64}
-    G_buffer::Vector{Float64}
     ρ_A_evolved::Matrix{ComplexF64}
     ρ_A_right::Matrix{ComplexF64}
     dAforpb::Matrix{ComplexF64}
-    H_A::Matrix{ComplexF64}
     H_A_forexp::Matrix{ComplexF64}
     sumobs::T
     evolob::Matrix{ComplexF64}
@@ -17,11 +14,8 @@ function make_qcfl_only_buffer(d::Integer, numBlocks::Integer, observables::Vect
     return BufferOnlyQCFL{eltype(observables)}(
     zeros(Float64, numBlocks+1),
     zeros(Float64, numBlocks+1),
-    zeros(Float64, numBlocks+1),
-    zeros(Float64, numBlocks),
     zeros(ComplexF64, d, d), 
     zeros(ComplexF64, d, d), 
-    zeros(ComplexF64, d, d),
     zeros(ComplexF64, d, d),
     zeros(ComplexF64, d, d),
     zero(observables[1]),
@@ -34,11 +28,16 @@ end
 struct QCFL_buffer
     qcfl_buff::BufferOnlyQCFL
     exp_buff::Exp_frech_buffer{ComplexF64}
+    H_A::Matrix{ComplexF64}
 end 
 
 function make_QCFL_buffer(model::AbstractModel, numBlocks::Integer, observables::Vector{<:AbstractMatrix})
     d = size(model.ρ_A)[1] # Hilbert space dimension
-    return QCFL_buffer(make_qcfl_only_buffer(d, numBlocks, observables), make_exp_frech_buffer(ComplexF64, d))
+    return QCFL_buffer(
+        make_qcfl_only_buffer(d, numBlocks, observables), 
+        make_exp_frech_buffer(ComplexF64, d), 
+        zeros(ComplexF64, d, d) 
+    )
 end 
 
 

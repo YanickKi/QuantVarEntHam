@@ -19,7 +19,7 @@ function (c::Commutator)(g::Vector{<:Real})
     H_A = c.buff.H_A
     ρ_A = c.model.ρ_A 
 
-    get_H_A!(H_A, g, c.blocks)
+    get_H_A!(c, g)
 
     mul!(mul!(comm, ρ_A, H_A), H_A, ρ_A, 1, -1) # compute [H_A, ρ_A] and save it in comm
     
@@ -28,13 +28,35 @@ end
 
 function gradient!(G::Vector{<:Real}, c::Commutator, g::Vector{<:Real})
     
+    get_H_A!(c, g)
+
+    Λ_comm, Λ_H_A, Λ_ρ_A = pre_computations_gradient(c)
+
+    @fastmath @inbounds @simd for i in eachindex(G)
+        G[i] = gradient_component(c, Λ_comm, Λ_H_A, Λ_ρ_A, i)
+    end 
+    return Λ_comm/(2*Λ_H_A * Λ_ρ_A)
+end 
+
+
+function gradient!(G::Vector{<:Real}, fc::FixedCost{C}, g::Vector{<:Real}) where {C<:Commutator}
+    
+    get_H_A!(fc, g)
+
+    Λ_comm, Λ_H_A, Λ_ρ_A = pre_computations_gradient(fc.c)
+
+    @fastmath @inbounds @simd for i in eachindex(fc.free_indices)
+        G[i] = gradient_component(fc.c, Λ_comm, Λ_H_A, Λ_ρ_A, fc.free_indices[i])
+    end 
+    return Λ_comm/(2*Λ_H_A * Λ_ρ_A)
+end 
+
+
+function pre_computations_gradient(c::Commutator)
+    
     comm = c.buff.comm
     H_A = c.buff.H_A
-    temp = c.buff.temp
     ρ_A = c.model.ρ_A
-    blocks = c.blocks
-
-    get_H_A!(H_A, g, c.blocks)
 
     mul!(mul!(comm, ρ_A, H_A), H_A, ρ_A, 1, -1) # compute [H_A, ρ_A] and save it in comm
 
@@ -43,14 +65,17 @@ function gradient!(G::Vector{<:Real}, c::Commutator, g::Vector{<:Real})
     Λ_H_A = norm(H_A)
     Λ_ρ_A = norm(ρ_A)
 
-    @fastmath @inbounds @simd for index in eachindex(G)
-        mul!(mul!(temp, ρ_A, blocks[index]), blocks[index], ρ_A, 1, -1) # compute [h_index, ρ_A] and save it in temp
-        ∂Λ_comm = 1/Λ_comm * real(sum(had!(temp, temp, comm)))
-        ∂Λ_H_A = 1/Λ_H_A * real(sum(had!(temp, H_A, blocks[index])))
-        G[index] = 1/(2*Λ_ρ_A*Λ_H_A^2)*(∂Λ_comm * Λ_H_A - Λ_comm * ∂Λ_H_A) 
-    end 
-    return Λ_comm/(2*Λ_H_A * Λ_ρ_A)
+    return Λ_comm, Λ_H_A, Λ_ρ_A 
 end 
+
+
+function gradient_component(c::Commutator, Λ_comm::Real, Λ_H_A::Real, Λ_ρ_A::Real, index::Integer)
+    mul!(mul!(c.buff.temp, c.model.ρ_A, c.blocks[index]), c.blocks[index], c.model.ρ_A, 1, -1) # compute [h_index, ρ_A] and save it in temp
+    ∂Λ_comm = 1/Λ_comm * real(sum(had!(c.buff.temp, c.buff.temp, c.buff.comm)))
+    ∂Λ_H_A = 1/Λ_H_A * real(sum(had!(c.buff.temp, c.buff.H_A, c.blocks[index])))
+    return 1/(2*Λ_ρ_A*Λ_H_A^2)*(∂Λ_comm * Λ_H_A - Λ_comm * ∂Λ_H_A) 
+end 
+
 
 # compute hadamard product of two square matrices A and B and save it in buff
 function had!(buff::AbstractMatrix, A::AbstractMatrix,B::AbstractMatrix)

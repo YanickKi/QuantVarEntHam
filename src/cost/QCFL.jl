@@ -8,6 +8,35 @@ struct QCFL{M, I, O} <: AbstractCostFunction
     buff::QCFL_buffer
 end
  
+function FixedCost(c::QCFL, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+    
+    @assert typeof(c) != FixedCost "Cannot wrap a fixed cost into a new fixed cost!"
+
+    c = deepcopy(c)
+
+    if typeof(c.integrator) == Tanh_sinh
+        for _ in eachindex(fixed_indices)
+            pop!(c.integrator.buffer)
+        end 
+    end 
+    for _ in eachindex(fixed_indices)
+        pop!(c.buff.qcfl_buff.C_G)
+        pop!(c.buff.qcfl_buff.C_G_result)
+    end 
+
+    full_g = zeros(length(c.blocks))
+
+    full_g[fixed_indices] .= fixed_values
+    free_indices = setdiff(eachindex(c.blocks), fixed_indices)
+    return FixedCost(
+        c, 
+        fixed_indices,
+        Float64.(fixed_values),
+        free_indices,
+        full_g
+    ) 
+end 
+
 function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing)
     
     observables = something(observables, [repeat(model.N_A, Z, (i,i+1), S = model.S) for i in 1:model.N_A-1])
@@ -25,33 +54,39 @@ function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Rea
 end 
 
 function (c::QCFL)(g::Vector{<:Real})
-    get_H_A!(c.buff.qcfl_buff.H_A, g, c.blocks)
-    return c.integrator.scalar_integrate(t -> integrand_cost(c, g, t), c.T_max)/(length(c.observables)*c.T_max)
+    get_H_A!(c, g)
+    return c.integrator.scalar_integrate(t -> integrand_cost(c, t), c.T_max)/(length(c.observables)*c.T_max)
 end 
 
 function gradient!(G, c::QCFL, g::Vector{<:Real})
-    get_H_A!(c.buff.qcfl_buff.H_A, g, c.blocks)
-    c.integrator.vector_integrate(c.buff.qcfl_buff.C_G_result, t -> integrand_gradient(c, g, t), c.T_max)
+    get_H_A!(c, g)
+    c.integrator.vector_integrate(c.buff.qcfl_buff.C_G_result, t -> integrand_gradient(c, t), c.T_max)
     c.buff.qcfl_buff.C_G_result ./= length(c.observables)*c.T_max
     G[:] .= @view c.buff.qcfl_buff.C_G_result[2:end]
+    return c.buff.qcfl_buff.C_G_result[1]
 end
 
+function gradient!(G, fc::FixedCost{C}, g::Vector{<:Real}) where {C<:QCFL}
+    c = fc.c
 
-function integrand_gradient(c::QCFL, g::Vector{<:Real}, t::AbstractFloat)
+    get_H_A!(fc, g)
     
+    c.integrator.vector_integrate(c.buff.qcfl_buff.C_G_result, t -> integrand_gradient(fc, t), c.T_max)
+    c.buff.qcfl_buff.C_G_result ./= length(c.observables)*c.T_max
+    G[:] .= @view c.buff.qcfl_buff.C_G_result[2:end]
+    return c.buff.qcfl_buff.C_G_result[1]
+end 
+
+
+function pre_computations_gradient(c::QCFL, t::AbstractFloat)
     ρ_A = c.model.ρ_A 
     observables = c.observables
-    blocks = c.blocks 
     meas0 = c.meas0 
     buff = c.buff
 
-    fix_first_index = false 
-
-    get_H_A!(buff.qcfl_buff.H_A, g, blocks)
-
     qcfl_buff = buff.qcfl_buff
 
-    qcfl_buff.H_A_forexp .=  -1im*t .* qcfl_buff.H_A 
+    qcfl_buff.H_A_forexp .=  -1im*t .* buff.H_A 
     pullback =  own_rrule(exp, qcfl_buff.H_A_forexp, buff.exp_buff)
     
     evolve(ρ_A, buff.exp_buff.X, qcfl_buff)  
@@ -68,25 +103,40 @@ function integrand_gradient(c::QCFL, g::Vector{<:Real}, t::AbstractFloat)
 
     pullback(mul!(qcfl_buff.dAforpb, qcfl_buff.ρ_A_right, qcfl_buff.sumobs))
 
-    @fastmath @inbounds @simd for i in 1+fix_first_index:lastindex(qcfl_buff.C_G)-1+fix_first_index
-        qcfl_buff.C_G[i+1-fix_first_index] = gradient_component(buff, blocks[i], t)
+end 
+
+function integrand_gradient(c::QCFL, t::AbstractFloat)
+
+    pre_computations_gradient(c, t)
+
+    @fastmath @inbounds @simd for i in 1:lastindex(c.buff.qcfl_buff.C_G)-1
+        c.buff.qcfl_buff.C_G[i+1] = gradient_component(c.buff, c.blocks[i], t)
     end    
     
-    return qcfl_buff.C_G
+    return c.buff.qcfl_buff.C_G
 end
 
-function integrand_cost(c::QCFL, g::Vector{<:Real}, t::AbstractFloat)
+function integrand_gradient(fc::FixedCost{C}, t::AbstractFloat) where {C <: QCFL}
+    
+    pre_computations_gradient(fc.c, t)
+
+    @fastmath @inbounds @simd for i in eachindex(fc.free_indices)
+        fc.c.buff.qcfl_buff.C_G[i+1] = gradient_component(fc.c.buff, fc.c.blocks[fc.free_indices[i]], t)
+    end    
+    
+    return fc.c.buff.qcfl_buff.C_G
+end 
+
+function integrand_cost(c::QCFL, t::AbstractFloat)
     
     ρ_A = c.model.ρ_A 
     observables = c.observables
-    blocks = c.blocks 
     meas0 = c.meas0 
     buff = c.buff
 
-    get_H_A!(buff.qcfl_buff.H_A, g, blocks)
     qcfl_buff = buff.qcfl_buff
 
-    qcfl_buff.H_A_forexp .=  -1im*t .* qcfl_buff.H_A 
+    qcfl_buff.H_A_forexp .=  -1im*t .* buff.H_A 
     exp_only_buffered!(qcfl_buff.H_A_forexp, buff.exp_buff)
 
     evolve(ρ_A, buff.exp_buff.X, qcfl_buff)  
