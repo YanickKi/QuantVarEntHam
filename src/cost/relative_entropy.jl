@@ -29,26 +29,15 @@ function (c::Relative_entropy)(g)
     return S1 + S2
 end 
 
-function gradient!(G, c::Relative_entropy, g::Vector{<:Real})
+
+function _gradient!(c::Relative_entropy, G, g::Vector{<:Real}, free_indices)
     
     get_H_A!(c, g)
 
     pre_computations_gradient(c)
 
-    @fastmath @inbounds @simd for i in eachindex(G)
-        G[i] = gradient_component(c, i)
-    end
-
-    return G 
-end 
-
-function gradient!(G, fc::FixedCost{C}, g::Vector{<:Real}) where {C<:Relative_entropy}
-    
-    get_H_A!(fc, g)
-
-    pre_computations_gradient(fc.c)
-    @fastmath @inbounds @simd for i in eachindex(fc.free_indices)
-        G[i] = gradient_component(fc.c, fc.free_indices[i])
+    @fastmath @inbounds @simd for i in eachindex(free_indices)
+        G[i] = gradient_component(c, free_indices[i])
     end
 
     return G 
@@ -68,10 +57,11 @@ function pre_computations_gradient(c::Relative_entropy)
 
 end 
 
+
 function gradient_component(c::Relative_entropy, index::Integer)
 
-    ρ_A_times_block = c.buff.ρ_A_times_H_A # renaming for readability 
-    exp_H_A = c.buff.exp_buff.X    # renaming for readability 
+    ρ_A_times_block = c.buff.ρ_A_times_H_A  # renaming for readability 
+    exp_H_A = c.buff.exp_buff.X             # renaming for readability 
 
     γ = - 1/c.trace_exp_H_A
 
@@ -79,6 +69,16 @@ function gradient_component(c::Relative_entropy, index::Integer)
     ∂S2 = γ * tr(mul!(ρ_A_times_block, exp_H_A, c.blocks[index]))
     return ∂S1+∂S2
 end 
+
+
+function cost_from_gradient_intermediates(c::Relative_entropy)
+    S1 = tr(mul!(c.buff.ρ_A_times_H_A, c.model.ρ_A, c.buff.H_A))
+    S2 = log(c.trace_exp_H_A)
+    return S1+S2
+end 
+
+cost_from_gradient_intermediates(fc::FixedCost{C}) where {C<:Relative_entropy} = unwrap(cost_from_gradient_intermediates, fc)
+
 
 function fg!(F, G::Union{Vector{<:Real}, Nothing}, c::Union{C, FixedCost{C}}, g::Vector{<:Real}) where {C<:Relative_entropy}
     if !isnothing(G)
@@ -90,14 +90,4 @@ function fg!(F, G::Union{Vector{<:Real}, Nothing}, c::Union{C, FixedCost{C}}, g:
     if !isnothing(F)
         return c(g)
     end 
-end 
-
-function cost_from_gradient_intermediates(c::Relative_entropy)
-    S1 = tr(mul!(c.buff.ρ_A_times_H_A, c.model.ρ_A, c.buff.H_A))
-    S2 = log(c.trace_exp_H_A)
-    return S1+S2
-end 
-
-function cost_from_gradient_intermediates(fc::FixedCost{C}) where {C<:Relative_entropy}
-    cost_from_gradient_intermediates(fc.c)
 end 

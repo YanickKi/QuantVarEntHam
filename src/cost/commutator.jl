@@ -26,30 +26,19 @@ function (c::Commutator)(g::Vector{<:Real})
     return norm(comm)/(2*norm(H_A)*norm(ρ_A))
 end 
 
-function gradient!(G::Vector{<:Real}, c::Commutator, g::Vector{<:Real})
+
+function _gradient!(c::Commutator, G::Vector{<:Real}, g::Vector{<:Real}, free_indices)
     
     get_H_A!(c, g)
 
     Λ_comm, Λ_H_A, Λ_ρ_A = pre_computations_gradient(c)
 
-    @fastmath @inbounds @simd for i in eachindex(G)
-        G[i] = gradient_component(c, Λ_comm, Λ_H_A, Λ_ρ_A, i)
+    @fastmath @inbounds @simd for i in eachindex(free_indices)
+        G[i] = gradient_component(c, Λ_comm, Λ_H_A, Λ_ρ_A, free_indices[i])
     end 
     return Λ_comm/(2*Λ_H_A * Λ_ρ_A)
 end 
 
-
-function gradient!(G::Vector{<:Real}, fc::FixedCost{C}, g::Vector{<:Real}) where {C<:Commutator}
-    
-    get_H_A!(fc, g)
-
-    Λ_comm, Λ_H_A, Λ_ρ_A = pre_computations_gradient(fc.c)
-
-    @fastmath @inbounds @simd for i in eachindex(fc.free_indices)
-        G[i] = gradient_component(fc.c, Λ_comm, Λ_H_A, Λ_ρ_A, fc.free_indices[i])
-    end 
-    return Λ_comm/(2*Λ_H_A * Λ_ρ_A)
-end 
 
 
 function pre_computations_gradient(c::Commutator)
@@ -75,7 +64,6 @@ function gradient_component(c::Commutator, Λ_comm::Real, Λ_H_A::Real, Λ_ρ_A:
     ∂Λ_H_A = 1/Λ_H_A * real(sum(had!(c.buff.temp, c.buff.H_A, c.blocks[index])))
     return 1/(2*Λ_ρ_A*Λ_H_A^2)*(∂Λ_comm * Λ_H_A - Λ_comm * ∂Λ_H_A) 
 end 
-
 
 # compute hadamard product of two square matrices A and B and save it in buff
 function had!(buff::AbstractMatrix, A::AbstractMatrix,B::AbstractMatrix)
