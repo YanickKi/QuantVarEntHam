@@ -2,6 +2,10 @@ using KrylovKit: eigsolve
 using LinearAlgebra
 using SparseArrays
 
+export H_A_BW, H_A_notBW, get_ρ_A
+export TFIM, XXZ, Pollmann
+export H_XXZ, H_TFIM, H_pollmann
+
 
 """
     AbstractModel
@@ -23,6 +27,7 @@ In general the concrete types will have the same fields besides the model specif
 """
 abstract type AbstractModel end
 
+
 """
     get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int) 
 
@@ -32,7 +37,7 @@ For a Hilbert space dimension of more than 1024, the [krylov subspace method fro
 extracting the ground state, exact diagonalization otherwise.
 """
 
-function get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+function get_ρ_A(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
     d = (Int64(2*S+1))^(N)
     N_A = length(A)
     if d > 1024
@@ -49,29 +54,8 @@ function get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Ra
 end 
 
 
-function partial_trace_pure_state(ψ::Vector{<:Number}, dimA::Int, dimB::Int; trace_subsystem::Symbol = :B)
-    ψ_tensor = reshape(ψ, (dimA, dimB)) 
-
-    if trace_subsystem == :B
-        return ψ_tensor * ψ_tensor' 
-    elseif trace_subsystem == :A
-        return transpose(ψ_tensor) * conj(ψ_tensor)
-    else
-        error("trace_subsystem must be :A or :B")
-    end
-end
-
-function expect(Op::AbstractMatrix, ρ::AbstractMatrix)
-    E = tr(Op*ρ)
-    if abs(imag(E)) > eps(Float64)
-        error("Imaginary part too large for expectation value!")
-    end 
-    return real(E)
-end 
-
-
 """
-    H_A_BW(set::AbstractModel) 
+    H_A_BW(model::AbstractModel) 
 
 Return a vector with the blocks as its entries, which are complex dense matrices.
 
@@ -80,10 +64,10 @@ This function calls lower level functions which dispatch on the concrete subtype
 
 
 # Example 
-`H_A_BW(set::TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
+`H_A_BW(model::TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
 """
-function H_A_BW(set::AbstractModel)
-    @unpack N, N_A, r_max, periodic, J = set
+function H_A_BW(model::AbstractModel)
+    @unpack N, N_A, r_max, periodic, J = model
     
     if 2*N_A != N && periodic == false 
         @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
@@ -91,17 +75,17 @@ function H_A_BW(set::AbstractModel)
     
     blocks = Matrix{ComplexF64}[]
     
-    H_A_BW_wo_corrections!(blocks, set)
+    H_A_BW_wo_corrections!(blocks, model)
     
     if r_max > 1
-        corrections!(blocks, set)
+        corrections!(blocks, model)
     end 
     return J*blocks
 
 end 
 
 """
-    H_A_not_BW(set::AbstractModel) 
+    H_A_notBW(model::AbstractModel) 
 
 Return a vector with the blocks as its entries, which are complex dense matrices.
 
@@ -109,182 +93,26 @@ The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
 This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`AbstractModel`](@ref) to get the correct variational Ansatz for the corresponding AbstractModel.
 
 # Example 
-`H_A_not_BW(set::TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
+`H_A_notBW(model::TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
 """
-function H_A_not_BW(set::AbstractModel)
-    @unpack N_A, r_max, J = set
+function H_A_notBW(model::AbstractModel)
+    @unpack N_A, r_max, J = model
     
     blocks = Matrix{ComplexF64}[]
     
-    H_A_notBW_wo_corrections!(blocks, set)
+    H_A_notBW_wo_corrections!(blocks, model)
     
     if r_max > 1
-        corrections!(blocks, set)
+        corrections!(blocks, model)
     end 
 
     return J*blocks
 end 
 
-function H_A_BW_wo_corrections!(blocks::Vector{<:AbstractMatrix}, set::AbstractModel)
-    @unpack N_A = set
-    for i in 1:N_A 
-        push!(blocks, hi(i, set))
-    end     
-end
-
-
-function corrections!(blocks::Vector{<:AbstractMatrix}, set::AbstractModel)
-    @unpack N_A, r_max = set
-    for r in 2:r_max
-        for i in 1:N_A-r
-            correction!(blocks, i, r, set)
-        end
-    end 
-end 
 
 include("spinoperators.jl")
 include("xxz.jl")
 include("tfim.jl")
 include("pollmann.jl")
-#include("toric_code.jl")
-#include("kitaev.jl")
-#=
-
-
-include("toric_code.jl")
-include("kitaev.jl")
-
-
-
-function map_to_subsystem_chain!(objects, A)
-
-
-    for obj in objects
-        for i in eachindex(obj)
-            obj[i] = findfirst(==(obj[i]), A)
-        end 
-    end
-
-end 
-
-
-function H_A_BW_bad(set::AbstractModel_toric)
-    @unpack Nx,Ny, A ,J = set 
-    
-    blocks = Vector{AbstractBlock}(undef, 0)
-
-    N_A = length(A)
-
-    for qbit in 1:N_A-1
-        push!(blocks, repeat(N_A, Z, (qbit, qbit+1)))
-    end 
-    for qbit in 1:N_A-1
-        push!(blocks, repeat(N_A, X, (qbit, qbit+1)))
-    end 
-
-    #for plaquette in plaquets_in_A
-    #    push!(blocks, repeat(N_A, Z, plaquette))
-    #end
-
-    blocks *= -J 
-    
-    return H_A_Var(blocks, mat.(blocks))
-end
-
-function H_A_BW(set::AbstractModel_kitaev)
-    @unpack Jz, Jx, Jy = set
-    blocks = Vector{AbstractBlock}(undef, 0)
-
-    zterm = -Jz * [
-        repeat(6, Z, (2,4)),
-        repeat(6, Z, (3,5))
-    ]
-
-    xterm = -Jx * [
-        repeat(6, X, (1,2)),
-        repeat(6, X, (5,6))
-        ]
-
-    yterm = -Jy * [
-        repeat(6, Y, (1,3)),
-        repeat(6, Y, (4,6))
-        ]
-
-    for i in 1:2
-        push!(blocks, zterm[i])
-    end 
-    for i in 1:2
-        push!(blocks, xterm[i])
-    end 
-    for i in 1:2
-        push!(blocks, yterm[i])
-    end
-
-    return H_A_Var(blocks, mat.(blocks)) 
-    
-end 
-function H_A_BW(set::AbstractModel_toric)
-    @unpack Nx,Ny, A ,J = set 
-
-    stars, plaquets = make_all_objects(Nx,Ny)
-
-    blocks = Vector{AbstractBlock}(undef, 0)
-
-    N_obj = length(stars)
-    stars_in_A = Vector{Int64}[]
-    plaquets_in_A = Vector{Int64}[]
-    iscomplete = true 
-
-    for i in 1:N_obj    
-        for qbit in stars[i]
-            iscomplete =  qbit ∈ A
-            if iscomplete == false
-                break 
-            end 
-        end 
-        if iscomplete == true 
-            push!(stars_in_A, stars[i])
-        end 
-    end
-    iscomplete = true 
-
-
-    for i in 1:N_obj    
-        for qbit in plaquets[i]
-            iscomplete =  qbit ∈ A
-            if iscomplete == false
-                break 
-            end 
-        end 
-        if iscomplete == true 
-            push!(plaquets_in_A, plaquets[i])
-        end 
-    end 
-
-    map_to_subsystem_chain!(stars_in_A,A)
-    map_to_subsystem_chain!(plaquets_in_A, A)
-    
-    N_A = length(A)
-
-    for star in stars_in_A
-        push!(blocks, repeat(N_A, X, star))
-    end 
-
-    for plaquette in plaquets_in_A
-        push!(blocks, repeat(N_A, Z, plaquette))
-    end
-
-    
-    N_A = length(A)
-
-    for qbit in 1:N_A
-        push!(blocks, put(N_A, qbit => X))
-    end 
-
-    blocks *= -J 
-
-
-    return H_A_Var(blocks, mat.(blocks))
-end
-
-=#
+include("utils.jl")
+include("utils_entanglement_hamiltonians.jl")

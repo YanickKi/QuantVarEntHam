@@ -41,3 +41,5 @@ function (fc::FixedCost)(g::Vector{<:Real})
     fill_full_g(fc, g)
     return fc.c(fc.full_g)
 end 
+
+_gradient!(fc::FixedCost, G::Vector{<:Real}, g::Vector{<:Real}, free_indices) = unwrap(_gradient!, fc, G, fill_full_g(fc, g), free_indices)

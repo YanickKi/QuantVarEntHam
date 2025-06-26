@@ -1,3 +1,9 @@
+struct Relative_entropy_buffer
+    H_A::Matrix{ComplexF64}
+    H_A_forexp::Matrix{ComplexF64}
+    exp_buff::Exp_buffer{ComplexF64}
+end 
+
 mutable struct Relative_entropy{M} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
@@ -5,13 +11,21 @@ mutable struct Relative_entropy{M} <: AbstractCostFunction
     trace_exp_H_A::Float64 # cached variable to save intermediate calculations in gradient for cost
 end 
 
-function Relative_entropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+function Relative_entropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix}; buffer::Union{Nothing, Relative_entropy_buffer} = nothing)
+    buffer = something(buffer, Relative_entropy_buffer(model))
     return Relative_entropy(
         model, 
-        blocks, 
-        make_relative_entropy_buffer(model),
+        blocks,
+        buffer,
         0.
     )
+end 
+
+function Relative_entropy_buffer(model::AbstractModel)
+
+    d = size(model.ρ_A)[1]
+    return Relative_entropy_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), 
+        Exp_buffer(ComplexF64, d))
 end 
 
 function (c::Relative_entropy)(g)
@@ -23,7 +37,7 @@ function (c::Relative_entropy)(g)
     exp_only_buffered!(buff.H_A_forexp, buff.exp_buff)
     exp_H_A = buff.exp_buff.X
 
-    S1 = tr(mul!(buff.ρ_A_times_H_A, ρ_A, buff.H_A))
+    S1 = dot(ρ_A, buff.H_A)
     S2 = log(tr(exp_H_A))
 
     return S1 + S2
@@ -60,19 +74,18 @@ end
 
 function gradient_component(c::Relative_entropy, index::Integer)
 
-    ρ_A_times_block = c.buff.ρ_A_times_H_A  # renaming for readability 
-    exp_H_A = c.buff.exp_buff.X             # renaming for readability 
+    exp_H_A = c.buff.exp_buff.X # renaming for readability 
 
     γ = - 1/c.trace_exp_H_A
 
-    ∂S1 = tr(mul!(ρ_A_times_block, c.model.ρ_A, c.blocks[index]))
-    ∂S2 = γ * tr(mul!(ρ_A_times_block, exp_H_A, c.blocks[index]))
+    ∂S1 = dot(c.model.ρ_A, c.blocks[index])
+    ∂S2 = γ * dot(exp_H_A, c.blocks[index])
     return ∂S1+∂S2
 end 
 
 
 function cost_from_gradient_intermediates(c::Relative_entropy)
-    S1 = tr(mul!(c.buff.ρ_A_times_H_A, c.model.ρ_A, c.buff.H_A))
+    S1 = dot(c.model.ρ_A, c.buff.H_A)
     S2 = log(c.trace_exp_H_A)
     return S1+S2
 end 

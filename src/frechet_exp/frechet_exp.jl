@@ -1,4 +1,3 @@
-using LinearAlgebra
 import LinearAlgebra.BlasFloat
 using ChainRulesCore: add!!
 
@@ -50,7 +49,7 @@ function generate_coefficients(T)
     return [C1,C2,C3,C4,C5]
 end 
 
-function make_exp_buffer(T::Type, n::Int)
+function Exp_buffer(T::Type, n::Int)
     return Exp_buffer(
         Matrix{T}(I, n, n),
         zeros(T, n, n),
@@ -67,7 +66,7 @@ function make_exp_buffer(T::Type, n::Int)
     )
 end
 
-function make_exp_frech_buffer(T::Type, n::Int)
+function Exp_frech_buffer(T::Type, n::Int)
    
     return Exp_frech_buffer(
         Matrix{T}(I, n, n),
@@ -89,7 +88,7 @@ function make_exp_frech_buffer(T::Type, n::Int)
         zeros(T, n, n),
         zeros(T, n, n),
         Matrix{T}[zeros(T,n,n) for i in 1:6],  # Apows
-        Matrix{T}[zeros(T,n,n) for i in 1:5],  # Xpows
+        Matrix{T}[zeros(T,n,n) for i in 1:7],  # Xpows
         generate_coefficients(T)
     )
 end

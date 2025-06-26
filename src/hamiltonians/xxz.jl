@@ -23,7 +23,7 @@ Concrete type of [`AbstractModel`](@ref), containing the settings for the XXZ mo
 end
 """
     XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
 
 Convenient constructor for [`XXZ`](@ref) containing settings for the XXZ Model 
 
@@ -37,13 +37,13 @@ Convenient constructor for [`XXZ`](@ref) containing settings for the XXZ Model
 - `J::Real=-1`: global prefactor in the Hamiltonian.
 - `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
 - `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
-- `ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
+- `ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 
 # Recommendations
 - use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most. 
 """
 function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
     
     return XXZ(
         N = N, N_A = N_A,
@@ -74,7 +74,7 @@ function H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{In
     return J*(XX_term+Δ*Z_term)
 end 
 
-function hi(i::Int, model::XXZ)
+function hi(model::XXZ, i::Int)
     @unpack N_A, Δ, S= model
 
     if i > 1 && i < N_A 
@@ -87,7 +87,7 @@ function hi(i::Int, model::XXZ)
 end
 
 
-function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, model::XXZ)
+function correction!(blks::Vector{<:AbstractMatrix}, model::XXZ, i::Int, r::Int)
     @unpack N_A, Δ, S = model   
     push!(blks, repeat(N_A,X,(i,i+r), S=S) + repeat(N_A,Y,(i,i+r), S=S))
     push!(blks, Δ*repeat(N_A,Z,(i,i+r), S=S)) 

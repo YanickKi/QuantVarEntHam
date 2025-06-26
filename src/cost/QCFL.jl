@@ -1,3 +1,20 @@
+mutable struct BufferOnlyQCFL{T<:AbstractMatrix}
+    C_G::Vector{Float64}
+    C_G_result::Vector{Float64}
+    ρ_A_evolved::Matrix{ComplexF64}
+    ρ_A_right::Matrix{ComplexF64}
+    dAforpb::Matrix{ComplexF64}
+    H_A_forexp::Matrix{ComplexF64}
+    sumobs::T
+end 
+
+
+struct QCFL_buffer
+    qcfl_buff::BufferOnlyQCFL
+    exp_buff::Exp_frech_buffer{ComplexF64}
+    H_A::Matrix{ComplexF64}
+end
+
 struct QCFL{M, I, O} <: AbstractCostFunction
     model::M 
     blocks::Vector{Matrix{ComplexF64}}
@@ -8,10 +25,12 @@ struct QCFL{M, I, O} <: AbstractCostFunction
     buff::QCFL_buffer
 end
  
-function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing)
+function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
+    buffer::Union{Nothing, QCFL_buffer} = nothing)
     
     observables = something(observables, [repeat(model.N_A, Z, (i,i+1), S = model.S) for i in 1:model.N_A-1])
     integrator = something(integrator, Tanh_sinh(length(blocks)+1))
+    buffer = something(buffer, QCFL_buffer(model, blocks, observables))
     meas0 = [expect(observable, model.ρ_A) for observable in observables]
     return QCFL(
         model, 
@@ -20,7 +39,7 @@ function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Rea
         observables,
         Float64(T_max),
         meas0,
-        make_QCFL_buffer(model, length(blocks), observables)
+        buffer
     )
 end 
 
@@ -36,6 +55,31 @@ function shorten_buffers(c::QCFL, fixed_indices::AbstractVector)
     end 
 
 end 
+
+
+
+function QCFL_buffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
+    numBlocks = length(blocks) 
+    d = size(model.ρ_A)[1] # Hilbert space dimension
+    return QCFL_buffer(
+        BufferOnlyQCFL(d, numBlocks, observables), 
+        Exp_frech_buffer(ComplexF64, d), 
+        zeros(ComplexF64, d, d) 
+    )
+end 
+
+
+function BufferOnlyQCFL(d::Integer, numBlocks::Integer, observables::Vector{<:AbstractMatrix}) 
+    return BufferOnlyQCFL{eltype(observables)}(
+    zeros(Float64, numBlocks+1),
+    zeros(Float64, numBlocks+1),
+    zeros(ComplexF64, d, d), 
+    zeros(ComplexF64, d, d), 
+    zeros(ComplexF64, d, d),
+    zeros(ComplexF64, d, d),
+    zero(observables[1]),
+    )
+end
 
 function (c::QCFL)(g::Vector{<:Real})
     get_H_A!(c, g)
@@ -116,14 +160,10 @@ function evolve(ρ_A::AbstractMatrix, U::AbstractMatrix, qcfl_buff)
 end 
 
 function dev(observable::AbstractMatrix, expect_at_0::AbstractFloat, qcfl_buff)
-    @inbounds mul!(qcfl_buff.evolob, observable, qcfl_buff.ρ_A_evolved)
-    @inbounds δ = real(tr(qcfl_buff.evolob))- expect_at_0
-    return δ
+    return  real(dot(observable, qcfl_buff.ρ_A_evolved)) - expect_at_0
 end 
 
 function gradient_component(buff, block::AbstractMatrix, t::Real)
-    qcfl_buff = buff.qcfl_buff
     frech = buff.exp_buff.∂X
-    mul!(qcfl_buff.frechTimesBlock, frech, block)
-    return 4*t*imag(tr(qcfl_buff.frechTimesBlock))
+    return 4*t*imag(dot(block,frech))
 end

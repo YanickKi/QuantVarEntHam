@@ -1,3 +1,19 @@
+"""
+    MidPoint <: AbstractIntegrator
+
+Struct for the integration via mid-point rule.
+
+# Fields 
+-`dt::Float64` : step size
+-`scalar_integrate::Function`: function for integrating scalar functions 
+-`vector_integrate::Function`: function for integrating vector functions
+
+Allows unified handling of scalar and vector functions as in e.g. ['QCFL'](@ref)
+
+# Example 
+
+
+"""
 struct MidPoint <: AbstractIntegrator
     dt::Float64
     scalar_integrate::Function 

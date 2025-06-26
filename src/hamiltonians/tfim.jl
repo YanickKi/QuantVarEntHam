@@ -1,7 +1,7 @@
 """
     TFIM
 
-Concrete type of [`AbstractModel`](@ref), containing the settings for the TFIM
+Concrete type of [`AbstractModel`](@ref), containing the modeltings for the TFIM
 
 !!! tip
     Use the constructor [`TFIM`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
@@ -24,9 +24,9 @@ end
 
 """
     TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
-    J::Real=-1, ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
+    J::Real=-1, ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
-Convenient constructor for [`TFIM`](@ref) containing settings for the TFIM
+Convenient constructor for [`TFIM`](@ref) containing modeltings for the TFIM
 
 # Required Arguments
 - `N::Int`: number of sites in the composite system.
@@ -38,13 +38,13 @@ Convenient constructor for [`TFIM`](@ref) containing settings for the TFIM
 - `J::Real=-1`: global prefactor in the Hamiltonian.
 - `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
 - `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
-- `ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
+- `ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 
 # Recommendations
 - use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most. 
 """
 function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
-    J::Real=-1, ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
+    J::Real=-1, ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
     return TFIM(
         N = N, N_A = N_A,
@@ -78,8 +78,8 @@ function H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{I
 end 
 
 
-function hi(i::Int, set::TFIM)
-    @unpack N_A, Γ, S = set
+function hi(model::TFIM, i::Int)
+    @unpack N_A, Γ, S = model
      
     hi = Γ * repeat(N_A, X, i, S=S)
     
@@ -92,13 +92,13 @@ function hi(i::Int, set::TFIM)
     return hi
 end
 
-function correction!(blks::Vector{<:AbstractMatrix}, i::Int, r::Int, set::TFIM)
-    @unpack N_A, S = set   
+function correction!(blks::Vector{<:AbstractMatrix}, model::TFIM, i::Int, r::Int)
+    @unpack N_A, S = model   
     push!(blks, repeat(N_A,Z,(i,i+r), S=S))
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::TFIM)
-    @unpack N_A, Γ, S = set
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, model::TFIM)
+    @unpack N_A, Γ, S = model
     
     push!(blks, Γ*repeat(N_A, X, 1, S=S))
 

@@ -1,17 +1,28 @@
+struct Commutator_buffer
+    comm::Matrix{ComplexF64}
+    temp::Matrix{ComplexF64}
+    H_A::Matrix{ComplexF64}
+end 
+
 struct Commutator{M} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
     buff::Commutator_buffer
 end 
 
-function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix}; buffer::Union{Nothing, Commutator_buffer} = nothing)
+    buffer = something(buffer, Commutator_buffer(model))
     return Commutator(
         model, 
         blocks, 
-        make_commutator_buffer(model)
+        buffer
     )
 end 
 
+function Commutator_buffer(model::AbstractModel)
+    d = size(model.ρ_A)[1]
+    return Commutator_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
+end 
 
 function (c::Commutator)(g::Vector{<:Real})
     
@@ -68,7 +79,7 @@ end
 # compute hadamard product of two square matrices A and B and save it in buff
 function had!(buff::AbstractMatrix, A::AbstractMatrix,B::AbstractMatrix)
     n = size(A)[1]
-    for j in 1:n
+    @fastmath @inbounds @simd for j in 1:n
        for i in 1:n
          @inbounds buff[i,j] = A[i,j] *B[i,j]
        end

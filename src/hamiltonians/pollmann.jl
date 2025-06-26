@@ -28,9 +28,9 @@ end
 
 """
     pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int64, Rational}=1//1, r_max::Int=1, periodic::Bool=false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
 
-Convenient constructor for [`Pollmann`](@ref) containing settings for the pollmann model
+Convenient constructor for [`Pollmann`](@ref) containing modeltings for the pollmann model
 
 # Required Arguments
 - `N::Int`: number of sites in the composite system.
@@ -44,13 +44,13 @@ Convenient constructor for [`Pollmann`](@ref) containing settings for the pollma
 - `J::Real=+1`: global prefactor in the Hamiltonian.
 - `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
 - `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
-- `ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
+- `ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 
 # Recommendations
 - use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most. 
 """
-function pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int64, Rational}=1, r_max::Int=1, periodic::Bool=false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
+function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int64, Rational}=1, r_max::Int=1, periodic::Bool=false,
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
     
     return Pollmann(
         N = N, N_A = N_A,
@@ -88,8 +88,8 @@ function H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=fa
 end 
 
 
-function hi(i::Int, set::Pollmann)
-    @unpack N_A, J_Heis, Bx, Uzz, S = set
+function hi(model::Pollmann, i::Int)
+    @unpack N_A, J_Heis, Bx, Uzz, S = model
      
     hi = Bx*repeat(N_A, X, i, S=S) + Uzz*repeat(N_A, Z, i, S=S)^2
     
@@ -108,8 +108,8 @@ function hi(i::Int, set::Pollmann)
     return hi
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Pollmann)
-    @unpack N_A, J_Heis, Bx, Uzz, S = set
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, model::Pollmann)
+    @unpack N_A, J_Heis, Bx, Uzz, S = model
     
     if iszero(Bx) == false  
         push!(blks, Bx*repeat(N_A, X, 1, S=S))
@@ -119,9 +119,9 @@ function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Pollmann
     end 
 
     for i ∈ 1:N_A-1 
-        push!(blks, J_Heis*(repeat(N_A,Z,(i,i+1), S=S)))
         push!(blks, J_Heis*(repeat(N_A,X,(i,i+1), S=S)))
         push!(blks, J_Heis*(repeat(N_A,Y,(i,i+1), S=S)))
+        push!(blks, J_Heis*(repeat(N_A,Z,(i,i+1), S=S)))
         if iszero(Bx) == false 
             push!(blks, Bx*repeat(N_A, X, (i+1), S=S))
         end 
@@ -132,8 +132,18 @@ function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, set::Pollmann
     
 end
 
-function H_A_notBW_wo_corrections_I!(blks::Vector{<:AbstractMatrix}, set::Pollmann)
-    @unpack N_A, J_Heis, Bx, Uzz, S = set
+
+function correction!(blks::Vector{<:AbstractMatrix}, model::Pollmann, i::Int, r::Int)
+    @unpack N_A, S = model   
+    for σ in [X,Y,Z]
+        push!(blks, repeat(N_A,σ,(i,i+r), S=S))
+
+    end
+end
+
+#=
+function H_A_notBW_wo_corrections_I!(blks::Vector{<:AbstractMatrix}, model::Pollmann)
+    @unpack N_A, J_Heis, Bx, Uzz, S = model
     
     
     if iszero(Bx) == false  
@@ -154,13 +164,6 @@ function H_A_notBW_wo_corrections_I!(blks::Vector{<:AbstractMatrix}, set::Pollma
         end
     end 
     
-end
-
-#=
-
-function correction!(blks::Vector{<:AbstractBlock}, i::Int, r::Int, set::Model_TFIM)
-    @unpack N_A = set   
-    push!(blks, repeat(N_A,Z,(i,i+r)))
 end
 
 =#
