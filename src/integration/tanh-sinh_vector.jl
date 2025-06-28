@@ -14,7 +14,7 @@ function integrate!(I::AbstractVector, f::Function, q::QuadTS{N}, Σ::AbstractVe
         f2 = f(-t[1])
         f21 = f2[2]
         Σ .+= f2 .* t[2]
-
+(1e-2)
         maxf = max(f11, f21)
         
         return maxf*t[2]
@@ -49,13 +49,15 @@ function integrate!(I::AbstractVector, f::Function, q::QuadTS{N}, Σ::AbstractVe
     end
 end
 
-function tanh_sinh!(I::AbstractVector, f::Function, a::Real, b::Real, q::QuadTS{N}, Σ::AbstractVector;
-    atol::Real=0.0,
-    rtol::Real=atol>0 ? 0. : sqrt(eps(Float64))) where {N}
-    if a == b
+function (th_v::TanhSinh_vector)(I::AbstractVector, f::Function, b::Real)
+    q       = th_v.integration_table
+    atol    = th_v.atol
+    rtol    = th_v.rtol
+    Σ       = th_v.buffer
+    if iszero(b)
          fill!(I, 0.)
     else 
-        _a = Float64(a)
+        _a = 0.
         _b = Float64(b)
         s = (_b + _a)/2
         t = (_b - _a)/2

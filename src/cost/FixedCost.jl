@@ -17,7 +17,7 @@ function FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fi
     full_g[fixed_indices] .= fixed_values
     free_indices = setdiff(eachindex(c.blocks), fixed_indices)
 
-    shorten_buffers(c,fixed_indices)
+    shorten_buffers!(c,fixed_indices)
 
     return FixedCost(
         c, 
@@ -29,7 +29,7 @@ function FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fi
 end 
 
 
-shorten_buffers(::AbstractCostFunction, ::AbstractVector) = nothing 
+shorten_buffers!(::AbstractCostFunction, ::AbstractVector) = nothing 
 
 function fill_full_g(fc::FixedCost, g::Vector{Float64})
    fc.full_g[fc.free_indices] .= g

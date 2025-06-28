@@ -15,21 +15,21 @@ struct QCFL_buffer
     H_A::Matrix{ComplexF64}
 end
 
-struct QCFL{M, I, O} <: AbstractCostFunction
+struct QCFL{M, O} <: AbstractCostFunction
     model::M 
     blocks::Vector{Matrix{ComplexF64}}
-    integrator::I
+    integrator::Integrator
     observables::Vector{O} 
     T_max::Float64
     meas0::Vector{Float64}
     buff::QCFL_buffer
 end
  
-function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
+function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,Integrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
     buffer::Union{Nothing, QCFL_buffer} = nothing)
     
     observables = something(observables, [repeat(model.N_A, Z, (i,i+1), S = model.S) for i in 1:model.N_A-1])
-    integrator = something(integrator, Tanh_sinh(length(blocks)+1))
+    integrator = something(integrator, tanh_sinh(length(blocks)+1))
     buffer = something(buffer, QCFL_buffer(model, blocks, observables))
     meas0 = [expect(observable, model.ρ_A) for observable in observables]
     return QCFL(
@@ -43,12 +43,8 @@ function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Rea
     )
 end 
 
-function shorten_buffers(c::QCFL, fixed_indices::AbstractVector)
-    if typeof(c.integrator) == Tanh_sinh
-        for _ in eachindex(fixed_indices)
-            pop!(c.integrator.buffer)
-        end 
-    end 
+function shorten_buffers!(c::QCFL, fixed_indices::AbstractVector)
+    shorten_buffer!(buffertrait(c.integrator.vector_integrate),c.integrator.vector_integrate, fixed_indices)
     for _ in eachindex(fixed_indices)
         pop!(c.buff.qcfl_buff.C_G)
         pop!(c.buff.qcfl_buff.C_G_result)

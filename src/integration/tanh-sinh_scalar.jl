@@ -84,13 +84,14 @@ function estimate_error(prevI::Float64, I::Float64, prevI2::Float64, maxj::Float
 end
 
 
-function tanh_sinh(f::Function, a::Real, b::Real, q::QuadTS{N};
-    atol::Real=0.0,
-    rtol::Real=atol>0 ? 0. : sqrt(eps(Float64))) where {N}
-    if a == b
-        return 0.0
+function (th_s::TanhSinh_scalar)(f::Function, b::Real)
+    q = th_s.integration_table
+    atol = th_s.atol
+    rtol = th_s.rtol
+    if iszero(b)
+        return zero(b)
     else 
-        _a = Float64(a)
+        _a = 0.
         _b = Float64(b)
         s = (_b + _a)/2
         t = (_b - _a)/2
