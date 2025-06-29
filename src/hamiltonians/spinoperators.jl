@@ -1,11 +1,14 @@
 using SparseArrays
 
+export X,Y,Z 
+export repeat
+
 function X(S::Union{Rational, Int})
     d = Int64(2*S+1)
 
     multi = S*(S+1)
 
-    Sx = spzeros(Float64, d, d)
+    Sx = spzeros(ComplexF64, d, d)
     
     for m in -S:S
         _m = Int64(S-m+1)
@@ -65,19 +68,6 @@ function Z(S::Union{Rational, Int})
 end
 
 
-function identity(S::Union{Rational, Int})
-    d = Int64(2*S+1)
-
-    I = Diagonal(zeros(Int64,d))
-
-    for i in 1:d
-        I[i,i] = 1.
-    end 
-
-    return I
-
-end 
-
 
 repeat(N, sig::Function, locs::Int; S::Union{Rational, Int} = 1//2) = repeat(N, sig, (locs,), S = S) 
 
@@ -86,17 +76,21 @@ function repeat(N, sig::Function, locs::NTuple{l,Int}; S::Union{Rational, Int} =
         error("Location out of bounds!")
     end 
     
-    M = spzeros(ComplexF64, 3, 3)
+    d = Int64(2*S+1)
+    
+    M = spzeros(ComplexF64, d, d)
+
+    Identity = sparse(I,d,d)
 
     if 1 ∉ locs 
-        M = identity(S)
+        M = Identity
     else 
         M = sig(S)
     end 
 
     for qudit in 2:N
         if qudit ∉ locs 
-            M = kron(M, identity(S))
+            M = kron(M, Identity)
         end
         if qudit ∈ locs 
             M = kron(M, sig(S))

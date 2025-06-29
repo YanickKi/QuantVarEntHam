@@ -4,7 +4,7 @@ struct Relative_entropy_buffer
     exp_buff::Exp_buffer{ComplexF64}
 end 
 
-mutable struct Relative_entropy{M} <: AbstractCostFunction
+mutable struct Relative_entropy{M<:AbstractModel} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
     buff::Relative_entropy_buffer

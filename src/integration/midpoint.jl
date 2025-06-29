@@ -7,6 +7,10 @@ end
 
 buffertrait(::MidPoint_vector) = NoNeedBuffer()
 
+struct MidPoint <: AbstractIntegrator
+    dt::Float64
+end 
+    
 #=
 """
     MidPoint <: AbstractIntegrator
@@ -29,58 +33,23 @@ Allows unified handling of integrating scalar and vector functions as in e.g. ['
 """
     MidPoint(dt::Real) 
 
-Outer Constructor for [`MidPoint`](@ref).
+Outer Constructor for [`Integrator`](@ref) to construct the scalar and vector integration via midpoint rule with a given step size `dt`
 
 # Arguments 
 
 -`dt::Real`: step size 
-
-# Example 
-
-Integrating ``\\sin (t)`` and `` (\\sin (t), \\cos (t)) `` via midpoint rule with `dt=1e-2` from `0` to `T_max = pi`
-
-Create [`MidPoint`](@ref) struct for scalar and vector integration with `dt=1e-2`
-
-```julia
-julia> mp = MidPoint(1e-2)
-MidPoint(0.01, QuantVarEntHam.var"#19#21"{Float64}(0.01), QuantVarEntHam.var"#20#22"{Float64}(0.01))
-```
-
-Now integrate the scalar function 
-```julia
-julia> mp.scalar_integrate(t -> sin(t), pi)
-2.0000070650798945
-``` 
-
-which yields approximately 2 as one would expect.
-The vector integration needs a preallocated vector to save the result in
-
-```julia
-julia> I = zeros(2)
-2-element Vector{Float64}:
- 0.0
- 0.0
-
-julia> mp.vector_integrate(I, t -> [sin(t), cos(t)], pi)
-2-element Vector{Float64}:
- 2.0000070650798945
- 0.0015926595525598975
-``` 
-The result is returned and saved in the vector `I` aswell 
-
-```julia
-julia> I
-2-element Vector{Float64}:
- 2.0000070650798945
- 0.0015926595525598975
-```
 """
 function midpoint(dt::Real)
     #scalar_integrate = (f, T_max) -> midpoint_scalar(f,0,T_max,dt)
     #vector_integrate = (I, f, T_max) -> midpoint_vector!(I, f, 0, T_max, dt)
-    return Integrator(MidPoint_scalar(dt), MidPoint_vector(dt)) 
+    return _ -> _midpoint(dt) 
 end 
 
+function _midpoint(dt::Real)
+    #scalar_integrate = (f, T_max) -> midpoint_scalar(f,0,T_max,dt)
+    #vector_integrate = (I, f, T_max) -> midpoint_vector!(I, f, 0, T_max, dt)
+    return Integrator(MidPoint_scalar(dt), MidPoint_vector(dt)) 
+end 
 
 function (mp_s::MidPoint_scalar)(f::Function, b::Real)
     dt = mp_s.dt

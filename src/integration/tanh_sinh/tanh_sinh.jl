@@ -17,6 +17,13 @@ struct TanhSinh_vector <: AbstractVectorIntegrator
     buffer::Vector{Float64}
 end 
 
+struct TanhSinh <: AbstractIntegrator
+    atol::Float64
+    rtol::Float64
+    maxlevel::Int64
+    h0::Float64
+end 
+
 buffertrait(::TanhSinh_vector) = NeedBuffer()
 
 function integration_tables(;maxlevel::Integer=12, h0::Real=1)
@@ -32,17 +39,21 @@ function integration_tables(;maxlevel::Integer=12, h0::Real=1)
     return QuadTS{maxlevel}(_h0, origin, table0, Tuple(tables))
 end
 
+"""
+    tanh_sinh(length_buffer::Int; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Float64=1.0) 
 
-function tanh_sinh(length_buffer::Int; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Float64=1.0)
-    q = integration_tables(maxlevel = maxlevel, h0 = h0)
-    buffer = zeros(length_buffer)
-    scalar_integrate = TanhSinh_scalar(q, atol, rtol)
-    vector_integrate = TanhSinh_vector(q, atol, rtol, buffer)
+Outer Constructor for [`Integrator`](@ref) to construct the scalar and vector integration via the Tanh-sinh quadrature 
+with a given step size `dt`
 
-    return Integrator(scalar_integrate, vector_integrate)
+# Arguments 
 
+-`dt::Real`: step size 
+"""
+
+function TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Float64=1.0)
+    
+    return TanhSinh(atol, rtol, maxlevel, h0)
 end 
-
 include("mapsum.jl")
 include("mapsum_vector.jl")
 include("tanh-sinh_scalar.jl")

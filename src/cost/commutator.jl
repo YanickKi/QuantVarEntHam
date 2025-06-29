@@ -4,7 +4,7 @@ struct Commutator_buffer
     H_A::Matrix{ComplexF64}
 end 
 
-struct Commutator{M} <: AbstractCostFunction
+struct Commutator{M<:AbstractModel} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
     buff::Commutator_buffer
