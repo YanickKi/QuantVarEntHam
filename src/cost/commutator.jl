@@ -1,15 +1,66 @@
+""" 
+    Commutator_buffer
+
+Struct containing the buffers for the cost function [`Commutator`](@ref).
+"""
 struct Commutator_buffer
     comm::Matrix{ComplexF64}
     temp::Matrix{ComplexF64}
     H_A::Matrix{ComplexF64}
 end 
 
+
+""" 
+    Commutator_buffer
+
+Outer constructor for [`Commutator_buffer`](@ref) given a `model`.
+
+# Arguments
+
+-`model::AbstractModel`: model
+"""
+function Commutator_buffer(model::AbstractModel)
+    d = size(model.ρ_A)[1]
+    return Commutator_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
+end 
+
+"""
+    Commutator
+
+Commutator as a cost function defined as 
+```math
+C(\vec{g})  = \frac{||[H_\text{A}^\text{Var}(\vec{g}), ρ_\text{A}]||}{||H_\text{A}^\text{Var}(\vec{g}||||ρ_\text{A}||},
+```
+where ``H_\\text{A}^\\text{Var}(\\vec{g})`` is the variational Ansatz and ``ρ_\\text{A}`` the exact reduced density matrix. 
+The Frobenius norm is used.
+
+# Fields 
+
+-`model::M`: model 
+-`blocks::Vector{Matrix{ComplexF64}}`: blocks for the variational Ansatz 
+-`buff::Commutator_buffer`: buffers 
+"""
 struct Commutator{M<:AbstractModel} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
     buff::Commutator_buffer
 end 
 
+"""
+    Commutator
+
+Outer Constructor for [`Commutator`](@ref) s.t. the correct buffers will be automatically constructed 
+for the given `model` and `blocks`.  
+
+# Required Arguments 
+
+-`model::AbstractModel`: model 
+-`blocks::Vector{<:AbstractMatrix}`: blocks for the variational Ansatz 
+
+# Keyword Arguments
+
+-`buffer::Union{Nothing, Commutator_buffer} = nothing`
+"""
 function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix}; buffer::Union{Nothing, Commutator_buffer} = nothing)
     buffer = something(buffer, Commutator_buffer(model))
     return Commutator(
@@ -19,10 +70,6 @@ function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix}; buff
     )
 end 
 
-function Commutator_buffer(model::AbstractModel)
-    d = size(model.ρ_A)[1]
-    return Commutator_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
-end 
 
 function (c::Commutator)(g::Vector{<:Real})
     

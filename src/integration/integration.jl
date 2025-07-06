@@ -1,18 +1,10 @@
 export Integrator, MidPoint, TanhSinh
 
 
-"""
-    AbstractScalarIntegrator
 
-Abstract type for scalar integration.
-"""
 abstract type AbstractScalarIntegrator end 
 
-"""
-    AbstractVectorIntegrator
 
-Abstract type for vector integration.
-"""
 abstract type AbstractVectorIntegrator end
 
 

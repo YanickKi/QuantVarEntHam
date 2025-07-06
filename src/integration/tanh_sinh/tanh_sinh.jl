@@ -17,11 +17,38 @@ struct TanhSinh_vector <: AbstractVectorIntegrator
     buffer::Vector{Float64}
 end 
 
+"""
+    TanhSinh
+
+Struct containing the settings for the tanh-sinh quadrature.
+    
+# Fields 
+-`atol::Float64`: absolute tolerance
+-`rtol::Float64`: relative tolerance 
+-`maxlevel::Int64`: maximum amount of repititions 
+-`h0::Float64`: initial step size for trapezoidal integration
+"""
 struct TanhSinh <: AbstractIntegrator
     atol::Float64
     rtol::Float64
     maxlevel::Int64
     h0::Float64
+end 
+
+"""
+    TanhSinh
+
+Outer constructor for [`TanhSinh`](@ref) with recommended default values.
+    
+# Keyword arguments 
+-`atol::Real=0.0`: absolute tolerance
+-`rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64))`: relative tolerance 
+-`maxlevel::Integer=12`: maximum amount of repititions 
+-`h0::Real=1`: initial step size for trapezoidal integration
+"""
+function TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)
+    
+    return TanhSinh(Float64(atol), Float64(rtol), maxlevel, Float64(h0))
 end 
 
 buffertrait(::TanhSinh_vector) = NeedBuffer()
@@ -39,21 +66,6 @@ function integration_tables(;maxlevel::Integer=12, h0::Real=1)
     return QuadTS{maxlevel}(_h0, origin, table0, Tuple(tables))
 end
 
-"""
-    tanh_sinh(length_buffer::Int; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Float64=1.0) 
-
-Outer Constructor for [`Integrator`](@ref) to construct the scalar and vector integration via the Tanh-sinh quadrature 
-with a given step size `dt`
-
-# Arguments 
-
--`dt::Real`: step size 
-"""
-
-function TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Float64=1.0)
-    
-    return TanhSinh(atol, rtol, maxlevel, h0)
-end 
 include("mapsum.jl")
 include("mapsum_vector.jl")
 include("tanh-sinh_scalar.jl")

@@ -8,13 +8,44 @@ struct BufferOnlyQCFL{T<:AbstractMatrix}
     sumobs::T
 end 
 
+"""
+    QCFL_buffer
 
+Struct containing the buffers for the [`QCFL`](@ref).
+"""
 struct QCFL_buffer
     qcfl_buff::BufferOnlyQCFL
     exp_buff::Exp_frech_buffer{ComplexF64}
     H_A::Matrix{ComplexF64}
 end
 
+
+"""
+    QCFL_buffer
+
+Outer constructor for [`QCFL_buffer`](@ref) given a `model`, `blocks` and `observables`. 
+
+# Arguments 
+
+-`model::AbstractModel`: model
+-`blocks::Vector{<:AbstractMatrix}`: blocks for the variational Ansatz 
+-`observables::Vector{<:AbstractMatrix}`: 
+"""
+function QCFL_buffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
+    numBlocks = length(blocks) 
+    d = size(model.ρ_A)[1] # Hilbert space dimension
+    return QCFL_buffer(
+        BufferOnlyQCFL(d, numBlocks, observables), 
+        Exp_frech_buffer(ComplexF64, d), 
+        zeros(ComplexF64, d, d) 
+    )
+end 
+
+"""
+    QCFL
+
+
+"""
 struct QCFL{M<:AbstractModel, O<:AbstractMatrix} <: AbstractCostFunction
     model::M 
     blocks::Vector{Matrix{ComplexF64}}
@@ -55,18 +86,6 @@ function shorten_buffers!(c::QCFL, how_often::Integer)
         pop!(c.buff.qcfl_buff.C_G_result)
     end 
 
-end 
-
-
-
-function QCFL_buffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
-    numBlocks = length(blocks) 
-    d = size(model.ρ_A)[1] # Hilbert space dimension
-    return QCFL_buffer(
-        BufferOnlyQCFL(d, numBlocks, observables), 
-        Exp_frech_buffer(ComplexF64, d), 
-        zeros(ComplexF64, d, d) 
-    )
 end 
 
 

@@ -7,6 +7,16 @@ end
 
 buffertrait(::MidPoint_vector) = NoNeedBuffer()
 
+
+"""
+    MidPoint(dt::Real) 
+
+Struct containing the settings for midpoint integration.
+
+# Arguments 
+
+-`dt::Real`: step size 
+"""
 struct MidPoint <: AbstractIntegrator
     dt::Float64
 end 
@@ -29,27 +39,6 @@ Allows unified handling of integrating scalar and vector functions as in e.g. ['
 
 """
 =#
-
-"""
-    MidPoint(dt::Real) 
-
-Outer Constructor for [`Integrator`](@ref) to construct the scalar and vector integration via midpoint rule with a given step size `dt`
-
-# Arguments 
-
--`dt::Real`: step size 
-"""
-function midpoint(dt::Real)
-    #scalar_integrate = (f, T_max) -> midpoint_scalar(f,0,T_max,dt)
-    #vector_integrate = (I, f, T_max) -> midpoint_vector!(I, f, 0, T_max, dt)
-    return _ -> _midpoint(dt) 
-end 
-
-function _midpoint(dt::Real)
-    #scalar_integrate = (f, T_max) -> midpoint_scalar(f,0,T_max,dt)
-    #vector_integrate = (I, f, T_max) -> midpoint_vector!(I, f, 0, T_max, dt)
-    return Integrator(MidPoint_scalar(dt), MidPoint_vector(dt)) 
-end 
 
 function (mp_s::MidPoint_scalar)(f::Function, b::Real)
     dt = mp_s.dt
