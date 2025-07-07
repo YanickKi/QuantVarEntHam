@@ -5,12 +5,12 @@ struct QuadTS{N}
     tables::NTuple{N,Vector{Tuple{Float64,Float64}}}
 end
 
-struct TanhSinh_scalar <: AbstractScalarIntegrator
+struct TanhSinhScalar <: AbstractScalarIntegrator
     integration_table::QuadTS
     atol::Float64
     rtol::Float64
 end 
-struct TanhSinh_vector <: AbstractVectorIntegrator
+struct TanhSinhVector <: AbstractVectorIntegrator
     integration_table::QuadTS
     atol::Float64
     rtol::Float64
@@ -18,15 +18,15 @@ struct TanhSinh_vector <: AbstractVectorIntegrator
 end 
 
 """
-    TanhSinh
+    TanhSinh <: AbstractIntegrator 
 
 Struct containing the settings for the tanh-sinh quadrature.
     
 # Fields 
--`atol::Float64`: absolute tolerance
--`rtol::Float64`: relative tolerance 
--`maxlevel::Int64`: maximum amount of repititions 
--`h0::Float64`: initial step size for trapezoidal integration
+- `atol::Float64`: absolute tolerance
+- `rtol::Float64`: relative tolerance 
+- `maxlevel::Int64`: maximum amount of repititions 
+- `h0::Float64`: initial step size for trapezoidal integration
 """
 struct TanhSinh <: AbstractIntegrator
     atol::Float64
@@ -36,22 +36,22 @@ struct TanhSinh <: AbstractIntegrator
 end 
 
 """
-    TanhSinh
+    TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)
 
 Outer constructor for [`TanhSinh`](@ref) with recommended default values.
     
 # Keyword arguments 
--`atol::Real=0.0`: absolute tolerance
--`rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64))`: relative tolerance 
--`maxlevel::Integer=12`: maximum amount of repititions 
--`h0::Real=1`: initial step size for trapezoidal integration
+- `atol`: absolute tolerance
+- `rtol`: relative tolerance 
+- `maxlevel`: maximum amount of repititions 
+- `h0`: initial step size for trapezoidal integration
 """
 function TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)
     
     return TanhSinh(Float64(atol), Float64(rtol), maxlevel, Float64(h0))
 end 
 
-buffertrait(::TanhSinh_vector) = NeedBuffer()
+buffertrait(::TanhSinhVector) = NeedBuffer()
 
 function integration_tables(;maxlevel::Integer=12, h0::Real=1)
     _h0 = Float64(h0)

@@ -1,8 +1,8 @@
 # Ansätze
 
 ```@docs
-H_A_BW(set::Settings)
+H_A_BW(model::AbstractModel)
 ```
 ```@docs
-H_A_not_BW(set::Settings) 
+H_A_notBW(model::AbstractModel) 
 ```

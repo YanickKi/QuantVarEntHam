@@ -1,20 +1,66 @@
 # Cost
 
 ```@docs 
-QCFL(;integration_method = tanh_sinh(), g1::Real=NaN)
+AbstractCostFunction
+```
+
+## Quantum Classical Feedback Loop (QCFL) 
+
+```@docs 
+QCFL
 ```
 ```@docs 
-commutator()
+QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
+buffer::Union{Nothing, QCFL_buffer} = nothing) 
+```
+```@docs
+QCFLBuffer
+```
+```@docs
+QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
+```
+
+## Commutator
+
+```@docs 
+Commutator
 ```
 ```@docs 
-relative_entropy()
+Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+```
+```@docs
+CommutatorBuffer
+```
+```@docs
+CommutatorBuffer(model::AbstractModel)
+```
+
+## Relative Entropy
+
+```@docs 
+RelativeEntropy
 ```
 ```@docs 
-tanh_sinh_integrand(g::Vector{<:AbstractFloat}, u1::Real, u2::Real, num_points::Int, init::Init)
+RelativeEntropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
 ```
-```@docs 
-cost_count(g::Vector{<:AbstractFloat}, init::Init; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Int = 12, h0::Real = 1.)
+```@docs
+RelativeEntropyBuffer
 ```
-```@docs 
-quadgk_count!(g::Vector{<:AbstractFloat}, init::Init; rtol=sqrt(eps), atol=0, maxevals=10^7, order=7)
+```@docs
+RelativeEntropyBuffer(model::AbstractModel)
 ```
+
+## Wrapper for fixing parameters 
+
+```@docs
+FixedCost
+```
+```@docs
+FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+```
+## Gradient
+
+```@docs
+gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real})
+```
+

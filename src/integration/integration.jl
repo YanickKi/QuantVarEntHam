@@ -1,24 +1,40 @@
 export Integrator, MidPoint, TanhSinh
+export AbstractIntegrator, AbstractScalarIntegrator, AbstractVectorIntegrator
 
 
-
+#= 
+    AbstractScalarIntegrator
+    
+Asbtract type for scalar integration.
+Each concrete type of it needs to be callable.
+=#
 abstract type AbstractScalarIntegrator end 
 
-
+#= 
+    AbstractScalarIntegrator
+    
+Asbtract type for vector integration.
+Each concrete type of it needs to be callable.
+=#
 abstract type AbstractVectorIntegrator end
 
 
-""" 
+#= 
     Integrator{S<:AbstractScalarIntegrator,V<:AbstractVectorIntegrator}
-    
-Contains the scalar and vector integration method.
-Allows unified handling of scalar and vector integration and can be conveniently passed to cost functions.
-"""
+
+Allows unified handling of scalar and vector integration.
+=#
 struct Integrator{S<:AbstractScalarIntegrator,V<:AbstractVectorIntegrator}
     scalar_integrate::S
     vector_integrate::V
 end 
 
+""" 
+    AbstractIntegrator
+    
+Asbtract type for integration.
+Concrete types contain the settings (e.g. step size, tolerances, etc...).
+"""
 abstract type AbstractIntegrator end 
 
 include("traits.jl")

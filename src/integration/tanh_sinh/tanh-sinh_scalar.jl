@@ -84,7 +84,7 @@ function estimate_error(prevI::Float64, I::Float64, prevI2::Float64, maxj::Float
 end
 
 
-function (th_s::TanhSinh_scalar)(f::Function, b::Real)
+function (th_s::TanhSinhScalar)(f::Function, b::Real)
     q = th_s.integration_table
     atol = th_s.atol
     rtol = th_s.rtol

@@ -1,15 +1,11 @@
 """
-    XXZ
+    XXZ <: AbstractModel
 
-Concrete type of [`AbstractModel`](@ref), containing the settings for the XXZ model
-
-!!! tip
-    Use the constructor [`XXZ`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
-    and the default values in [`XXZ`](@ref) are highly recommended.
+Object containing the settings for the XXZ model
 
 # Fields 
 - see [`AbstractModel`](@ref)
-- `Δ::Real`: anisotropy 
+- `Δ::Float64`: anisotropy 
 """
 @with_kw struct XXZ <: AbstractModel
     N::Int
@@ -25,25 +21,24 @@ end
     XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
     J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
 
-Convenient constructor for [`XXZ`](@ref) containing settings for the XXZ Model 
+Convenient constructor for [`XXZ`](@ref) containing settings for the XXZ Model.
+The default values are often used and the density matrix is automatically constructed.
+
 
 # Required Arguments
-- `N::Int`: number of sites in the composite system.
-- `Δ::Real`: anisotropy 
-- `N_A::Int`: number of sites in subsystem A.
+- `N`: number of sites in the composite system.
+- `Δ`: anisotropy 
+- `N_A`: number of sites in subsystem A.
 
 # Keyword arguments
-- `S::Union{Int64, Rational} = 1//2`: spin number.
-- `J::Real=-1`: global prefactor in the Hamiltonian.
-- `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
-- `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
-- `ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
-
-# Recommendations
-- use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most. 
+- `S`: spin number.
+- `J`: global prefactor in the Hamiltonian.
+- `r_max`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) `r_max = N_A-1` is maximally possible.
+- `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
+- `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 """
 function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
     
     return XXZ(
         N = N, N_A = N_A,

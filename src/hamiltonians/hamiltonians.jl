@@ -2,7 +2,8 @@ using KrylovKit: eigsolve
 using LinearAlgebra
 using SparseArrays
 
-export H_A_BW, H_A_notBW, get_ρ_A
+export AbstractModel
+export H_A_BW, H_A_notBW, get_rhoA
 export TFIM, XXZ, Pollmann
 export H_XXZ, H_TFIM, H_pollmann
 
@@ -12,32 +13,30 @@ export H_XXZ, H_TFIM, H_pollmann
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
 
-All physical AbstractModels have their own concrete type of `AbstractModel` (e.g. `TFIM`).
+All physical `AbstractModel`s have their own concrete (e.g. `TFIM`).
 In general the concrete types will have the same fields besides the model specific Hamiltonian parameters, which are: 
  
 - `N::Int`: number of sites in composite system.
 - `N_A::Int`: number of sites in subsystem A.
 - `J::Float64`: global prefactor in Hamiltonian
 - `S::Rational`: spin number
-- `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 corresponds to maximum order.
+- `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) `r_max = N_A-1` corresponds to maximum order.
 - `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
 - `ρ_A::Matrix{ComplexF64}`: reduced density matrix of ground state of the composite system on subsystem A.
-- `meas0::Vector{Float64}`: expectation values of `observables` at time ``t=0``.
-- `observables::Vector{M}`: matrix representations of the observables
 """
 abstract type AbstractModel end
 
 
 """
-    get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int) 
+    get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2)
 
-Return the reduced density matrix as either a real or complex matrix of the ground state of Hamiltonian `H` for `N` sites on subsystem A.
+Return the reduced density matrix as either a real or complex matrix of the ground state of Hamiltonian `H` with spins of 
+spin number `S` for `N` sites on subsystem A.
 
 For a Hilbert space dimension of more than 1024, the [krylov subspace method from KrylovKit](https://jutho.github.io/KrylovKit.jl/stable/man/eig/#KrylovKit.eigsolve) is used for 
 extracting the ground state, exact diagonalization otherwise.
 """
-
-function get_ρ_A(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+function get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
     d = (Int64(2*S+1))^(N)
     N_A = length(A)
     if d > 1024
@@ -60,8 +59,6 @@ end
 Return a vector with the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
-This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`AbstractModel`](@ref) to get the correct variational Ansatz for the corresponding AbstractModel.
-
 
 # Example 
 `H_A_BW(model::TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
@@ -90,7 +87,6 @@ end
 Return a vector with the blocks as its entries, which are complex dense matrices.
 
 The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
-This function calls lower level functions which dispatch on the concrete subtypes of the abstract type [`AbstractModel`](@ref) to get the correct variational Ansatz for the corresponding AbstractModel.
 
 # Example 
 `H_A_notBW(model::TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.

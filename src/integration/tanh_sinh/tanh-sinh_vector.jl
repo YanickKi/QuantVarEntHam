@@ -49,7 +49,7 @@ function integrate!(I::AbstractVector, f::Function, q::QuadTS{N}, Σ::AbstractVe
     end
 end
 
-function (th_v::TanhSinh_vector)(I::AbstractVector, f::Function, b::Real)
+function (th_v::TanhSinhVector)(I::AbstractVector, f::Function, b::Real)
     q       = th_v.integration_table
     atol    = th_v.atol
     rtol    = th_v.rtol

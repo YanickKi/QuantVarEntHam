@@ -1,19 +1,66 @@
-struct Relative_entropy_buffer
+"""
+    RelativeEntropyBuffer
+
+Struct containing the buffers for the [`RelativeEntropy`](@ref).
+"""
+struct RelativeEntropyBuffer
     H_A::Matrix{ComplexF64}
     H_A_forexp::Matrix{ComplexF64}
-    exp_buff::Exp_buffer{ComplexF64}
+    exp_buff::ExpBuffer{ComplexF64}
 end 
 
-mutable struct Relative_entropy{M<:AbstractModel} <: AbstractCostFunction
+"""
+    RelativeEntropyBuffer(model::AbstractModel)
+
+Outer constructor for [`RelativeEntropyBuffer`](@ref) given a `model`. 
+"""
+function RelativeEntropyBuffer(model::AbstractModel)
+
+    d = size(model.ρ_A)[1]
+    return RelativeEntropyBuffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), 
+        ExpBuffer(ComplexF64, d))
+end 
+
+"""
+    RelativeEntropy{M<:AbstractModel} <: AbstractCostFunction
+
+Relative entropy as a cost function as an object defined as 
+```math 
+\\mathcal{C}(\\vec{g}) = \\text{Tr} [ρ_A H_\\text{A}^\\text{Var}(\\vec{g}) ] + \\ln  \\text{Tr}_\\text{A} [e^{-H_\\text{A}^\\text{Var}(\\vec{g})}]
+```
+# Fields 
+
+- `model::M`: model
+- `blocks::Vector{Matrix{ComplexF64}}`: blocks for the variational Ansatz
+- `buff::RelativeEntropyBuffer`: buffers (see [`RelativeEntropyBuffer`](@ref)) 
+- `trace_exp_H_A::Float64`: cached variable to store an intermiadte result
+
+# Gradient 
+
+The gradient is given by 
+
+```math
+\\partial_{g_k} \\mathcal{C}(\\vec{g}) = \\text{Tr}_{\\text{A}} [  \\rho_\\text{A} h_k ] - \\frac{\\text{Tr}_{\\text{A}} [ e^{-H_\\text{A}^\\text{Var}(\\vec{g})} h_k ] }
+{\\text{Tr}_{\\text{A}} [ e^{-H_\\text{A}^\\text{Var}(\\vec{g})}]}.
+```
+"""
+mutable struct RelativeEntropy{M<:AbstractModel} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
-    buff::Relative_entropy_buffer
+    buff::RelativeEntropyBuffer
     trace_exp_H_A::Float64 # cached variable to save intermediate calculations in gradient for cost
 end 
 
-function Relative_entropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix}; buffer::Union{Nothing, Relative_entropy_buffer} = nothing)
-    buffer = something(buffer, Relative_entropy_buffer(model))
-    return Relative_entropy(
+"""
+    RelativeEntropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+
+Outer constructor for [`RelativeEntropy`](@ref) s.t. the correct `buffers´ (see [`RelativeEntropyBuffer`](@ref)) will be automatically constructed
+for a given `model` and `blocks`.
+An already existing `buffer` can be provided.
+"""
+function RelativeEntropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+    buffer = RelativeEntropyBuffer(model)
+    return RelativeEntropy(
         model, 
         blocks,
         buffer,
@@ -21,14 +68,8 @@ function Relative_entropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix}
     )
 end 
 
-function Relative_entropy_buffer(model::AbstractModel)
 
-    d = size(model.ρ_A)[1]
-    return Relative_entropy_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), 
-        Exp_buffer(ComplexF64, d))
-end 
-
-function (c::Relative_entropy)(g)
+function (c::RelativeEntropy)(g)
     buff = c.buff
     ρ_A = c.model.ρ_A
 
@@ -44,7 +85,7 @@ function (c::Relative_entropy)(g)
 end 
 
 
-function _gradient!(c::Relative_entropy, G, g::Vector{<:Real}, free_indices)
+function _gradient!(c::RelativeEntropy, G, g::Vector{<:Real}, free_indices)
     
     get_H_A!(c, g)
 
@@ -57,7 +98,7 @@ function _gradient!(c::Relative_entropy, G, g::Vector{<:Real}, free_indices)
     return G 
 end 
 
-function pre_computations_gradient(c::Relative_entropy)
+function pre_computations_gradient(c::RelativeEntropy)
     
     H_A_forexp = c.buff.H_A_forexp
     exp_buff = c.buff.exp_buff
@@ -72,7 +113,7 @@ function pre_computations_gradient(c::Relative_entropy)
 end 
 
 
-function gradient_component(c::Relative_entropy, index::Integer)
+function gradient_component(c::RelativeEntropy, index::Integer)
 
     exp_H_A = c.buff.exp_buff.X # renaming for readability 
 
@@ -84,16 +125,16 @@ function gradient_component(c::Relative_entropy, index::Integer)
 end 
 
 
-function cost_from_gradient_intermediates(c::Relative_entropy)
+function cost_from_gradient_intermediates(c::RelativeEntropy)
     S1 = dot(c.model.ρ_A, c.buff.H_A)
     S2 = log(c.trace_exp_H_A)
     return S1+S2
 end 
 
-cost_from_gradient_intermediates(fc::FixedCost{C}) where {C<:Relative_entropy} = unwrap(cost_from_gradient_intermediates, fc)
+cost_from_gradient_intermediates(fc::FixedCost{C}) where {C<:RelativeEntropy} = unwrap(cost_from_gradient_intermediates, fc)
 
 
-function fg!(F, G::Union{Vector{<:Real}, Nothing}, c::Union{C, FixedCost{C}}, g::Vector{<:Real}) where {C<:Relative_entropy}
+function fg!(F, G::Union{Vector{<:Real}, Nothing}, c::Union{C, FixedCost{C}}, g::Vector{<:Real}) where {C<:RelativeEntropy}
     if !isnothing(G)
         gradient!(G, c, g)
         if !isnothing(F)

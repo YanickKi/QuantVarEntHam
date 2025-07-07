@@ -1,9 +1,9 @@
 """ 
-    Commutator_buffer
+    CommutatorBuffer
 
 Struct containing the buffers for the cost function [`Commutator`](@ref).
 """
-struct Commutator_buffer
+struct CommutatorBuffer
     comm::Matrix{ComplexF64}
     temp::Matrix{ComplexF64}
     H_A::Matrix{ComplexF64}
@@ -11,58 +11,63 @@ end
 
 
 """ 
-    Commutator_buffer
+    CommutatorBuffer(model::AbstractModel)
 
-Outer constructor for [`Commutator_buffer`](@ref) given a `model`.
-
-# Arguments
-
--`model::AbstractModel`: model
+Outer constructor for [`CommutatorBuffer`](@ref) given a `model`.
 """
-function Commutator_buffer(model::AbstractModel)
+function CommutatorBuffer(model::AbstractModel)
     d = size(model.ρ_A)[1]
-    return Commutator_buffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
+    return CommutatorBuffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
 end 
 
 """
-    Commutator
+    Commutator{M<:AbstractModel} <: AbstractCostFunction
 
-Commutator as a cost function defined as 
+Commutator as a cost function as an object defined as 
 ```math
-C(\vec{g})  = \frac{||[H_\text{A}^\text{Var}(\vec{g}), ρ_\text{A}]||}{||H_\text{A}^\text{Var}(\vec{g}||||ρ_\text{A}||},
+\\mathcal{C}(\\vec{g})  = \\frac{||[H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}]||}{||H_\\text{A}^\\text{Var}(\\vec{g})||||ρ_\\text{A}||},
 ```
 where ``H_\\text{A}^\\text{Var}(\\vec{g})`` is the variational Ansatz and ``ρ_\\text{A}`` the exact reduced density matrix. 
 The Frobenius norm is used.
 
 # Fields 
 
--`model::M`: model 
--`blocks::Vector{Matrix{ComplexF64}}`: blocks for the variational Ansatz 
--`buff::Commutator_buffer`: buffers 
+- `model::M`: model 
+- `blocks::Vector{Matrix{ComplexF64}}`: blocks for the variational Ansatz 
+- `buff::CommutatorBuffer`: buffers (see [`CommutatorBuffer`](@ref))
+
+# Gradient 
+
+The gradient is given by 
+
+```math
+\\partial_{g_k} \\mathcal{C}(\\vec{g}) =
+\\frac{1}{2||\\rho_\\text{A}|| || H_\\text{A}^\\text{Var}(\\vec{g}) ||^2} 
+\\left ( \\frac{|| H_\\text{A}^\\text{Var}(\\vec{g}) ||}{|| [H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] ||} 
+\\text{Sum} \\left ( [H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] \\, .\\!* [H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] \\right ) -
+\\frac{[H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] ||}{|| H_\\text{A}^\\text{Var}(\\vec{g}) ||}
+\\text{Sum} \\left ( H_\\text{A}^\\text{Var}(\\vec{g}) \\, . \\! * h_k \\right )
+\\right ).
+```
+Here, `` \\text{Sum}(X) = \\sum_{ij} X_{ij}`` denotes the sum of all matrix elements and 
+the elementwise product aka Hadamard product is denoted by ``C = A \\, . \\! *B`` s.t. 
+``C_{ij} = A_{ij} B_{ij}``.
 """
 struct Commutator{M<:AbstractModel} <: AbstractCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
-    buff::Commutator_buffer
+    buff::CommutatorBuffer
 end 
 
 """
-    Commutator
+    Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
 
-Outer Constructor for [`Commutator`](@ref) s.t. the correct buffers will be automatically constructed 
+Outer Constructor for [`Commutator`](@ref) s.t. the correct `buffer` (see [`CommutatorBuffer`](@ref)) will be automatically constructed 
 for the given `model` and `blocks`.  
-
-# Required Arguments 
-
--`model::AbstractModel`: model 
--`blocks::Vector{<:AbstractMatrix}`: blocks for the variational Ansatz 
-
-# Keyword Arguments
-
--`buffer::Union{Nothing, Commutator_buffer} = nothing`
+An already existing `buffer` can be provided.
 """
-function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix}; buffer::Union{Nothing, Commutator_buffer} = nothing)
-    buffer = something(buffer, Commutator_buffer(model))
+function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+    buffer = CommutatorBuffer(model)
     return Commutator(
         model, 
         blocks, 

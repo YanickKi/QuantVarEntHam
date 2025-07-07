@@ -1,3 +1,16 @@
+"""
+    FixedCost{C} <: AbstractCostFunction
+
+Wrapper for fixing parameters of a cost function object. 
+
+# Fields 
+
+- `c::C`: cost function 
+- `fixed_indices::Vector{Int}`: the indices of the parameters which are to be fixed 
+- `fixed_values::Vector{Float64}`: values of the parameters which are to be fixed 
+- `free_indices::Vector{Int}`: free indices which are to be optimized 
+- `full_g::Vector{Float64}`: a buffer to construct the full parameter vector with fixed and free parameters
+"""
 struct FixedCost{C} <: AbstractCostFunction
     c::C 
     fixed_indices::Vector{Int}
@@ -7,6 +20,17 @@ struct FixedCost{C} <: AbstractCostFunction
 end 
 
 
+"""
+    FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+
+Outer constructor for [`FixedCost`](@ref).
+
+# Arguments
+
+- `c`: cost function 
+- `fixed_indices`: the indices of the parameters which are to be fixed 
+- `fixed_values`: values of the parameters which are to be fixed 
+"""
 function FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
     @assert typeof(c) != FixedCost "Cannot wrap a fixed cost into a new fixed cost!"
     

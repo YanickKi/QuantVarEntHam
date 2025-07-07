@@ -1,11 +1,7 @@
 """
-    TFIM
+    TFIM <: AbstractModel
 
-Concrete type of [`AbstractModel`](@ref), containing the modeltings for the TFIM
-
-!!! tip
-    Use the constructor [`TFIM`](@ref) to instantiate this struct since the type for `observables` is automatically inferred
-    and the default values in [`TFIM`](@ref) are highly recommended.
+Object containing the settings for the TFIM.
 
 # Fields 
 - see [`AbstractModel`](@ref)
@@ -26,25 +22,23 @@ end
     TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
-Convenient constructor for [`TFIM`](@ref) containing modeltings for the TFIM
+Convenient constructor for [`TFIM`](@ref) containing settings for the TFIM.
+The default values are often used and the density matrix is automatically constructed.
 
 # Required Arguments
-- `N::Int`: number of sites in the composite system.
-- `Γ::Real`: transversal field strength 
-- `N_A::Int`: number of sites in subsystem A.
+- `N`: number of sites in the composite system
+- `Γ`: transversal field strength 
+- `N_A`: number of sites in subsystem A
 
 # Keyword arguments
-- `S::Union{Int64, Rational} = 1//2`: spin number.
-- `J::Real=-1`: global prefactor in the Hamiltonian.
-- `r_max::Int=1`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) r_max = N_A-1 is maximally possible.
-- `periodic::Bool=false`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
-- `ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J),  N-N_A+1:N, N)`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
-
-# Recommendations
-- use only Z-gates (or composition of these) as observables since these are diagonal thus save computation time the most. 
+- `S`: spin number.
+- `J`: global prefactor in the Hamiltonian.
+- `r_max`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) `r_max = N_A-1` is maximally possible.
+- `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
+- `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 """
 function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
-    J::Real=-1, ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
+    J::Real=-1, ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
     return TFIM(
         N = N, N_A = N_A,

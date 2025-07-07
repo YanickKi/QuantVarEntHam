@@ -1,4 +1,4 @@
-struct BufferOnlyQCFL{T<:AbstractMatrix}
+struct QCFLOnlyBuffer{T<:AbstractMatrix}
     C_G::Vector{Float64}
     C_G_result::Vector{Float64}
     ρ_A_evolved::Matrix{ComplexF64}
@@ -9,42 +9,66 @@ struct BufferOnlyQCFL{T<:AbstractMatrix}
 end 
 
 """
-    QCFL_buffer
+    QCFLBuffer
 
 Struct containing the buffers for the [`QCFL`](@ref).
 """
-struct QCFL_buffer
-    qcfl_buff::BufferOnlyQCFL
-    exp_buff::Exp_frech_buffer{ComplexF64}
+struct QCFLBuffer
+    qcfl_buff::QCFLOnlyBuffer
+    exp_buff::ExpFrechBuffer{ComplexF64}
     H_A::Matrix{ComplexF64}
 end
 
 
 """
-    QCFL_buffer
+    QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
 
-Outer constructor for [`QCFL_buffer`](@ref) given a `model`, `blocks` and `observables`. 
-
-# Arguments 
-
--`model::AbstractModel`: model
--`blocks::Vector{<:AbstractMatrix}`: blocks for the variational Ansatz 
--`observables::Vector{<:AbstractMatrix}`: 
+Outer constructor for [`QCFLBuffer`](@ref) given a `model`, `blocks` and `observables`.
 """
-function QCFL_buffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
+function QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
     numBlocks = length(blocks) 
     d = size(model.ρ_A)[1] # Hilbert space dimension
-    return QCFL_buffer(
-        BufferOnlyQCFL(d, numBlocks, observables), 
-        Exp_frech_buffer(ComplexF64, d), 
+    return QCFLBuffer(
+        QCFLOnlyBuffer(d, numBlocks, observables), 
+        ExpFrechBuffer(ComplexF64, d), 
         zeros(ComplexF64, d, d) 
     )
 end 
 
 """
-    QCFL
+    QCFL{M<:AbstractModel, O<:AbstractMatrix} <: AbstractCostFunction
 
+The cost function from the QCFL as an object defined as 
 
+```math
+\\mathcal{C}(\\vec{g}) = \\frac{1}{T_\\text{max}} \\int_0^{T_\\text{max}} \\frac{1}{N_\\text{O}} \\sum_{j=1}^{N_\\text{O}} \\left ( \\langle \\mathcal{O}_j^\\text{A} \\rangle_t - \\langle \\mathcal{O}_j^\\text{A} \\rangle_0 \\right ) dt
+```
+with the expectation value of the time evolved observables
+```math 
+\\langle \\mathcal{O}_j^\\text{A} \\rangle_t =  \\text{Tr}_{\\text{A}} \\left \\{ \\mathcal{O}_j^\\text{A} e^{- i H_\\text{A}^\\text{Var}(\\vec{g})t} \\rho_\\text{A}  e^{i H_\\text{A}^\\text{Var}(\\vec{g})t} \\right \\}.
+```
+``N_\\text{O}`` denotes the number of observables.
+# Fields 
+- `model::M`: model 
+- `blocks::Vector{Matrix{ComplexF64}}`: blocks of the variational Ansatz
+- `integrator::Integrator`: object containing scalar and vector integration (NOTE: INTERNAL ONLY)
+- `observables::Vector{O}`: monitored observables
+- `T_max::Float64`: maximum integration time aka how long the system is sampled 
+- `meas0::Vector{Float64}`: expectation values at time `t=0` 
+- `buff::QCFLBuffer`: see [`QCFLBuffer`](@ref)
+
+# Gradient 
+
+The gradient is given by 
+
+```math
+    \\partial_{g_k} \\mathcal{C}(\\vec{g}) = \\frac{4}{T_\\text{max} N_\\text{O}} \\int_0^{T_\\text{max}} t \\, \\text{Im} \\left \\{ \\text{Tr}_{\\text{A}} 
+    \\left [ \\mathcal{L}_{e^X} ( - i t  H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}) h_\\text{k} \\right ] \\right   \\} dt ,
+```
+where ``\\Xi_\\text{A} = \\sum_j \\langle \\mathcal{O}_j^\\text{A} \\rangle_t - \\langle \\mathcal{O}_j^\\text{A} \\rangle_0 \\mathcal{O}_j^\\text{A}``
+and ``\\mathcal{L}_{e^X} ( - i t H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A})``
+denotes the Frechet derivative of the matrix exponential at ``- i t H_\\text{A}^\\text{Var}``
+in the direction of ``\\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}``.
 """
 struct QCFL{M<:AbstractModel, O<:AbstractMatrix} <: AbstractCostFunction
     model::M 
@@ -53,19 +77,42 @@ struct QCFL{M<:AbstractModel, O<:AbstractMatrix} <: AbstractCostFunction
     observables::Vector{O} 
     T_max::Float64
     meas0::Vector{Float64}
-    buff::QCFL_buffer
+    buff::QCFLBuffer
 end
  
+
+"""
+    QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
+    buffer::Union{Nothing, QCFLBuffer} = nothing) 
+
+Outer constructor for [`QCFL`](@ref) s.t. the correct buffers will be automatically constructed for 
+the given `model`, `blocks` and `observables`.
+
+Provides default values for observables and the integrator.
+The default values for observables is `` \\{ Z_i Z_{i+1} | 1 \\leq i < N_\\text{A} \\}``.
+The tanh-sinh quadrature is set as the default integrator with its default values (see [`TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)`](@ref)).
+
+# Required arguments
+
+- `model`: model 
+- `blocks`: blocks for the variational Ansatz
+- `T_max`: maximum integration time aka how long the system is sampled
+
+# Keyword arguments
+- `integrator`: settings for integration method (see [`AbstractIntegrator`](@ref))
+- `observables`: observables
+- `buffer`: see [`QCFLBuffer`](@ref) 
+"""
 function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
-    buffer::Union{Nothing, QCFL_buffer} = nothing)
+    buffer::Union{Nothing, QCFLBuffer} = nothing)
     
     observables = something(observables, [repeat(model.N_A, Z, (i,i+1), S = model.S) for i in 1:model.N_A-1])
     integrator = something(integrator, TanhSinh())
-    buffer = something(buffer, QCFL_buffer(model, blocks, observables))
+    buffer = something(buffer, QCFLBuffer(model, blocks, observables))
     meas0 = [expect(observable, model.ρ_A) for observable in observables]
 
 
-    complete_integrator = make_integrator(model, integrator)
+    complete_integrator = make_integrator(blocks, integrator)
     
 
     return QCFL(
@@ -89,8 +136,8 @@ function shorten_buffers!(c::QCFL, how_often::Integer)
 end 
 
 
-function BufferOnlyQCFL(d::Integer, numBlocks::Integer, observables::Vector{<:AbstractMatrix}) 
-    return BufferOnlyQCFL{eltype(observables)}(
+function QCFLOnlyBuffer(d::Integer, numBlocks::Integer, observables::Vector{<:AbstractMatrix}) 
+    return QCFLOnlyBuffer{eltype(observables)}(
     zeros(Float64, numBlocks+1),
     zeros(Float64, numBlocks+1),
     zeros(ComplexF64, d, d), 
@@ -175,7 +222,7 @@ function integrand_cost(c::QCFL, t::AbstractFloat)
     return c
 end
 
-function evolve(ρ_A::AbstractMatrix, U::AbstractMatrix, qcfl_buff::BufferOnlyQCFL)
+function evolve(ρ_A::AbstractMatrix, U::AbstractMatrix, qcfl_buff::QCFLOnlyBuffer)
     mul!(qcfl_buff.ρ_A_evolved, U, mul!(qcfl_buff.ρ_A_right, ρ_A, U'))
 end 
 

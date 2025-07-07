@@ -1,19 +1,19 @@
+
+"""
+    AbstractCostFunction
+
+Abstract type for cost functions
+"""
 abstract type AbstractCostFunction end 
 
 export gradient!
-export AbstractCostFunction, QCFL, Commutator, Relative_entropy, FixedCost
-export QCFL_buffer, Commutator_buffer, Relative_entropy_buffer
+export AbstractCostFunction, QCFL, Commutator, RelativeEntropy, FixedCost
+export QCFLBuffer, CommutatorBuffer, RelativeEntropyBuffer
 
 """
-    gradient!
+    gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real})
 
 Computes the gradient of a given cost function `c` at point `g` and saves it in `G`.
-
-# Arguments
--`G::Vector{<:Real}`: buffer to save gradient in 
--`c::AbstractCostFunction`: cost function
--`g::Vector{<:Real}`: parameters
-
 """
 function gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real})
     

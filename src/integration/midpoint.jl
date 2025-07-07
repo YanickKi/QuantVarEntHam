@@ -1,21 +1,21 @@
-struct MidPoint_scalar <: AbstractScalarIntegrator
+struct MidPointScalar <: AbstractScalarIntegrator
     dt::Float64
 end 
-struct MidPoint_vector <: AbstractVectorIntegrator
+struct MidPointVector <: AbstractVectorIntegrator
     dt::Float64
 end 
 
-buffertrait(::MidPoint_vector) = NoNeedBuffer()
+buffertrait(::MidPointVector) = NoNeedBuffer()
 
 
 """
-    MidPoint(dt::Real) 
+    MidPoint
 
 Struct containing the settings for midpoint integration.
 
-# Arguments 
+# Fields 
 
--`dt::Real`: step size 
+- `dt::Real`: step size 
 """
 struct MidPoint <: AbstractIntegrator
     dt::Float64
@@ -40,7 +40,7 @@ Allows unified handling of integrating scalar and vector functions as in e.g. ['
 """
 =#
 
-function (mp_s::MidPoint_scalar)(f::Function, b::Real)
+function (mp_s::MidPointScalar)(f::Function, b::Real)
     dt = mp_s.dt
     _a = 0.
     _b = Float64(b)
@@ -54,7 +54,7 @@ function (mp_s::MidPoint_scalar)(f::Function, b::Real)
     return I*dt
 end 
 
-function (mp_v::MidPoint_vector)(I::AbstractVector, f::Function, b::Real)
+function (mp_v::MidPointVector)(I::AbstractVector, f::Function, b::Real)
     dt = mp_v.dt
     _a = 0.
     _b = Float64(b)

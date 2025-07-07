@@ -1,7 +1,7 @@
 import LinearAlgebra.BlasFloat
 using ChainRulesCore: add!!
 
-mutable struct Exp_frech_buffer{T}
+mutable struct ExpFrechBuffer{T}
     Inn::Matrix{T}
     A::Matrix{T}
     A2::Matrix{T}
@@ -25,7 +25,7 @@ mutable struct Exp_frech_buffer{T}
     C::Vector{Vector{T}}
 end
 
-mutable struct Exp_buffer{T}
+mutable struct ExpBuffer{T}
     Inn::Matrix{T}
     A::Matrix{T}
     A2::Matrix{T}
@@ -49,8 +49,8 @@ function generate_coefficients(T)
     return [C1,C2,C3,C4,C5]
 end 
 
-function Exp_buffer(T::Type, n::Int)
-    return Exp_buffer(
+function ExpBuffer(T::Type, n::Int)
+    return ExpBuffer(
         Matrix{T}(I, n, n),
         zeros(T, n, n),
         zeros(T, n, n),
@@ -66,9 +66,9 @@ function Exp_buffer(T::Type, n::Int)
     )
 end
 
-function Exp_frech_buffer(T::Type, n::Int)
+function ExpFrechBuffer(T::Type, n::Int)
    
-    return Exp_frech_buffer(
+    return ExpFrechBuffer(
         Matrix{T}(I, n, n),
         zeros(T, n, n),
         zeros(T, n, n),
@@ -93,7 +93,7 @@ function Exp_frech_buffer(T::Type, n::Int)
     )
 end
 
-function exp_only_buffered!(A::StridedMatrix{T}, buf::Union{Exp_frech_buffer{T}, Exp_buffer{T}}) where {T<:BlasFloat}    
+function exp_only_buffered!(A::StridedMatrix{T}, buf::Union{ExpFrechBuffer{T}, ExpBuffer{T}}) where {T<:BlasFloat}    
     n = LinearAlgebra.checksquare(A)
     ilo, ihi, scale = LAPACK.gebal!('B', A)  # modifies A
     nA = opnorm(A, 1)
@@ -146,7 +146,7 @@ function exp_only_buffered!(A::StridedMatrix{T}, buf::Union{Exp_frech_buffer{T},
     return
 end
 
-function exp_buffered!(A::StridedMatrix{T}, buf::Exp_frech_buffer{T}) where {T<:BlasFloat}    
+function exp_buffered!(A::StridedMatrix{T}, buf::ExpFrechBuffer{T}) where {T<:BlasFloat}    
     n = LinearAlgebra.checksquare(A)
     ilo, ihi, scale = LAPACK.gebal!('B', A)  # modifies A
     nA = opnorm(A, 1)
@@ -253,7 +253,7 @@ function _unbalance!(X, ilo, ihi, scale, n)
 end
 
 
-function own_rrule(::typeof(exp), A0::StridedMatrix{<:BlasFloat}, buf::Exp_frech_buffer)
+function own_rrule(::typeof(exp), A0::StridedMatrix{<:BlasFloat}, buf::ExpFrechBuffer)
     # TODO: try to make this more type-stable
     buf.A .= A0
     intermediates = exp_buffered!(buf.A, buf)
@@ -265,7 +265,7 @@ end
 
 
 function _matfun_frechet!(
-    ::typeof(exp), ΔA, A::StridedMatrix{T}, (ilo, ihi, scale, C, si, F, sizeApows, sizeXpows), buf::Exp_frech_buffer
+    ::typeof(exp), ΔA, A::StridedMatrix{T}, (ilo, ihi, scale, C, si, F, sizeApows, sizeXpows), buf::ExpFrechBuffer
 ) where {T<:BlasFloat}
     n = LinearAlgebra.checksquare(A)
     _balance!(ΔA, ilo, ihi, scale, n)

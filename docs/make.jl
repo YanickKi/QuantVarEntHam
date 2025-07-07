@@ -7,9 +7,9 @@ makedocs(sitename="QuantVarEntHam.jl",  modules = [QuantVarEntHam],
                 "Home" => "index.md"
                 "Functionality" => "functionality.md"
                 "Models" => "models.md"
-                "Initialize" => "initialize.md"
                 "Ansätze" => "ansätze.md"
-                "Optimizer" => "optimizer.md"
                 "Cost" => "cost.md"
+                "Integration" => "integration.md"
+                "Optimizer" => "optimizer.md"
         ],
         repo = "https://gitlab.dlr.de/ma-kind/QuantVarEntHam.git")

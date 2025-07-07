@@ -9,14 +9,14 @@ Minimize cost function using the [LBFGS-optimizer from `Optim.jl`](https://julia
 the optimal parameters and the cost function value at the minimum.
 
 # Required arguments
-- `cost::AbstractCostFunction`: cost function.
-- `g_init::Vector{<:Real}`: initial parameters.
+- `cost`: cost function.
+- `g_init`: initial parameters.
 
 # Keyword arguments 
--`∇_tol::Real=1e-16`: maximum infinity norm of the gradient in order to stop the minimization.
-- `maxiter::Integer = 1000`: maximum number of iterations in order to stop minimizing.
-- `show_trace::Bool=true`: true for showing the trace of the minizing procedure, false otherwise.
-- `print_result::Bool = true` true to print optimal parameters and result, false otherwise.
+- `∇_tol`: minimum infinity norm of the gradient in order to stop the minimization.
+- `maxiter`: maximum number of iterations in order to stop minimizing.
+- `show_trace`: true for showing the trace of the minizing procedure, false otherwise.
+- `print_result` true to print optimal parameters and result, false otherwise.
 """
 function optimize(cost::AbstractCostFunction, g_init::Vector{<:Real}; ∇_tol::Real=1e-16, maxiter::Integer=1000, show_trace::Bool=true, print_result::Bool= true)
     
