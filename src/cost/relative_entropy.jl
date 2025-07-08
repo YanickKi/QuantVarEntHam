@@ -22,7 +22,7 @@ function RelativeEntropyBuffer(model::AbstractModel)
 end 
 
 """
-    RelativeEntropy{M<:AbstractModel} <: AbstractCostFunction
+    RelativeEntropy{M<:AbstractModel} <: AbstractFreeCostFunction
 
 Relative entropy as a cost function as an object defined as 
 ```math 
@@ -44,7 +44,7 @@ The gradient is given by
 {\\text{Tr}_{\\text{A}} [ e^{-H_\\text{A}^\\text{Var}(\\vec{g})}]}.
 ```
 """
-mutable struct RelativeEntropy{M<:AbstractModel} <: AbstractCostFunction
+mutable struct RelativeEntropy{M<:AbstractModel} <: AbstractFreeCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
     buff::RelativeEntropyBuffer
@@ -56,7 +56,6 @@ end
 
 Outer constructor for [`RelativeEntropy`](@ref) s.t. the correct `buffers´ (see [`RelativeEntropyBuffer`](@ref)) will be automatically constructed
 for a given `model` and `blocks`.
-An already existing `buffer` can be provided.
 """
 function RelativeEntropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
     buffer = RelativeEntropyBuffer(model)

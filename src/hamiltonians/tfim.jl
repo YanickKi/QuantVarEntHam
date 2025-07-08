@@ -68,7 +68,7 @@ function H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{I
         repeat(N, X, i, S=S)
     end |> sum
 
-    return J*(ising_term + Γ*transversal_term) 
+    return Float64(J)*(ising_term + Float64(Γ)*transversal_term) 
 end 
 
 

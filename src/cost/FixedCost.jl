@@ -1,5 +1,5 @@
 """
-    FixedCost{C} <: AbstractCostFunction
+    FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
 
 Wrapper for fixing parameters of a cost function object. 
 
@@ -11,7 +11,7 @@ Wrapper for fixing parameters of a cost function object.
 - `free_indices::Vector{Int}`: free indices which are to be optimized 
 - `full_g::Vector{Float64}`: a buffer to construct the full parameter vector with fixed and free parameters
 """
-struct FixedCost{C} <: AbstractCostFunction
+struct FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
     c::C 
     fixed_indices::Vector{Int}
     fixed_values::Vector{Float64}
@@ -21,7 +21,7 @@ end
 
 
 """
-    FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+    FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
 
 Outer constructor for [`FixedCost`](@ref).
 
@@ -31,9 +31,8 @@ Outer constructor for [`FixedCost`](@ref).
 - `fixed_indices`: the indices of the parameters which are to be fixed 
 - `fixed_values`: values of the parameters which are to be fixed 
 """
-function FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
-    @assert typeof(c) != FixedCost "Cannot wrap a fixed cost into a new fixed cost!"
-    
+function FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+        
     c = deepcopy(c)
 
     full_g = zeros(length(c.blocks))
@@ -53,13 +52,17 @@ function FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fi
 end 
 
 
-shorten_buffers!(::AbstractCostFunction, ::Integer) = nothing 
+shorten_buffers!(::AbstractFreeCostFunction, ::Integer) = nothing 
 
+"""
+    fill_full_g(fc::FixedCost, g::Vector{Float64})
+
+Return the complete parameter vector consisting of the fixed parameter in `fc` and the passed parameters `g`.
+"""
 function fill_full_g(fc::FixedCost, g::Vector{Float64})
    fc.full_g[fc.free_indices] .= g
    return fc.full_g
 end 
-
 
 function (fc::FixedCost)(g::Vector{<:Real})
     fill_full_g(fc, g)

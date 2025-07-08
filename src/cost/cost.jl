@@ -1,14 +1,24 @@
-
+export gradient!
+export AbstractCostFunction, AbstractFreeCostFunction
+export QCFL, Commutator, RelativeEntropy, FixedCost
+export QCFLBuffer, CommutatorBuffer, RelativeEntropyBuffer
+export fill_full_g
 """
     AbstractCostFunction
 
-Abstract type for cost functions
+Abstract type for cost functions including where parameters are fixed.
 """
 abstract type AbstractCostFunction end 
 
-export gradient!
-export AbstractCostFunction, QCFL, Commutator, RelativeEntropy, FixedCost
-export QCFLBuffer, CommutatorBuffer, RelativeEntropyBuffer
+
+"""
+    AbstractFreeCostFunction
+
+Abstract type for cost functions only where all parameters are free.
+"""
+abstract type AbstractFreeCostFunction <: AbstractCostFunction end
+
+
 
 """
     gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real})

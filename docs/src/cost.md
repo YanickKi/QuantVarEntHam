@@ -3,7 +3,9 @@
 ```@docs 
 AbstractCostFunction
 ```
-
+```@docs 
+AbstractFreeCostFunction
+```
 ## Quantum Classical Feedback Loop (QCFL) 
 
 ```@docs 
@@ -56,7 +58,10 @@ RelativeEntropyBuffer(model::AbstractModel)
 FixedCost
 ```
 ```@docs
-FixedCost(c::AbstractCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+```
+```@docs
+fill_full_g(fc::FixedCost, g::Vector{Float64}) 
 ```
 ## Gradient
 

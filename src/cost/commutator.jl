@@ -21,7 +21,7 @@ function CommutatorBuffer(model::AbstractModel)
 end 
 
 """
-    Commutator{M<:AbstractModel} <: AbstractCostFunction
+    Commutator{M<:AbstractModel} <: AbstractFreeCostFunction
 
 Commutator as a cost function as an object defined as 
 ```math
@@ -44,8 +44,8 @@ The gradient is given by
 \\partial_{g_k} \\mathcal{C}(\\vec{g}) =
 \\frac{1}{2||\\rho_\\text{A}|| || H_\\text{A}^\\text{Var}(\\vec{g}) ||^2} 
 \\left ( \\frac{|| H_\\text{A}^\\text{Var}(\\vec{g}) ||}{|| [H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] ||} 
-\\text{Sum} \\left ( [H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] \\, .\\!* [H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] \\right ) -
-\\frac{[H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] ||}{|| H_\\text{A}^\\text{Var}(\\vec{g}) ||}
+\\text{Sum} \\left ( [h_k, ρ_\\text{A}] \\, .\\!* [H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] \\right ) -
+\\frac{||[H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}] ||}{|| H_\\text{A}^\\text{Var}(\\vec{g}) ||}
 \\text{Sum} \\left ( H_\\text{A}^\\text{Var}(\\vec{g}) \\, . \\! * h_k \\right )
 \\right ).
 ```
@@ -53,7 +53,7 @@ Here, `` \\text{Sum}(X) = \\sum_{ij} X_{ij}`` denotes the sum of all matrix elem
 the elementwise product aka Hadamard product is denoted by ``C = A \\, . \\! *B`` s.t. 
 ``C_{ij} = A_{ij} B_{ij}``.
 """
-struct Commutator{M<:AbstractModel} <: AbstractCostFunction
+struct Commutator{M<:AbstractModel} <: AbstractFreeCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
     buff::CommutatorBuffer
@@ -63,8 +63,7 @@ end
     Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
 
 Outer Constructor for [`Commutator`](@ref) s.t. the correct `buffer` (see [`CommutatorBuffer`](@ref)) will be automatically constructed 
-for the given `model` and `blocks`.  
-An already existing `buffer` can be provided.
+for the given `model` and `blocks`.
 """
 function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
     buffer = CommutatorBuffer(model)

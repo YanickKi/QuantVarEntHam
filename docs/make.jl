@@ -5,7 +5,7 @@ using Documenter, QuantVarEntHam
 makedocs(sitename="QuantVarEntHam.jl",  modules = [QuantVarEntHam], 
         pages = [
                 "Home" => "index.md"
-                "Functionality" => "functionality.md"
+                "Tutorials" => "tutorials.md"
                 "Models" => "models.md"
                 "Ansätze" => "ansätze.md"
                 "Cost" => "cost.md"

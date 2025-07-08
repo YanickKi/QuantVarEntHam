@@ -57,7 +57,7 @@ end
 function Z(S::Union{Rational, Int})
     d = Int64(2*S+1)
 
-    Sz = Diagonal(zeros(d))
+    Sz = Diagonal{ComplexF64}(zeros(d))
 
     for m in -S:S
         _m = Int64(m+S+1) 
@@ -80,7 +80,7 @@ function repeat(N, sig::Function, locs::NTuple{l,Int}; S::Union{Rational, Int} =
     
     M = spzeros(ComplexF64, d, d)
 
-    Identity = sparse(I,d,d)
+    Identity = sparse((1.0+0.0im)*I,d,d)
 
     if 1 ∉ locs 
         M = Identity
@@ -96,5 +96,5 @@ function repeat(N, sig::Function, locs::NTuple{l,Int}; S::Union{Rational, Int} =
             M = kron(M, sig(S))
         end
     end
-    return M
+    return sparse(M)
 end 
