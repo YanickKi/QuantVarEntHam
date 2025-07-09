@@ -85,11 +85,11 @@ and ``\\mathcal{L}_{e^X} ( - i t H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\te
 denotes the Frechet derivative of the matrix exponential at ``- i t H_\\text{A}^\\text{Var}``
 in the direction of ``\\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}``.
 """
-struct QCFL{M<:AbstractModel, O<:AbstractMatrix, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, BM <: BlocksMatrices, BMH_A<:BlocksMatrices} <: AbstractFreeCostFunction
+struct QCFL{M<:AbstractModel, O<:AbstractMatrix, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator} <: AbstractFreeCostFunction
     model::M 
-    blocks::BMH_A
+    blocks::Vector{Matrix{ComplexF64}}
     integrator::Integrator{S,V}
-    observables::BM 
+    observables::Vector{O} 
     T_max::Float64
     meas0::Vector{Float64}
     buff::QCFLBuffer{O}
@@ -118,22 +118,16 @@ The tanh-sinh quadrature is set as the default integrator with its default value
 - `observables`: observables
 - `buffer`: see [`QCFLBuffer`](@ref) 
 """
-function QCFL(model::AbstractModel, blocks::Vector{<:Block}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:Block}} = nothing,
+function QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
     buffer::Union{Nothing, QCFLBuffer} = nothing)
     
-    if isnothing(observables)
-        observables_blocks = [PauliString(model.N_A, "Z", (i,i+1), S = model.S) for i in 1:model.N_A-1]
-        observables = BlocksMatrices(1*observables_blocks, Diagonal.(Matrix.(mat.(observables_blocks))))
-    end 
-
-    blocks = BlocksMatrices(blocks, Matrix.(mat.(blocks)))
-
+    observables = something(observables, [Diagonal(Matrix(repeat(model.N_A, Z, (i,i+1), S = model.S))) for i in 1:model.N_A-1])
     integrator = something(integrator, TanhSinh())
-    buffer = something(buffer, QCFLBuffer(model, blocks.matrices, observables.matrices))
-    meas0 = [expect(observable, model.ρ_A) for observable in observables.matrices]
+    buffer = something(buffer, QCFLBuffer(model, blocks, observables))
+    meas0 = [expect(observable, model.ρ_A) for observable in observables]
 
 
-    complete_integrator = make_integrator(blocks.matrices, integrator)
+    complete_integrator = make_integrator(blocks, integrator)
     
     return QCFL(
         model, 
@@ -158,13 +152,13 @@ end
 
 function (c::QCFL)(g::Vector{<:Real})
     get_H_A!(c, g)
-    return c.integrator.scalar_integrate(t -> integrand_cost(c, t), c.T_max)/(length(c.observables.blocks)*c.T_max)
+    return c.integrator.scalar_integrate(t -> integrand_cost(c, t), c.T_max)/(length(c.observables)*c.T_max)
 end 
 
 function _gradient!(c::QCFL, G, g::Vector{<:Real}, free_indices)
     get_H_A!(c, g)
     c.integrator.vector_integrate(c.buff.qcfl_buff.C_G_result, t -> integrand_gradient(c, t, free_indices), c.T_max)
-    c.buff.qcfl_buff.C_G_result ./= length(c.observables.blocks)*c.T_max
+    c.buff.qcfl_buff.C_G_result ./= length(c.observables)*c.T_max
     G[:] .= @view c.buff.qcfl_buff.C_G_result[2:end]
     return c.buff.qcfl_buff.C_G_result[1]
 end
@@ -172,7 +166,7 @@ end
 
 function pre_computations_gradient(c::QCFL, t::AbstractFloat)
     ρ_A = c.model.ρ_A 
-    observables = c.observables.matrices
+    observables = c.observables
     meas0 = c.meas0 
     buff = c.buff
 
@@ -202,7 +196,7 @@ function integrand_gradient(c::QCFL, t::AbstractFloat, free_indices)
     pre_computations_gradient(c, t)
 
     @fastmath @inbounds @simd for i in eachindex(free_indices)
-        c.buff.qcfl_buff.C_G[i+1] = gradient_component(c.buff, c.blocks.matrices[free_indices[i]], t)
+        c.buff.qcfl_buff.C_G[i+1] = gradient_component(c.buff, c.blocks[free_indices[i]], t)
     end    
     
     return c.buff.qcfl_buff.C_G
@@ -212,7 +206,7 @@ end
 function integrand_cost(c::QCFL, t::AbstractFloat)
     
     ρ_A = c.model.ρ_A 
-    observables = c.observables.matrices
+    observables = c.observables
     meas0 = c.meas0 
     buff = c.buff
 

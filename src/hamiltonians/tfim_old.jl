@@ -73,34 +73,46 @@ function H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{I
     return Float64(J)*(ising_term + Float64(Γ)*transversal_term) 
 end 
 
+function H_TFIM_blocks(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{Int64, Rational} = 1//2)
+
+    ising_term = map(1:(periodic ? N : N-1)) do i
+        PauliString(N,"Z",(i,i%N+1), S=S)
+    end |> sum
+
+    transversal_term = map(1:N) do i
+        PauliString(N, "X", i, S=S)
+    end |> sum
+
+    return Float64(J)*(ising_term + Float64(Γ)*transversal_term) 
+end 
 
 function hi(model::TFIM, i::Int)
     @unpack N_A, Γ, S = model
      
-    hi = Γ * PauliString(N_A, "X", i, S=S)
+    hi = Γ * repeat(N_A, X, i, S=S)
     
     if i > 1
-        hi += 1/2 * PauliString(N_A, "Z", (i-1, i), S=S)
+        hi += 1/2 * repeat(N_A, Z, i-1, S=S) * repeat(N_A, Z, i, S=S)
     end
     if i < N_A
-        hi += 1/2 * PauliString(N_A, "Z", (i,i+1), S=S)
+        hi += 1/2 * repeat(N_A, Z, i, S=S) * repeat(N_A, Z, i+1, S=S)
     end    
     return hi
 end
 
-function correction!(blks::Vector{<:Block}, model::TFIM, i::Int, r::Int)
+function correction!(blks::Vector{<:AbstractMatrix}, model::TFIM, i::Int, r::Int)
     @unpack N_A, S = model   
-    push!(blks, PauliString(N_A,"Z",(i,i+r), S=S))
+    push!(blks, repeat(N_A,Z,(i,i+r), S=S))
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:Block}, model::TFIM)
+function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, model::TFIM)
     @unpack N_A, Γ, S = model
     
-    push!(blks, Γ*PauliString(N_A, "X", 1, S=S))
+    push!(blks, Γ*repeat(N_A, X, 1, S=S))
 
     for i ∈ 1:N_A-1 
-        push!(blks, PauliString(N_A,"Z",(i,i+1), S=S))
-        push!(blks, Γ*PauliString(N_A, "X", i+1, S=S))
+        push!(blks, repeat(N_A,Z,(i,i+1), S=S))
+        push!(blks, Γ*repeat(N_A, X, i+1, S=S))
     end 
     
 end

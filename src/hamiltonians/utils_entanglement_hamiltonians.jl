@@ -1,4 +1,4 @@
-function H_A_BW_wo_corrections!(blocks::Vector{<:AbstractMatrix}, model::AbstractModel)
+function H_A_BW_wo_corrections!(blocks::Vector{<:Block}, model::AbstractModel)
     @unpack N_A = model
     for i in 1:N_A 
         push!(blocks, hi(model, i))
@@ -6,7 +6,7 @@ function H_A_BW_wo_corrections!(blocks::Vector{<:AbstractMatrix}, model::Abstrac
 end
 
 
-function corrections!(blocks::Vector{<:AbstractMatrix}, model::AbstractModel)
+function corrections!(blocks::Vector{<:Block}, model::AbstractModel)
     @unpack N_A, r_max = model
     for r in 2:r_max
         for i in 1:N_A-r
