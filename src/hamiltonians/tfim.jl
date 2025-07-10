@@ -9,12 +9,10 @@ Object containing the settings for the TFIM.
 - see [`AbstractModel`](@ref)
 - `Γ::Real`: transverse field strength 
 """
-@with_kw struct TFIM <: AbstractModel
+@with_kw struct TFIM{S,N_A} <: AbstractModel{S,N_A}
     N::Int
-    N_A::Int
     Γ::Float64
     J::Float64
-    S::Rational
     r_max::Int
     periodic::Bool
     ρ_A::Matrix{ComplexF64} 
@@ -42,9 +40,8 @@ The default values are often used and the density matrix is automatically constr
 function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::AbstractMatrix=get_rhoA(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
-    return TFIM(
-        N = N, N_A = N_A,
-        S = S,
+    return TFIM{S, N_A}(
+        N = N,
         Γ = Γ, J = J, 
         r_max = r_max, periodic = periodic,
         ρ_A = ρ_A
@@ -74,8 +71,8 @@ function H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{I
 end 
 
 
-function hi(model::TFIM, i::Int)
-    @unpack N_A, Γ, S = model
+function hi(model::TFIM{S,N_A}, i::Int) where {S,N_A}
+    @unpack Γ = model
      
     hi = Γ * PauliString(N_A, "X", i, S=S)
     
@@ -88,13 +85,12 @@ function hi(model::TFIM, i::Int)
     return hi
 end
 
-function correction!(blks::Vector{<:Block}, model::TFIM, i::Int, r::Int)
-    @unpack N_A, S = model   
+function correction!(blks::Vector{<:Block}, ::TFIM{S,N_A}, i::Int, r::Int) where {S,N_A}
     push!(blks, PauliString(N_A,"Z",(i,i+r), S=S))
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:Block}, model::TFIM)
-    @unpack N_A, Γ, S = model
+function H_A_notBW_wo_corrections!(blks::Vector{<:Block}, model::TFIM{S,N_A}) where {S, N_A}
+    @unpack Γ = model
     
     push!(blks, Γ*PauliString(N_A, "X", 1, S=S))
 

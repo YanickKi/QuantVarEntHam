@@ -1,25 +1,27 @@
-using LinearAlgebra
+using QuantVarEntHam
 using BenchmarkTools
+using Cthulhu
 
 function main()
-    n = 100
-    N = 40
-    As = [rand(n,n) for _ in 1:N]
-    g = [rand() for _ in 1:N] 
-    As_ntuple = tuple(As...)
-    C = zero(As[1])
-    @btime lincomb($C, $As, $g)
-    @btime lincomb($C, $As_ntuple, $g)
+    model = TFIM(8, 4, 1)
+    cost1 = QCFL(model, H_A_notBW(model),1, integrator = MidPoint(1e-2))
+    fixed_cost = FixedCost(cost1, [1,2,3,4], [1,2,3,4])
+    ginit = Float64.([1,1,2,2,2,3,3])
+    ginit_fixed = Float64.([2,3,3])
+    #g, c = optimize(cost1, ginit)
+    #g, c = QuantVarEntHam.optimize(fixed_cost, ginit_fixed)
+    #G = similar(ginit)
+    #Gfixed = similar(ginit_fixed)
+    cost = QCFL(model, H_A_notBW(model),1, integrator = MidPoint(1e-2))
+    @btime $cost1($ginit)
+    ## optimize(cost, ginit)
+    #@btime gradient!($G, $cost1, $ginit_fixed)
+    #@btime $fixed_cost($ginit_fixed)
+    #gradient!(Gfixed, fixed_cost, ginit_fixed)
+    ##println(g/g[1])
+    ##g = Float64.([1, 1,2,2,2,3,3])
+    ##g, c = optimize_LBFGS(ginit, QCFL(set, 2, H_A_not_BW, integration_method = midpoint()))
+    #g, c = optimize_LBFGS(ginit, commutator(set, H_A_not_BW))
 end 
 
-
-function lincomb(C, As, g::Vector{<:AbstractFloat})
-    C .= g[1] .* As[1]
-
-    @fastmath @inbounds @simd for i in 2:length(g)
-        C .+= g[i].* As[i]
-    end 
-    return C
-end 
 main()
-

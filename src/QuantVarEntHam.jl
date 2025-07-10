@@ -4,6 +4,7 @@ using Parameters, LinearAlgebra
 
 
 include("integration/integration.jl")
+include("spinoperators/spinoperators.jl")
 include("hamiltonians/hamiltonians.jl")
 include("frechet_exp/frechet_exp.jl")
 include("cost/cost.jl")

@@ -24,7 +24,7 @@ In general the concrete types will have the same fields besides the model specif
 - `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
 - `ρ_A::Matrix{ComplexF64}`: reduced density matrix of ground state of the composite system on subsystem A.
 """
-abstract type AbstractModel end
+abstract type AbstractModel{S,N} end
 
 
 """
@@ -63,8 +63,8 @@ The variational Ansatz follows the Bisognano-Wichmann-theorem.
 # Example 
 `H_A_BW(model::TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
 """
-function H_A_BW(model::AbstractModel)
-    @unpack N, N_A, r_max, periodic, J, S= model
+function H_A_BW(model::AbstractModel{S,N_A}) where {S,N_A}
+    @unpack N,  r_max, periodic, J = model
     
     if 2*N_A != N && periodic == false 
         @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
@@ -91,8 +91,8 @@ The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
 # Example 
 `H_A_notBW(model::TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
 """
-function H_A_notBW(model::AbstractModel)
-    @unpack N_A, r_max, J = model
+function H_A_notBW(model::AbstractModel{S,N_A}) where {S,N_A}
+    @unpack r_max, J= model
     
     blocks = Block{S, N_A}[]
     
@@ -106,9 +106,9 @@ function H_A_notBW(model::AbstractModel)
 end 
 
 
-include("spinoperators.jl")
-include("xxz.jl")
+#äinclude("spinoperators.jl")
+#include("xxz.jl")
 include("tfim.jl")
-include("pollmann.jl")
+#include("pollmann.jl")
 include("utils.jl")
 include("utils_entanglement_hamiltonians.jl")
