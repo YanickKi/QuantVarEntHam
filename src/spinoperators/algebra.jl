@@ -26,8 +26,29 @@ function +(ps::PauliString{S,N}, block::Block{S,N}) where {S,N}
     new_block = Block{S,N}(vcat(1., block.prefactors), vcat(ps,block.pauli_strings))
     return new_block
 end 
+
 function +(block1::Block{S,N}, block2::Block{S,N}) where {S,N}
     new_block =  Block{S,N}(vcat(block1.prefactors, block2.prefactors), vcat(block1.pauli_strings, block2.pauli_strings))
+    return new_block
+end 
+
+function -(ps1::PauliString{S,N}, ps2::PauliString{S,N}) where {S, N}
+    block = Block{S,N}([1., -1.], [ps1, ps2])
+    return block
+end
+
+function -(block::Block{S,N}, ps::PauliString{S,N}) where {S,N}
+    new_block = Block{S,N}(vcat(block.prefactors, -1.), vcat(block.pauli_strings, ps))
+    return new_block
+end 
+
+function -(ps::PauliString{S,N}, block::Block{S,N}) where {S,N}
+    new_block = Block{S,N}(vcat(1., -1. * block.prefactors), vcat(ps,block.pauli_strings))
+    return new_block
+end 
+
+function -(block1::Block{S,N}, block2::Block{S,N}) where {S,N}
+    new_block =  Block{S,N}(vcat(block1.prefactors, -1. * block2.prefactors), vcat(block1.pauli_strings, block2.pauli_strings))
     return  new_block
 end 
 

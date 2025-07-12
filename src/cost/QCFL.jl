@@ -129,7 +129,7 @@ function QCFL(model::AbstractModel{S,N_A}, str_blocks::Vector{<:Block}, T_max::R
 
     str_observables = PauliString{S,N_A}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1]
     
-    observables = Matrix.(mat.(str_observables))
+    observables = Diagonal.(Matrix.(mat.(str_observables)))
 
     blocks = Matrix.(mat.(str_blocks))
 

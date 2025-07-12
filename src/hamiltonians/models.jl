@@ -106,9 +106,9 @@ function H_A_notBW(model::AbstractModel{S,N_A}) where {S,N_A}
 end 
 
 
-#äinclude("spinoperators.jl")
-#include("xxz.jl")
+include("xxz.jl")
 include("tfim.jl")
-#include("pollmann.jl")
+include("pollmann.jl")
 include("utils.jl")
 include("utils_entanglement_hamiltonians.jl")
+include("printing.jl")

@@ -9,17 +9,19 @@ Object containing the settings for the Pollmann model
 - `Bx::Float64`: transverse field strength
 - `Uzz::Float64`: square term prefactor
 """
-@with_kw struct Pollmann <: AbstractModel
+@with_kw struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
     N::Int
-    N_A::Int
     J_Heis::Float64
     Bx::Float64
     Uzz::Float64
     J::Float64
-    S::Rational
     r_max::Int
     periodic::Bool
     ρ_A::Matrix{ComplexF64}
+    function Pollmann{S,N_A}(N, J_Heis, Bx, Uzz, J, r_max, periodic, ρ_A) where {S,N_A}
+        check_S_N_type(S,N_A)
+        new{S,N_A}(N, J_Heis, Bx, Uzz, J, r_max, periodic, ρ_A)
+    end
 end
 
 """
@@ -43,12 +45,11 @@ The default values are often used and the density matrix is automatically constr
 - `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
 - `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 """
-function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int64, Rational}=1, r_max::Int=1, periodic::Bool=false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
+function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, r_max::Int=1, periodic::Bool=false,
+    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(mat(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S)),  N-N_A+1:N, N, S=S))
     
-    return Pollmann(
-        N = N, N_A = N_A,
-        S=S, 
+    return Pollmann{Rational(S),N_A}(
+        N = N,
         J_Heis = J_Heis, Bx = Bx, Uzz = Uzz, J = J,
         r_max = r_max, periodic = periodic,
         ρ_A = ρ_A
@@ -67,93 +68,93 @@ Set `periodic` as true for PBC or as false for OBC and
 function H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=false, J::Real = 1, S::Union{Int64, Rational}=1)
 
     heisenberg_term = map(1:(periodic ? N : N-1)) do i
-        repeat(N,X,(i,i%N+1), S=S) + repeat(N,Y,(i,i%N+1),S=S) +repeat(N,Z,(i,i%N+1), S=S)
+        PauliString(N,"X",(i,i%N+1), S=S) + PauliString(N,"Y",(i,i%N+1),S=S) +PauliString(N,"Z",(i,i%N+1), S=S)
     end |> sum
 
     transversal_term = map(1:N) do i
-        repeat(N, X, i, S=S)
+        PauliString(N, "X", i, S=S)
     end |> sum
 
     square_term = map(1:N) do i
-        repeat(N, Z, i, S=S)^2
+        PauliString(N, "Z", i, S=S)^2
     end |> sum
-    return J*(J_Heis*heisenberg_term + Bx*transversal_term + Uzz*square_term)         
+    return Float64(J)*(J_Heis*heisenberg_term + Float64(Bx)*transversal_term + Float64(Uzz)*square_term)         
 end 
 
 
-function hi(model::Pollmann, i::Int)
-    @unpack N_A, J_Heis, Bx, Uzz, S = model
+function hi(model::Pollmann{S,N_A}, i::Int) where {S,N_A}
+    @unpack J_Heis, Bx, Uzz = model
      
-    hi = Bx*repeat(N_A, X, i, S=S) + Uzz*repeat(N_A, Z, i, S=S)^2
+    hi = Bx*PauliString(N_A, "X", i, S=S) + Uzz*PauliString(N_A, "Z", i, S=S)^2
     
-    Ops = [X, Y, Z]
+    sigs = ["X", "Y", "Z"]
 
     if i > 1
-        for Op in Ops
-            hi += J_Heis/2  * repeat(N_A, Op, (i,i-1), S=S)
+        for sig in sigs
+            hi += J_Heis/2  * PauliString(N_A, sig, (i,i-1), S=S)
         end
     end
     if i < N_A
-        for Op in Ops
-            hi += J_Heis/2  * repeat(N_A, Op, (i,i+1), S=S)
+        for sig in sigs
+            hi += J_Heis/2  * PauliString(N_A, sig, (i,i+1), S=S)
         end
     end    
     return hi
 end
 
-function H_A_notBW_wo_corrections!(blks::Vector{<:AbstractMatrix}, model::Pollmann)
-    @unpack N_A, J_Heis, Bx, Uzz, S = model
+function H_A_notBW_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::Pollmann{S,N_A}) where {S,N_A}
+    @unpack J_Heis, Bx, Uzz = model
     
     if iszero(Bx) == false  
-        push!(blks, Bx*repeat(N_A, X, 1, S=S))
+        push!(blocks, Bx*PauliString(N_A, "X", 1, S=S))
     end 
     if iszero(Uzz) == false 
-        push!(blks, Uzz*repeat(N_A, Z, 1, S=S)^2)
+        push!(blocks, Uzz*PauliString(N_A, "Z", 1, S=S)^2)
     end 
 
-    for i ∈ 1:N_A-1 
-        push!(blks, J_Heis*(repeat(N_A,X,(i,i+1), S=S)))
-        push!(blks, J_Heis*(repeat(N_A,Y,(i,i+1), S=S)))
-        push!(blks, J_Heis*(repeat(N_A,Z,(i,i+1), S=S)))
+    sigs = ["X","Y","Z"]
+
+    for i ∈ 1:N_A-1
+        for sig in sigs 
+            push!(blocks, J_Heis*PauliString(N_A,sig,(i,i+1), S=S))
+        end 
         if iszero(Bx) == false 
-            push!(blks, Bx*repeat(N_A, X, (i+1), S=S))
+            push!(blocks, Bx*PauliString(N_A, "X", (i+1), S=S))
         end 
         if iszero(Uzz) == false 
-            push!(blks, Uzz*repeat(N_A, Z, (i+1), S=S)^2)
+            push!(blocks, Uzz*PauliString(N_A, "Z", (i+1), S=S)^2)
         end
     end 
     
 end
 
 
-function correction!(blks::Vector{<:AbstractMatrix}, model::Pollmann, i::Int, r::Int)
-    @unpack N_A, S = model   
-    for σ in [X,Y,Z]
-        push!(blks, repeat(N_A,σ,(i,i+r), S=S))
-
+function correction!(blocks::Vector{<:Block{S,N_A}}, ::Pollmann{S,N_A}, i::Int, r::Int) where {S,N_A}
+    for sig in ["X","Y","Z"]
+        push!(blocks, PauliString(N_A,sig,(i,i+r), S=S))
     end
 end
 
 #=
-function H_A_notBW_wo_corrections_I!(blks::Vector{<:AbstractMatrix}, model::Pollmann)
+function H_A_notBW_wo_corrections_I!(blocks::Vector{<:AbstractMatrix}, model::Pollmann)
     @unpack N_A, J_Heis, Bx, Uzz, S = model
     
     
     if iszero(Bx) == false  
-        push!(blks, Bx*repeat(N_A, X, 1, S=S))
+        push!(blocks, Bx*repeat(N_A, X, 1, S=S))
     end 
     if iszero(Uzz) == false 
-        push!(blks, Uzz*repeat(N_A, Z, 1, S=S)^2)
+        push!(blocks, Uzz*repeat(N_A, Z, 1, S=S)^2)
     end 
 
     for i ∈ 1:N_A-1 
-        push!(blks, J_Heis*(repeat(N_A,Z,(i,i+1)) +repeat(N_A,X,(i,i+1), S=S) +repeat(N_A,Y,(i,i+1), S=S)))
+        push!(blocks, J_Heis*(repeat(N_A,Z,(i,i+1)) +repeat(N_A,X,(i,i+1), S=S) +repeat(N_A,Y,(i,i+1), S=S)))
         
         if iszero(Bx) == false 
-            push!(blks, Bx*repeat(N_A, X, (i+1), S=S))
+            push!(blocks, Bx*repeat(N_A, X, (i+1), S=S))
         end 
         if iszero(Uzz) == false 
-            push!(blks, Uzz*repeat(N_A, Z, (i+1), S=S)^2)
+            push!(blocks, Uzz*repeat(N_A, Z, (i+1), S=S)^2)
         end
     end 
     
