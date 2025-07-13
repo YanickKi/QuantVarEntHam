@@ -92,6 +92,7 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", blocks::Vector{Block{S,N}}) where {S,N}
     println(io, "Number of blocks: ", length(blocks))
+    println(io)
     print_info(io, blocks[1])
     println(io)
     for index in eachindex(blocks)

@@ -105,10 +105,11 @@ function H_A_notBW(model::AbstractModel)
     return J*blocks
 end 
 
-
+#=
 include("spinoperators.jl")
 include("xxz.jl")
 include("tfim.jl")
 include("pollmann.jl")
 include("utils.jl")
 include("utils_entanglement_hamiltonians.jl")
+=#

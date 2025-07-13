@@ -123,33 +123,33 @@ The tanh-sinh quadrature is set as the default integrator with its default value
 - `observables`: observables
 - `buffer`: see [`QCFLBuffer`](@ref) 
 """
-function QCFL(model::AbstractModel{S,N_A}, str_blocks::Vector{<:Block}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, hallo::Union{Nothing, Vector{<:PauliString}} = nothing,
+function QCFL(model::AbstractModel{S,N_A}, blocks::Vector{<:Block}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString}} = nothing,
     buffer::Union{Nothing, QCFLBuffer} = nothing) where {S,N_A}
     
 
-    str_observables = PauliString{S,N_A}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1]
+    observables = something(observables, PauliString{S,N_A}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1])
     
-    observables = Diagonal.(Matrix.(mat.(str_observables)))
+    observables_mat = Matrix.(mat.(observables))
 
-    blocks = Matrix.(mat.(str_blocks))
+    blocks_mat = Matrix.(mat.(blocks))
 
     integrator = something(integrator, TanhSinh())
-    buffer = something(buffer, QCFLBuffer(model, blocks, observables))
-    meas0 = [expect(observable, model.ρ_A) for observable in observables]
+    buffer = something(buffer, QCFLBuffer(model, blocks_mat, observables_mat))
+    meas0 = [expect(observable, model.ρ_A) for observable in observables_mat]
 
 
-    complete_integrator = make_integrator(blocks, integrator)
+    complete_integrator = make_integrator(blocks_mat, integrator)
     
     return QCFL(
         model, 
-        blocks, 
+        blocks_mat, 
         complete_integrator,
-        observables,
+        observables_mat,
         Float64(T_max),
         meas0,
         buffer,
-        str_blocks, 
-        str_observables
+        blocks, 
+        observables
     )
 end 
 

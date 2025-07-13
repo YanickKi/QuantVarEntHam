@@ -5,13 +5,13 @@ struct QuadTS{N}
     tables::NTuple{N,Vector{Tuple{Float64,Float64}}}
 end
 
-struct TanhSinhScalar <: AbstractScalarIntegrator
-    integration_table::QuadTS
+struct TanhSinhScalar{N} <: AbstractScalarIntegrator
+    integration_table::QuadTS{N}
     atol::Float64
     rtol::Float64
 end 
-struct TanhSinhVector <: AbstractVectorIntegrator
-    integration_table::QuadTS
+struct TanhSinhVector{N} <: AbstractVectorIntegrator
+    integration_table::QuadTS{N}
     atol::Float64
     rtol::Float64
     buffer::Vector{Float64}

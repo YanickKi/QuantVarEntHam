@@ -53,9 +53,10 @@ Here, `` \\text{Sum}(X) = \\sum_{ij} X_{ij}`` denotes the sum of all matrix elem
 the elementwise product aka Hadamard product is denoted by ``C = A \\, . \\! *B`` s.t. 
 ``C_{ij} = A_{ij} B_{ij}``.
 """
-struct Commutator{M<:AbstractModel} <: AbstractFreeCostFunction
+struct Commutator{M<:AbstractModel, SB<:AbstractBlock} <: AbstractFreeCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
+    str_blocks::Vector{SB}
     buff::CommutatorBuffer
 end 
 
@@ -65,11 +66,15 @@ end
 Outer Constructor for [`Commutator`](@ref) s.t. the correct `buffer` (see [`CommutatorBuffer`](@ref)) will be automatically constructed 
 for the given `model` and `blocks`.
 """
-function Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+function Commutator(model::AbstractModel, blocks::Vector{<:AbstractBlock})
     buffer = CommutatorBuffer(model)
+    
+    blocks_mat = Matrix.(mat.(blocks))
+
     return Commutator(
         model, 
-        blocks, 
+        blocks_mat, 
+        blocks,
         buffer
     )
 end 

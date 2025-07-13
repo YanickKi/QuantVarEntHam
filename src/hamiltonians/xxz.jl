@@ -7,7 +7,7 @@ Object containing the settings for the XXZ model
 - see [`AbstractModel`](@ref)
 - `Δ::Float64`: anisotropy 
 """
-@with_kw struct XXZ{S,N_A} <: AbstractModel{S,N_A}
+struct XXZ{S,N_A} <: AbstractModel{S,N_A}
     N::Int
     Δ::Float64
     J::Float64
@@ -43,10 +43,10 @@ function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::
     J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(mat(H_XXZ(N, Δ, periodic=periodic, J=J, S = S)),  N-N_A+1:N, N))
     
     return XXZ{Rational(S),N_A}(
-        N = N,
-        Δ = Δ, J = J, 
-        r_max = r_max, periodic = periodic,
-        ρ_A = ρ_A
+        N,
+        Δ, J, 
+        r_max, periodic,
+        ρ_A
     ) 
 end 
 
@@ -71,39 +71,27 @@ function H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{In
 end 
 
 function hi(model::XXZ{S,N_A}, i::Int) where {S,N_A}
-    @unpack Δ = model
 
     if i > 1 && i < N_A 
-        return 1/2*(PauliString(N_A,"X",(i-1,i), S=S) + PauliString(N_A,"Y",(i-1,i), S=S)+ Δ*PauliString(N_A,"Z",(i-1,i), S=S)) + 1/2*(PauliString(N_A,X,(i,i+1), S=S) + PauliString(N_A,"Y",(i,i+1), S=S) + Δ*PauliString(N_A,"Z",(i,i+1), S=S))
+        return 1/2*(PauliString(N_A,"X",(i-1,i), S=S) + PauliString(N_A,"Y",(i-1,i), S=S)+ model.Δ*PauliString(N_A,"Z",(i-1,i), S=S)) + 1/2*(PauliString(N_A,"X",(i,i+1), S=S) + PauliString(N_A,"Y",(i,i+1), S=S) + model.Δ*PauliString(N_A,"Z",(i,i+1), S=S))
     elseif i > 1
-        return 1/2*(PauliString(N_A,"X",(i-1,i), S=S) + PauliString(N_A,"Y",(i-1,i), S=S)+ Δ*PauliString(N_A,"Z",(i-1,i), S=S)) 
+        return 1/2*(PauliString(N_A,"X",(i-1,i), S=S) + PauliString(N_A,"Y",(i-1,i), S=S)+ model.Δ*PauliString(N_A,"Z",(i-1,i), S=S)) 
     elseif i < N_A
-        return 1/2*(PauliString(N_A,"X",(i,i+1), S=S) + PauliString(N_A,"Y",(i,i+1), S=S) + Δ*PauliString(N_A,"Z",(i,i+1), S=S))
+        return 1/2*(PauliString(N_A,"X",(i,i+1), S=S) + PauliString(N_A,"Y",(i,i+1), S=S) + model.Δ*PauliString(N_A,"Z",(i,i+1), S=S))
     end    
 end
 
 
 function correction!(blocks::Vector{<:Block{S,N_A}}, model::XXZ{S,N_A}, i::Int, r::Int) where {S,N_A}
-    @unpack  Δ =  model   
     push!(blocks, PauliString(N_A,"X",(i,i+r), S=S) + PauliString(N_A,"Y",(i,i+r), S=S))
-    push!(blocks, Δ*PauliString(N_A,"Z",(i,i+r), S=S)) 
+    !iszero(model.Δ) && push!(blocks, PauliString(N_A,"Z",(i,i+r), S=S)) 
 end
 
 function H_A_notBW_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::XXZ{S,N_A}) where {S,N_A}
-    @unpack Δ = model
-     
+
     for i ∈ 1:N_A-1 
         push!(blocks, PauliString(N_A,"X",(i,i+1), S=S) + PauliString(N_A,"Y",(i,i+1), S=S))
-        push!(blocks, Δ*PauliString(N_A,"Z",(i,i+1), S=S))
+        !iszero(model.Δ) && push!(blocks, model.Δ*PauliString(N_A,"Z",(i,i+1), S=S))
     end 
 end
 
-function H_A_XYZ_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::XXZ{S,N_A}) where {S,N_A}
-    @unpack Δ = model
-     
-    for i ∈ 1:N_A-1 
-        push!(blocks, PauliString(N_A,"X",(i,i+1), S=S))
-        push!(blocks, PauliString(N_A,"Y",(i,i+1), S=S))
-        push!(blocks, Δ*PauliString(N_A,"Z",(i,i+1), S=S))
-    end 
-end

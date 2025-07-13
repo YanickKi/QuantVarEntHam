@@ -1,6 +1,6 @@
 module QuantVarEntHam
 
-using Parameters, LinearAlgebra
+using LinearAlgebra
 
 
 function check_S_N_type(S,N)

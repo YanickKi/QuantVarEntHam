@@ -9,7 +9,7 @@ Object containing the settings for the TFIM.
 - see [`AbstractModel`](@ref)
 - `Γ::Real`: transverse field strength 
 """
-@with_kw struct TFIM{S,N_A} <: AbstractModel{S,N_A}
+struct TFIM{S,N_A} <: AbstractModel{S,N_A}
     N::Int
     Γ::Float64
     J::Float64
@@ -45,10 +45,10 @@ function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, r_max:
     J::Real=-1, ρ_A::AbstractMatrix=get_rhoA(mat(H_TFIM(N, Γ, periodic = periodic, J=J, S=S)),  N-N_A+1:N, N))
 
     return TFIM{Rational(S), N_A}(
-        N = N,
-        Γ = Γ, J = J, 
-        r_max = r_max, periodic = periodic,
-        ρ_A = ρ_A
+        N,
+        Γ, J, 
+        r_max, periodic,
+        ρ_A
     ) 
 end 
 
@@ -76,9 +76,8 @@ end
 
 
 function hi(model::TFIM{S,N_A}, i::Int) where {S,N_A}
-    @unpack Γ = model
-     
-    hi = Γ * PauliString(N_A, "X", i, S=S)
+         
+    hi = model.Γ * PauliString(N_A, "X", i, S=S)
     
     if i > 1
         hi += 1/2 * PauliString(N_A, "Z", (i-1, i), S=S)
@@ -94,13 +93,12 @@ function correction!(blocks::Vector{<:Block{S,N_A}}, ::TFIM{S,N_A}, i::Int, r::I
 end
 
 function H_A_notBW_wo_corrections!(blocks::Vector{<:Block}, model::TFIM{S,N_A}) where {S, N_A}
-    @unpack Γ = model
-    
-    push!(blocks, Γ*PauliString(N_A, "X", 1, S=S))
+   
+    !iszero(model.Γ) && push!(blocks, model.Γ*PauliString(N_A, "X", 1, S=S))
 
     for i ∈ 1:N_A-1 
         push!(blocks, PauliString(N_A,"Z",(i,i+1), S=S))
-        push!(blocks, Γ*PauliString(N_A, "X", i+1, S=S))
+        !iszero(model.Γ) && push!(blocks, model.Γ*PauliString(N_A, "X", i+1, S=S))
     end 
     
 end

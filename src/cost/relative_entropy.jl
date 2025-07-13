@@ -44,9 +44,10 @@ The gradient is given by
 {\\text{Tr}_{\\text{A}} [ e^{-H_\\text{A}^\\text{Var}(\\vec{g})}]}.
 ```
 """
-mutable struct RelativeEntropy{M<:AbstractModel} <: AbstractFreeCostFunction
+mutable struct RelativeEntropy{M<:AbstractModel, SB<:Block} <: AbstractFreeCostFunction
     model::M
     blocks::Vector{Matrix{ComplexF64}}
+    str_blocks::Vector{SB}
     buff::RelativeEntropyBuffer
     trace_exp_H_A::Float64 # cached variable to save intermediate calculations in gradient for cost
 end 
@@ -57,10 +58,12 @@ end
 Outer constructor for [`RelativeEntropy`](@ref) s.t. the correct `buffers´ (see [`RelativeEntropyBuffer`](@ref)) will be automatically constructed
 for a given `model` and `blocks`.
 """
-function RelativeEntropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+function RelativeEntropy(model::AbstractModel, blocks::Vector{<:Block})
+    blocks_mat = Matrix.(mat.(blocks))
     buffer = RelativeEntropyBuffer(model)
     return RelativeEntropy(
         model, 
+        blocks_mat,
         blocks,
         buffer,
         0.

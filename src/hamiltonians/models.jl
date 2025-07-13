@@ -64,7 +64,10 @@ The variational Ansatz follows the Bisognano-Wichmann-theorem.
 `H_A_BW(model::TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
 """
 function H_A_BW(model::AbstractModel{S,N_A}) where {S,N_A}
-    @unpack N,  r_max, periodic, J = model
+    N = model.N
+    r_max = model.r_max
+    periodic = model.periodic
+    J = model.J
     
     if 2*N_A != N && periodic == false 
         @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
@@ -92,8 +95,9 @@ The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
 `H_A_notBW(model::TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
 """
 function H_A_notBW(model::AbstractModel{S,N_A}) where {S,N_A}
-    @unpack r_max, J= model
-    
+    r_max = model.r_max
+    J = model.J
+
     blocks = Block{S, N_A}[]
     
     H_A_notBW_wo_corrections!(blocks, model)

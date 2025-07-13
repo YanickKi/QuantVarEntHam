@@ -9,7 +9,7 @@ Object containing the settings for the Pollmann model
 - `Bx::Float64`: transverse field strength
 - `Uzz::Float64`: square term prefactor
 """
-@with_kw struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
+struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
     N::Int
     J_Heis::Float64
     Bx::Float64
@@ -49,10 +49,10 @@ function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{
     J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(mat(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S)),  N-N_A+1:N, N, S=S))
     
     return Pollmann{Rational(S),N_A}(
-        N = N,
-        J_Heis = J_Heis, Bx = Bx, Uzz = Uzz, J = J,
-        r_max = r_max, periodic = periodic,
-        ρ_A = ρ_A
+        N,
+        J_Heis, Bx, Uzz, J,
+        r_max, periodic,
+        ρ_A
     ) 
 end 
 
@@ -83,55 +83,44 @@ end
 
 
 function hi(model::Pollmann{S,N_A}, i::Int) where {S,N_A}
-    @unpack J_Heis, Bx, Uzz = model
-     
-    hi = Bx*PauliString(N_A, "X", i, S=S) + Uzz*PauliString(N_A, "Z", i, S=S)^2
+         
+    hi = model.Bx*PauliString(N_A, "X", i, S=S) + model.Uzz*PauliString(N_A, "Z", i, S=S)^2
     
     sigs = ["X", "Y", "Z"]
 
     if i > 1
         for sig in sigs
-            hi += J_Heis/2  * PauliString(N_A, sig, (i,i-1), S=S)
+            hi += model.J_Heis/2  * PauliString(N_A, sig, (i,i-1), S=S)
         end
     end
     if i < N_A
         for sig in sigs
-            hi += J_Heis/2  * PauliString(N_A, sig, (i,i+1), S=S)
+            hi += model.J_Heis/2  * PauliString(N_A, sig, (i,i+1), S=S)
         end
     end    
     return hi
 end
 
 function H_A_notBW_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::Pollmann{S,N_A}) where {S,N_A}
-    @unpack J_Heis, Bx, Uzz = model
     
-    if iszero(Bx) == false  
-        push!(blocks, Bx*PauliString(N_A, "X", 1, S=S))
-    end 
-    if iszero(Uzz) == false 
-        push!(blocks, Uzz*PauliString(N_A, "Z", 1, S=S)^2)
-    end 
+    !iszero(model.Bx) && push!(blocks, model.Bx*PauliString(N_A, "X", 1, S=S))
+    !iszero(model.Uzz) && push!(blocks, model.Uzz*PauliString(N_A, "Z", 1, S=S)^2) 
 
     sigs = ["X","Y","Z"]
 
     for i ∈ 1:N_A-1
-        for sig in sigs 
-            push!(blocks, J_Heis*PauliString(N_A,sig,(i,i+1), S=S))
+        for sig in sigs
+            !iszero(model.J_Heis) && push!(blocks, model.J_Heis*PauliString(N_A,sig,(i,i+1), S=S))
         end 
-        if iszero(Bx) == false 
-            push!(blocks, Bx*PauliString(N_A, "X", (i+1), S=S))
-        end 
-        if iszero(Uzz) == false 
-            push!(blocks, Uzz*PauliString(N_A, "Z", (i+1), S=S)^2)
-        end
+        !iszero(model.Bx) && push!(blocks, model.Bx*PauliString(N_A, "X", (i+1), S=S)) 
+        !iszero(model.Uzz) && push!(blocks, model.Uzz*PauliString(N_A, "Z", (i+1), S=S)^2)
     end 
-    
 end
 
 
-function correction!(blocks::Vector{<:Block{S,N_A}}, ::Pollmann{S,N_A}, i::Int, r::Int) where {S,N_A}
+function correction!(blocks::Vector{<:Block{S,N_A}}, model::Pollmann{S,N_A}, i::Int, r::Int) where {S,N_A}
     for sig in ["X","Y","Z"]
-        push!(blocks, PauliString(N_A,sig,(i,i+r), S=S))
+        !iszero(model.J_Heis) && push!(blocks, PauliString(N_A,sig,(i,i+r), S=S))
     end
 end
 

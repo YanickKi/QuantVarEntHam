@@ -40,3 +40,4 @@ abstract type AbstractIntegrator end
 include("traits.jl")
 include("tanh_sinh/tanh_sinh.jl")
 include("midpoint.jl")
+include("printing.jl")
