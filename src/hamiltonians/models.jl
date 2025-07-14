@@ -28,7 +28,7 @@ abstract type AbstractModel{S,N} end
 
 
 """
-    get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2)
+    rho_A(H::AbstractBlock, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2)
 
 Return the reduced density matrix as either a real or complex matrix of the ground state of Hamiltonian `H` with spins of 
 spin number `S` for `N` sites on subsystem A.
@@ -36,17 +36,18 @@ spin number `S` for `N` sites on subsystem A.
 For a Hilbert space dimension of more than 1024, the [krylov subspace method from KrylovKit](https://jutho.github.io/KrylovKit.jl/stable/man/eig/#KrylovKit.eigsolve) is used for 
 extracting the ground state, exact diagonalization otherwise.
 """
-function get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+function rho_A(H::AbstractBlock, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+    H_mat = mat(H)
     d = (Int64(2*S+1))^(N)
     N_A = length(A)
     if d > 1024
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
-        _, vectors = eigsolve(H, 1 ,:SR, ishermitian=true, tol = 1e-16)
+        _, vectors = eigsolve(H_mat, 1 ,:SR, ishermitian=true, tol = 1e-16)
         ρ_A = partial_trace_pure_state(vectors[1], (Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A), trace_subsystem = :B) 
     return ρ_A
     else 
         println("Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix")
-        vectors = eigvecs(Hermitian(Matrix(H)))
+        vectors = eigvecs(Hermitian(Matrix(H_mat)))
         ρ_A = partial_trace_pure_state(vectors[:,1],(Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A), trace_subsystem = :B) 
         return ρ_A
     end
@@ -116,3 +117,4 @@ include("pollmann.jl")
 include("utils.jl")
 include("utils_entanglement_hamiltonians.jl")
 include("printing.jl")
+include("getter.jl")

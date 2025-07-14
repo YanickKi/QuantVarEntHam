@@ -20,8 +20,8 @@ struct XXZ{S,N_A} <: AbstractModel{S,N_A}
     end
 end
 """
-    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
+    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+    J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
 
 Convenient constructor for [`XXZ`](@ref) containing settings for the XXZ Model.
 The default values are often used and the density matrix is automatically constructed.
@@ -40,8 +40,10 @@ The default values are often used and the density matrix is automatically constr
 - `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 """
 function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Matrix{ComplexF64}=get_rhoA(mat(H_XXZ(N, Δ, periodic=periodic, J=J, S = S)),  N-N_A+1:N, N))
+    J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
     
+
+    ρ_A = something(ρ_A, rho_A(mat(H_XXZ(N, Δ, periodic=periodic, J=J, S = S)),  N-N_A+1:N, N))
     return XXZ{Rational(S),N_A}(
         N,
         Δ, J, 

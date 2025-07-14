@@ -40,8 +40,24 @@ end
 function print_BW_BWV(io::IO, blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
     length(blocks) == N_A ? print(io, "BW Ansatz") : print(io, "BW violating Ansatz")
 end
-#=
-function print_blocks(cost::AbstractCostFunction)
-    print_block(io, )
+
+
+function print_blocks(cost::AbstractFreeCostFunction)
+    show(stdout, MIME"text/plain"(),cost.str_blocks)
 end 
-=#
+
+function print_observables(cost::AbstractFreeCostFunction)
+    show(stdout, MIME"text/plain"(),cost.str_observables)
+end 
+
+print_blocks(fc::FixedCost) = unwrap(print_blocks, fc)
+print_observables(fc::FixedCost) = unwrap(print_observables, fc)
+
+function Base.show(io::IO, fc::FixedCost)
+    print(io, "Fixed cost: ")
+    show(io, fc.c)
+    println(io,)
+    println(io,)
+    println(io, "Fixed indices: ", fc.fixed_indices)
+    println(io, "Fixed values: ", float_to_int.(fc.fixed_values))
+end 

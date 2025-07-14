@@ -51,6 +51,10 @@ function FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}
     ) 
 end 
 
+FixedCost(c::AbstractFreeCostFunction, fixed_indices::Int, fixed_values::Real) = FixedCost(c, [fixed_indices], [fixed_values])
+
+FixedCost(c::AbstractFreeCostFunction, fixed_indices::NTuple{L,Int}, fixed_values::NTuple{L,Int}) where {L} = 
+    FixedCost(c, [fixed_indices...], [fixed_values...])
 
 shorten_buffers!(::AbstractFreeCostFunction, ::Integer) = nothing 
 

@@ -27,7 +27,7 @@ function superscriptnumber(i::Int)
 end
 
 function float_to_int(x::Float64)
-    isinteger(x) ? string(Int(x)) : x
+    isinteger(x) ? Int(x) : x
 end
 
 function print_pauli_string(io::IO, ps::PauliString)
@@ -75,13 +75,13 @@ function Base.show(io::IO, block::Block{S, N}) where {S,N}
     print_block(io, block)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", pauli_strings::Vector{PauliString{S,N, L}}) where {S,N, L}
+function Base.show(io::IO, ::MIME"text/plain", pauli_strings::Vector{PauliString{S,N}}) where {S,N}
     println(io, "Number of Pauli strings: ", length(pauli_strings))
     print_info(io, pauli_strings[1])
     println(io)
     for index in eachindex(pauli_strings)
         println("Pauli string ", index, ": " ) 
-        print(io, "\t")
+        print(io, "\t \t")
         print_pauli_string(io, pauli_strings[index])
         if index != lastindex(pauli_strings)
             println(io)
