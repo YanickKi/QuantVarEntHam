@@ -44,7 +44,7 @@ The default values are often used and the density matrix is automatically constr
 function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
 
-    ρ_A = something(ρ_A, rho_A(mat(H_TFIM(N, Γ, periodic = periodic, J=J, S=S)),  N-N_A+1:N, N))
+    ρ_A = something(ρ_A, rho_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
 
     return TFIM{Rational(S), N_A}(
         N,

@@ -3,7 +3,7 @@ function Base.show(io::IO, cost::QCFL{S,N_A}) where {S,N_A}
     println(io)
     print_model_short(io, cost.model)
     println(io)
-    print_BW_BWV(io, cost.str_blocks)
+    print_BW_BWV(io, cost.blocks)
     println(io)
     print(io, "Integration method: ")
     print_integration_name(io, cost.integrator)
@@ -17,7 +17,7 @@ function Base.show(io::IO, cost::Commutator)
     println(io)
     print_model_short(io, cost.model)
     println(io)
-    print_BW_BWV(io, cost.str_blocks)
+    print_BW_BWV(io, cost.blocks)
 end 
 
 function Base.show(io::IO, cost::RelativeEntropy)
@@ -25,7 +25,7 @@ function Base.show(io::IO, cost::RelativeEntropy)
     println(io)
     print_model_short(io, cost.model)
     println(io)
-    print_BW_BWV(io, cost.str_blocks)
+    print_BW_BWV(io, cost.blocks)
 end 
 
 function print_model_short(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
@@ -43,11 +43,11 @@ end
 
 
 function print_blocks(cost::AbstractFreeCostFunction)
-    show(stdout, MIME"text/plain"(),cost.str_blocks)
+    show(stdout, MIME"text/plain"(),cost.blocks)
 end 
 
 function print_observables(cost::AbstractFreeCostFunction)
-    show(stdout, MIME"text/plain"(),cost.str_observables)
+    show(stdout, MIME"text/plain"(),cost.observables)
 end 
 
 print_blocks(fc::FixedCost) = unwrap(print_blocks, fc)

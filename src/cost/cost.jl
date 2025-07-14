@@ -32,7 +32,6 @@ function gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real}
     return _gradient!(c,G,g, free_indices) 
 end 
 
-
 include("FixedCost.jl")
 include("QCFL.jl")
 include("relative_entropy.jl")

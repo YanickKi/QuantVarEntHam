@@ -3,7 +3,7 @@
 
 Struct containing the buffers for the cost function [`Commutator`](@ref).
 """
-struct CommutatorBuffer
+struct CommutatorBuffer{S,N_A}
     comm::Matrix{ComplexF64}
     temp::Matrix{ComplexF64}
     H_A::Matrix{ComplexF64}
@@ -15,9 +15,9 @@ end
 
 Outer constructor for [`CommutatorBuffer`](@ref) given a `model`.
 """
-function CommutatorBuffer(model::AbstractModel)
-    d = size(model.ρ_A)[1]
-    return CommutatorBuffer(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
+function CommutatorBuffer(::AbstractModel{S,N_A}) where {S,N_A}
+    d = Int((2*S+1)^N_A)
+    return CommutatorBuffer{S,N_A}(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
 end 
 
 """
@@ -33,7 +33,7 @@ The Frobenius norm is used.
 # Fields 
 
 - `model::M`: model 
-- `blocks::Vector{Matrix{ComplexF64}}`: blocks for the variational Ansatz 
+- `blocks_mat::Vector{Matrix{ComplexF64}}`: blocks_mat for the variational Ansatz 
 - `buff::CommutatorBuffer`: buffers (see [`CommutatorBuffer`](@ref))
 
 # Gradient 
@@ -53,28 +53,28 @@ Here, `` \\text{Sum}(X) = \\sum_{ij} X_{ij}`` denotes the sum of all matrix elem
 the elementwise product aka Hadamard product is denoted by ``C = A \\, . \\! *B`` s.t. 
 ``C_{ij} = A_{ij} B_{ij}``.
 """
-struct Commutator{M<:AbstractModel, SB<:AbstractBlock} <: AbstractFreeCostFunction
+struct Commutator{M<:AbstractModel, SB<:AbstractBlock, B<:CommutatorBuffer} <: AbstractFreeCostFunction
     model::M
-    blocks::Vector{Matrix{ComplexF64}}
-    str_blocks::Vector{SB}
-    buff::CommutatorBuffer
+    blocks_mat::Vector{Matrix{ComplexF64}}
+    blocks::Vector{SB}
+    buff::B
 end 
 
 """
-    Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+    Commutator(model::AbstractModel, blocks_mat::Vector{<:AbstractMatrix})
 
 Outer Constructor for [`Commutator`](@ref) s.t. the correct `buffer` (see [`CommutatorBuffer`](@ref)) will be automatically constructed 
-for the given `model` and `blocks`.
+for the given `model` and `blocks_mat`.
 """
-function Commutator(model::AbstractModel, blocks::Vector{<:AbstractBlock})
-    buffer = CommutatorBuffer(model)
+function Commutator(model::AbstractModel{S,N_A}, blocks_mat::Vector{<:AbstractBlock{S,N_A}}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
+    buffer = something(buffer, CommutatorBuffer(model))
     
-    blocks_mat = Matrix.(mat.(blocks))
+    blocks_mat_mat = Matrix.(mat.(blocks_mat))
 
     return Commutator(
         model, 
-        blocks_mat, 
-        blocks,
+        blocks_mat_mat, 
+        blocks_mat,
         buffer
     )
 end 
@@ -126,9 +126,9 @@ end
 
 
 function gradient_component(c::Commutator, Λ_comm::Real, Λ_H_A::Real, Λ_ρ_A::Real, index::Integer)
-    mul!(mul!(c.buff.temp, c.model.ρ_A, c.blocks[index]), c.blocks[index], c.model.ρ_A, 1, -1) # compute [h_index, ρ_A] and save it in temp
+    mul!(mul!(c.buff.temp, c.model.ρ_A, c.blocks_mat[index]), c.blocks_mat[index], c.model.ρ_A, 1, -1) # compute [h_index, ρ_A] and save it in temp
     ∂Λ_comm = 1/Λ_comm * real(sum(had!(c.buff.temp, c.buff.temp, c.buff.comm)))
-    ∂Λ_H_A = 1/Λ_H_A * real(sum(had!(c.buff.temp, c.buff.H_A, c.blocks[index])))
+    ∂Λ_H_A = 1/Λ_H_A * real(sum(had!(c.buff.temp, c.buff.H_A, c.blocks_mat[index])))
     return 1/(2*Λ_ρ_A*Λ_H_A^2)*(∂Λ_comm * Λ_H_A - Λ_comm * ∂Λ_H_A) 
 end 
 

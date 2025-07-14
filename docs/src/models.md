@@ -82,5 +82,5 @@ s.t. the BW violating Ansatz reads
 # Utils 
 
 ```@docs 
-get_rhoA(H::AbstractMatrix, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+rho_A(H::AbstractBlock, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
 ```

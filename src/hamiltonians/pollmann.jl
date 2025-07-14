@@ -48,7 +48,7 @@ The default values are often used and the density matrix is automatically constr
 function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, r_max::Int=1, periodic::Bool=false,
     J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
     
-    ρ_A = something(ρ_A, rho_A(mat(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S)),  N-N_A+1:N, N, S=S))
+    ρ_A = something(ρ_A, rho_A(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
 
     return Pollmann{Rational(S),N_A}(
         N,

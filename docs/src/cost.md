@@ -12,8 +12,7 @@ AbstractFreeCostFunction
 QCFL
 ```
 ```@docs 
-QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
-buffer::Union{Nothing, QCFL_buffer} = nothing) 
+QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
 ```
 ```@docs
 QCFLBuffer
@@ -28,7 +27,7 @@ QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::
 Commutator
 ```
 ```@docs 
-Commutator(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+Commutator(model::AbstractModel, blocks::Vector{<:AbstractBlock})
 ```
 ```@docs
 CommutatorBuffer
@@ -43,7 +42,7 @@ CommutatorBuffer(model::AbstractModel)
 RelativeEntropy
 ```
 ```@docs 
-RelativeEntropy(model::AbstractModel, blocks::Vector{<:AbstractMatrix})
+RelativeEntropy(model::AbstractModel, blocks::Vector{<:Block})
 ```
 ```@docs
 RelativeEntropyBuffer

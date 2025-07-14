@@ -16,10 +16,10 @@ end
 
 
 function get_H_A!(c::AbstractCostFunction, g::Vector{<:AbstractFloat})
-    c.buff.H_A .= g[1] .* c.blocks[1]
+    c.buff.H_A .= g[1] .* c.blocks_mat[1]
 
     @fastmath @inbounds @simd for i in 2:length(g)
-        c.buff.H_A .+= g[i] .* c.blocks[i]
+        c.buff.H_A .+= g[i] .* c.blocks_mat[i]
     end 
     return c.buff.H_A 
 end 
