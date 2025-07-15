@@ -106,6 +106,12 @@ function repeat(N, sig::String, locs::NTuple{L,Int}; S::Union{Rational, Int} = 1
     
 end 
 
+"""
+    mat(block::AbstractBlock)
+
+Return a complex, sparse matrix of a subtype of [`AbstractBlock`](@ref) (can be either a [`PauliString`](@ref) or a [`Block`](@ref)).
+"""
+mat(block::AbstractBlock) = mat(block)
 
 function mat(block::Block{S,N}) where {S,N}
     d = Int((2*S+1)^N)

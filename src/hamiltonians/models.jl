@@ -3,15 +3,17 @@ using LinearAlgebra
 using SparseArrays
 
 export AbstractModel
-export H_A_BW, H_A_notBW, get_rhoA
+export H_A_BW, H_A_notBW, rho_A
 export TFIM, XXZ, Pollmann
 export H_XXZ, H_TFIM, H_pollmann
 
 
 """
-    AbstractModel
+    AbstractModel{S,N_A} end
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
+
+The parameters are spin number `S` and number of  
 
 All physical `AbstractModel`s have their own concrete (e.g. `TFIM`).
 In general the concrete types will have the same fields besides the model specific Hamiltonian parameters, which are: 
@@ -24,14 +26,14 @@ In general the concrete types will have the same fields besides the model specif
 - `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
 - `ρ_A::Matrix{ComplexF64}`: reduced density matrix of ground state of the composite system on subsystem A.
 """
-abstract type AbstractModel{S,N} end
+abstract type AbstractModel{S,N_A} end
 
 
 """
     rho_A(H::AbstractBlock, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2)
 
 Return the reduced density matrix as either a real or complex matrix of the ground state of Hamiltonian `H` with spins of 
-spin number `S` for `N` sites on subsystem A.
+spin number `S` for `N` sites on subsystem A as complex, dense matrix.
 
 For a Hilbert space dimension of more than 1024, the [krylov subspace method from KrylovKit](https://jutho.github.io/KrylovKit.jl/stable/man/eig/#KrylovKit.eigsolve) is used for 
 extracting the ground state, exact diagonalization otherwise.
@@ -57,7 +59,7 @@ end
 """
     H_A_BW(model::AbstractModel) 
 
-Return a vector with the blocks as its entries, which are complex dense matrices.
+Return a vector with the blocks as its entries as `Block`s.
 
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
 
@@ -82,7 +84,6 @@ function H_A_BW(model::AbstractModel{S,N_A}) where {S,N_A}
         corrections!(blocks, model)
     end 
     return J*blocks
-
 end 
 
 """

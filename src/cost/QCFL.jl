@@ -23,8 +23,9 @@ end
 
 """
     QCFLBuffer{O<:AbstractMatrix}
+    QCFLBuffer(blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
 
-Struct containing the buffers for the [`QCFL`](@ref).
+Struct containing the buffers for the [`QCFL`](@ref) for given `blocks`.
 """
 struct QCFLBuffer{S,N_A,L}
     qcfl_buff::QCFLOnlyBuffer
@@ -33,11 +34,6 @@ struct QCFLBuffer{S,N_A,L}
 end
 
 
-"""
-    QCFLBuffer(model::AbstractModel{S,N_A}, blocks_mat::Vector{<:AbstractMatrix}, observables_mat::Vector{<:AbstractMatrix}) where {S,N_A}
-
-Outer constructor for [`QCFLBuffer`](@ref) given a `model`, `blocks` and `observables`.
-"""
 function QCFLBuffer(blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
     numBlocks = length(blocks) 
     d = Int((2*S+1)^N_A) # Hilbert space dimension
@@ -49,7 +45,14 @@ function QCFLBuffer(blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
 end 
 
 """
-    QCFL{M<:AbstractModel, O<:AbstractMatrix, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator} <: AbstractFreeCostFunction
+    QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, SB<:Block, SO<:AbstractBlock} <: AbstractFreeCostFunction
+    QCFL(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
+    buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
+
+Contains the `model`, `observables`, the `blocks` for the variational Ansatz, integtration settings (`integrator`) and `buffer`s for the QCFL.
+
+The default observables are ``\\{Z_i Z_{i+1} | 1 \\leq i  < N_\\text{A}\\}``.
+Existing buffers can be provided, and are constructed automatically otherwise. 
 
 The cost function from the QCFL as an object defined as 
 
@@ -63,14 +66,6 @@ The expectation value of the time evolved observables reads
 \\langle \\mathcal{O}_j^\\text{A} \\rangle_t =  \\text{Tr}_{\\text{A}} \\left [ \\mathcal{O}_j^\\text{A} e^{- i H_\\text{A}^\\text{Var}(\\vec{g})t} \\rho_\\text{A}  e^{i H_\\text{A}^\\text{Var}(\\vec{g})t} \\right ].
 ```
 ``N_\\text{O}`` denotes the number of observables.
-# Fields 
-- `model::M`: model 
-- `blocks::Vector{Matrix{ComplexF64}}`: blocks of the variational Ansatz
-- `integrator::Integrator{S,V}`: object containing scalar and vector integration (NOTE: INTERNAL ONLY)
-- `observables::Vector{O}`: monitored observables
-- `T_max::Float64`: maximum integration time aka how long the system is sampled 
-- `meas0::Vector{Float64}`: expectation values at time `t=0` 
-- `buff::QCFLBuffer{O}`: see [`QCFLBuffer`](@ref)
 
 # Gradient 
 
@@ -101,28 +96,7 @@ end
 struct IsDiagonal end 
 struct IsNotDiagonal end 
 
-"""
-    QCFL(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:AbstractMatrix}} = nothing,
-    buffer::Union{Nothing, QCFLBuffer} = nothing) 
 
-Outer constructor for [`QCFL`](@ref) s.t. the correct buffers will be automatically constructed for 
-the given `model`, `blocks` and `observables`.
-
-Provides default values for observables and the integrator.
-The default values for observables is `` \\{ Z_i Z_{i+1} | 1 \\leq i < N_\\text{A} \\}``.
-The tanh-sinh quadrature is set as the default integrator with its default values (see [`TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)`](@ref)).
-
-# Required arguments
-
-- `model`: model 
-- `blocks`: blocks for the variational Ansatz
-- `T_max`: maximum integration time aka how long the system is sampled
-
-# Keyword arguments
-- `integrator`: settings for integration method (see [`AbstractIntegrator`](@ref))
-- `observables`: observables
-- `buffer`: see [`QCFLBuffer`](@ref) 
-"""
 function QCFL(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
     buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
     

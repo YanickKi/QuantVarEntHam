@@ -32,7 +32,8 @@ end
 """ 
     AbstractIntegrator
     
-Asbtract type for integration.
+Abstract type for integration.
+
 Concrete types contain the settings (e.g. step size, tolerances, etc...).
 """
 abstract type AbstractIntegrator end 

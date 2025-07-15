@@ -19,14 +19,15 @@ end
 
 """
     TanhSinh <: AbstractIntegrator 
+    TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)
 
-Struct containing the settings for the tanh-sinh quadrature.
-    
-# Fields 
-- `atol::Float64`: absolute tolerance
-- `rtol::Float64`: relative tolerance 
-- `maxlevel::Int64`: maximum amount of repititions 
-- `h0::Float64`: initial step size for trapezoidal integration
+Contains the settings for the Tanh-sinh quadrature.
+
+Here, `atol` is the absolute and `rtol` the relative tolerance in order to stop the integration. 
+The initial step size is given by `h0` and the maximum amount of repititions by `maxlevel`.
+
+!!! danger 
+    Changing the default settings can lead to very inaccurate results.
 """
 struct TanhSinh <: AbstractIntegrator
     atol::Float64
@@ -35,17 +36,6 @@ struct TanhSinh <: AbstractIntegrator
     h0::Float64
 end 
 
-"""
-    TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)
-
-Outer constructor for [`TanhSinh`](@ref) with recommended default values.
-    
-# Keyword arguments 
-- `atol`: absolute tolerance
-- `rtol`: relative tolerance 
-- `maxlevel`: maximum amount of repititions 
-- `h0`: initial step size for trapezoidal integration
-"""
 function TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)
     
     return TanhSinh(Float64(atol), Float64(rtol), maxlevel, Float64(h0))

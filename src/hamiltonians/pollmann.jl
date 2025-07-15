@@ -1,5 +1,7 @@
 """
-    Pollmann <: AbstractModel
+    Pollmann{S,N_A} <: AbstractModel{S,N_A}
+    Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, r_max::Int=1, periodic::Bool=false,
+    J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
 
 Object containing the settings for the Pollmann model
 
@@ -24,6 +26,7 @@ struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
     end
 end
 
+#=
 """
     Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, r_max::Int=1, periodic::Bool=false,
     J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
@@ -45,6 +48,7 @@ The default values are often used and the density matrix is automatically constr
 - `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
 - `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 """
+=#
 function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, r_max::Int=1, periodic::Bool=false,
     J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
     

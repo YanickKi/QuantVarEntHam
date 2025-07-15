@@ -1,7 +1,9 @@
 export H_TFIM_blocks
 
 """
-    TFIM <: AbstractModel
+    TFIM{S,N_A} <: AbstractModel{S,N_A}
+    TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
+    J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
 
 Object containing the settings for the TFIM.
 
@@ -22,6 +24,7 @@ struct TFIM{S,N_A} <: AbstractModel{S,N_A}
     end
 end
 
+#=
 """
     TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
@@ -41,6 +44,7 @@ The default values are often used and the density matrix is automatically constr
 - `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
 - `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 """
+=#
 function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
 

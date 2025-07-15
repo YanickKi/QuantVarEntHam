@@ -1,7 +1,8 @@
 """
-    RelativeEntropyBuffer
+    RelativeEntropyBuffer{S,N_A}
+    RelativeEntropyBuffer(::AbstractModel{S,N_A}) where {S,N_A} 
 
-Struct containing the buffers for the [`RelativeEntropy`](@ref).
+Buffers for the [`RelativeEntropy`](@ref) for a given [`AbstractModel`](@ref) .
 """
 struct RelativeEntropyBuffer{S,N_A}
     H_A::Matrix{ComplexF64}
@@ -9,11 +10,7 @@ struct RelativeEntropyBuffer{S,N_A}
     exp_buff::ExpBuffer{ComplexF64}
 end 
 
-"""
-    RelativeEntropyBuffer(model::AbstractModel)
 
-Outer constructor for [`RelativeEntropyBuffer`](@ref) given a `model`. 
-"""
 function RelativeEntropyBuffer(::AbstractModel{S,N_A}) where {S,N_A} 
 
     d = Int((2*S+1)^N_A)
@@ -22,18 +19,17 @@ function RelativeEntropyBuffer(::AbstractModel{S,N_A}) where {S,N_A}
 end 
 
 """
-    RelativeEntropy{M<:AbstractModel} <: AbstractFreeCostFunction
+    RelativeEntropy{M<:AbstractModel, SB<:Block} <: AbstractFreeCostFunction
+    RelativeEntropy(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
 
-Relative entropy as a cost function as an object defined as 
+Contains the model, blocks, observables and buffers for the relative entropy as cost function.
+
+Existing buffers can be provided, and are constructed automatically otherwise. 
+
+The cost function is given by 
 ```math 
-\\mathcal{C}(\\vec{g}) = \\text{Tr} [ρ_A H_\\text{A}^\\text{Var}(\\vec{g}) ] + \\ln  \\text{Tr}_\\text{A} [e^{-H_\\text{A}^\\text{Var}(\\vec{g})}]
+\\mathcal{C}(\\vec{g}) = \\text{Tr}_{\\text{A}} [ρ_A H_\\text{A}^\\text{Var}(\\vec{g}) ] + \\ln  \\text{Tr}_\\text{A} [e^{-H_\\text{A}^\\text{Var}(\\vec{g})}]
 ```
-# Fields 
-
-- `model::M`: model
-- `blocks_mat::Vector{Matrix{ComplexF64}}`: blocks_mat for the variational Ansatz
-- `buff::RelativeEntropyBuffer`: buffers (see [`RelativeEntropyBuffer`](@ref)) 
-- `trace_exp_H_A::Float64`: cached variable to store an intermiadte result
 
 # Gradient 
 
@@ -52,12 +48,6 @@ mutable struct RelativeEntropy{M<:AbstractModel, SB<:Block} <: AbstractFreeCostF
     trace_exp_H_A::Float64 # cached variable to save intermediate calculations in gradient for cost
 end 
 
-"""
-    RelativeEntropy(model::AbstractModel, blocks_mat::Vector{<:AbstractMatrix})
-
-Outer constructor for [`RelativeEntropy`](@ref) s.t. the correct `buffers´ (see [`RelativeEntropyBuffer`](@ref)) will be automatically constructed
-for a given `model` and `blocks_mat`.
-"""
 function RelativeEntropy(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
     blocks_mat = Matrix.(mat.(blocks))
     buffer = something(buffer, RelativeEntropyBuffer(model))

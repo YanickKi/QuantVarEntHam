@@ -63,20 +63,23 @@ function print_info(io::IO, ::AbstractBlock{S,N}) where {S,N}
     println(io ,"Number of spins: ", N)
 end 
 
-function Base.show(io::IO, ps::PauliString{S, N}) where {S,N}
+function Base.show(io::IO, ::MIME"text/plain", ps::PauliString{S, N}) where {S,N}
+    println(io, "Pauli string")
     print_info(io, ps)
     println(io)
     print_pauli_string(io, ps)
 end
 
-function Base.show(io::IO, block::Block{S, N}) where {S,N}
+function Base.show(io::IO, ::MIME"text/plain", block::Block{S, N}) where {S,N}
+    println(io, "Block")
     print_info(io, block)
     println(io)
     print_block(io, block)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", pauli_strings::Vector{PauliString{S,N}}) where {S,N}
+function Base.show(io::IO, ::MIME"text/plain", pauli_strings::Vector{PauliString{S,N,L}}) where {S,N,L}
     println(io, "Number of Pauli strings: ", length(pauli_strings))
+    println(io)
     print_info(io, pauli_strings[1])
     println(io)
     for index in eachindex(pauli_strings)
@@ -105,3 +108,7 @@ function Base.show(io::IO, ::MIME"text/plain", blocks::Vector{Block{S,N}}) where
         end 
     end 
 end 
+
+Base.show(io::IO, ablock::AbstractBlock) = show(io, MIME"text/plain"(), ablock)
+
+Base.show(io::IO, ablocks::Vector{<:AbstractBlock}) = show(io, MIME"text/plain"(), ablocks)

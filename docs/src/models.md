@@ -10,10 +10,6 @@ H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{Int64, Rat
 ```@docs
 TFIM
 ```
-```@docs
-TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
-J::Real=-1, ρ_A::AbstractMatrix=get_ρ_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
-```
 ### Ansätze
 The BW Ansatz has the blocks 
 ```math
@@ -34,10 +30,6 @@ H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{Int64, Rati
 ```@docs
 XXZ
 ```
-```@docs
-XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int64, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
-```
 ### Ansätze
 The BW Ansatz has the blocks 
 ```math
@@ -57,10 +49,6 @@ H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=false, J::R
 ```
 ```@docs 
 Pollmann
-```
-```@docs
-Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int64, Rational}=1//1, r_max::Int=1, periodic::Bool=false,
-J::Real=+1, ρ_A::Matrix{ComplexF64}=get_ρ_A(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N-N_A+1:N, N, S=S))
 ```
 ### Ansätze
 The BW Ansatz has the blocks 

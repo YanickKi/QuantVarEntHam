@@ -1,15 +1,9 @@
 """
     FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
-
+    FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
 Wrapper for fixing parameters of a cost function object. 
 
-# Fields 
-
-- `c::C`: cost function 
-- `fixed_indices::Vector{Int}`: the indices of the parameters which are to be fixed 
-- `fixed_values::Vector{Float64}`: values of the parameters which are to be fixed 
-- `free_indices::Vector{Int}`: free indices which are to be optimized 
-- `full_g::Vector{Float64}`: a buffer to construct the full parameter vector with fixed and free parameters
+It stores a given cost function without fixed parameters `c` of the type [`AbstractFreeCostFunction`](@ref) together with the indices (`fixed_indices`) and the values (`fixed_values`) of the fixed parameters.
 """
 struct FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
     c::C 
@@ -20,17 +14,6 @@ struct FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
 end 
 
 
-"""
-    FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
-
-Outer constructor for [`FixedCost`](@ref).
-
-# Arguments
-
-- `c`: cost function 
-- `fixed_indices`: the indices of the parameters which are to be fixed 
-- `fixed_values`: values of the parameters which are to be fixed 
-"""
 function FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
         
     c = deepcopy(c)

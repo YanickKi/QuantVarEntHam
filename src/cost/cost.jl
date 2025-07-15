@@ -1,8 +1,11 @@
-export gradient!
 export AbstractCostFunction, AbstractFreeCostFunction
 export QCFL, Commutator, RelativeEntropy, FixedCost
 export QCFLBuffer, CommutatorBuffer, RelativeEntropyBuffer
 export fill_full_g
+export gradient, gradient!
+export print_blocks, print_observables, print_model
+export getblocks, getobservables, getmodel
+
 """
     AbstractCostFunction
 
@@ -19,17 +22,35 @@ Abstract type for cost functions only where all parameters are free.
 abstract type AbstractFreeCostFunction <: AbstractCostFunction end
 
 
+"""
+    gradient(cost::AbstractCostFunction, g::Vector{<:Real})
+
+Return the gradient of a given `cost` at `g`.
+"""
+function gradient(cost::AbstractCostFunction, g::Vector{<:Real})
+    
+    G = similar(g)
+
+    free_indices = get_free_indices(cost)
+    
+    _gradient!(cost,G,g, free_indices) 
+    
+    return G 
+end
 
 """
-    gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real})
+    gradient!(G::Vector{<:Real}, cost::AbstractCostFunction, g::Vector{<:Real})
 
-Computes the gradient of a given cost function `c` at point `g` and saves it in `G`.
+In place version of [`gradient`](@ref). 
+
+Save the gradient in `G` and return it.
 """
-function gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real})
+function gradient!(G::Vector{<:Real}, cost::AbstractCostFunction, g::Vector{<:Real})
     
-    free_indices = get_free_indices(c)
+    free_indices = get_free_indices(cost)
     
-    return _gradient!(c,G,g, free_indices) 
+    _gradient!(cost,G,g, free_indices) 
+    return G
 end 
 
 include("FixedCost.jl")

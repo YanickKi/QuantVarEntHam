@@ -1,7 +1,8 @@
 """ 
-    CommutatorBuffer
+    CommutatorBuffer{S,N_A}
+    CommutatorBuffer(::AbstractModel{S,N_A}) where {S,N_A}
 
-Struct containing the buffers for the cost function [`Commutator`](@ref).
+Buffer for the cost function [`Commutator`](@ref) for a given [`AbstractModel`](@ref).
 """
 struct CommutatorBuffer{S,N_A}
     comm::Matrix{ComplexF64}
@@ -10,11 +11,6 @@ struct CommutatorBuffer{S,N_A}
 end 
 
 
-""" 
-    CommutatorBuffer(model::AbstractModel)
-
-Outer constructor for [`CommutatorBuffer`](@ref) given a `model`.
-"""
 function CommutatorBuffer(::AbstractModel{S,N_A}) where {S,N_A}
     d = Int((2*S+1)^N_A)
     return CommutatorBuffer{S,N_A}(zeros(ComplexF64, d, d), zeros(ComplexF64, d, d), zeros(ComplexF64, d, d))
@@ -22,19 +18,18 @@ end
 
 """
     Commutator{M<:AbstractModel} <: AbstractFreeCostFunction
+    Commutator(model::AbstractModel{S,N_A}, blocks_mat::Vector{<:AbstractBlock{S,N_A}}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
 
-Commutator as a cost function as an object defined as 
+Contains the model, blocks, observables and buffers for the Commutator as a cost function.
+
+Existing buffers can be provided, and are constructed automatically otherwise. 
+
+The cost function is given by 
 ```math
 \\mathcal{C}(\\vec{g})  = \\frac{||[H_\\text{A}^\\text{Var}(\\vec{g}), ρ_\\text{A}]||}{||H_\\text{A}^\\text{Var}(\\vec{g})||||ρ_\\text{A}||},
 ```
 where ``H_\\text{A}^\\text{Var}(\\vec{g})`` is the variational Ansatz and ``ρ_\\text{A}`` the exact reduced density matrix. 
 The Frobenius norm is used.
-
-# Fields 
-
-- `model::M`: model 
-- `blocks_mat::Vector{Matrix{ComplexF64}}`: blocks_mat for the variational Ansatz 
-- `buff::CommutatorBuffer`: buffers (see [`CommutatorBuffer`](@ref))
 
 # Gradient 
 
@@ -60,21 +55,15 @@ struct Commutator{M<:AbstractModel, SB<:AbstractBlock, B<:CommutatorBuffer} <: A
     buff::B
 end 
 
-"""
-    Commutator(model::AbstractModel, blocks_mat::Vector{<:AbstractMatrix})
-
-Outer Constructor for [`Commutator`](@ref) s.t. the correct `buffer` (see [`CommutatorBuffer`](@ref)) will be automatically constructed 
-for the given `model` and `blocks_mat`.
-"""
-function Commutator(model::AbstractModel{S,N_A}, blocks_mat::Vector{<:AbstractBlock{S,N_A}}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
+function Commutator(model::AbstractModel{S,N_A}, blocks::Vector{<:AbstractBlock{S,N_A}}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
     buffer = something(buffer, CommutatorBuffer(model))
     
-    blocks_mat_mat = Matrix.(mat.(blocks_mat))
+    blocks_mat = Matrix.(mat.(blocks))
 
     return Commutator(
         model, 
-        blocks_mat_mat, 
-        blocks_mat,
+        blocks_mat, 
+        blocks,
         buffer
     )
 end 

@@ -11,14 +11,8 @@ AbstractFreeCostFunction
 ```@docs 
 QCFL
 ```
-```@docs 
-QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
-```
 ```@docs
 QCFLBuffer
-```
-```@docs
-QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::Vector{<:AbstractMatrix})
 ```
 
 ## Commutator
@@ -26,14 +20,8 @@ QCFLBuffer(model::AbstractModel, blocks::Vector{<:AbstractMatrix}, observables::
 ```@docs 
 Commutator
 ```
-```@docs 
-Commutator(model::AbstractModel, blocks::Vector{<:AbstractBlock})
-```
 ```@docs
 CommutatorBuffer
-```
-```@docs
-CommutatorBuffer(model::AbstractModel)
 ```
 
 ## Relative Entropy
@@ -42,13 +30,7 @@ CommutatorBuffer(model::AbstractModel)
 RelativeEntropy
 ```
 ```@docs 
-RelativeEntropy(model::AbstractModel, blocks::Vector{<:Block})
-```
-```@docs
 RelativeEntropyBuffer
-```
-```@docs
-RelativeEntropyBuffer(model::AbstractModel)
 ```
 
 ## Wrapper for fixing parameters 
@@ -57,14 +39,33 @@ RelativeEntropyBuffer(model::AbstractModel)
 FixedCost
 ```
 ```@docs
-FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
-```
-```@docs
 fill_full_g(fc::FixedCost, g::Vector{Float64}) 
 ```
 ## Gradient
-
 ```@docs
-gradient!(G::Vector{<:Real}, c::AbstractCostFunction, g::Vector{<:Real})
+gradient(cost::AbstractCostFunction, g::Vector{<:Real})
+```
+```@docs
+gradient!(G::Vector{<:Real}, cost::AbstractCostFunction, g::Vector{<:Real})
 ```
 
+## Getter
+```@docs
+getmodel(cost::AbstractCostFunction)
+```
+```@docs 
+getblocks(cost::AbstractCostFunction)
+```
+```@docs 
+getobservables(cost::AbstractCostFunction)
+```
+## Printing 
+```@docs 
+print_model(cost::AbstractCostFunction)
+```
+```@docs 
+print_blocks(cost::AbstractCostFunction)
+```
+```@docs 
+print_observables(cost::AbstractCostFunction)
+```

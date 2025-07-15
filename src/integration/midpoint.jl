@@ -11,11 +11,7 @@ buffertrait(::MidPointVector) = NoNeedBuffer()
 """
     MidPoint
 
-Struct containing the settings for midpoint integration.
-
-# Fields 
-
-- `dt::Real`: step size 
+Contains the step size `dt::Float64` for mid point integration.
 """
 struct MidPoint <: AbstractIntegrator
     dt::Float64

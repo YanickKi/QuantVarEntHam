@@ -1,5 +1,7 @@
 """
-    XXZ <: AbstractModel
+    XXZ{S,N_A} <: AbstractModel{S,N_A}
+    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+    J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
 
 Object containing the settings for the XXZ model
 
@@ -19,6 +21,8 @@ struct XXZ{S,N_A} <: AbstractModel{S,N_A}
         new{S,N_A}(N, Δ, J, r_max, periodic, ρ_A)
     end
 end
+
+#=
 """
     XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
     J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
@@ -39,6 +43,7 @@ The default values are often used and the density matrix is automatically constr
 - `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
 - `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
 """
+=#
 function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
     J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
     

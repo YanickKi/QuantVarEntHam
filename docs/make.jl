@@ -9,6 +9,7 @@ makedocs(sitename="QuantVarEntHam.jl",  modules = [QuantVarEntHam],
                 "Models" => "models.md"
                 "Ansätze" => "ansätze.md"
                 "Cost" => "cost.md"
+                "Spinoperators" => "spinoperators.md"
                 "Integration" => "integration.md"
                 "Optimizer" => "optimizer.md"
         ],
