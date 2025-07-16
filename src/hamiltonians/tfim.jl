@@ -24,31 +24,11 @@ struct TFIM{S,N_A} <: AbstractModel{S,N_A}
     end
 end
 
-#=
-"""
-    TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
-    J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
-
-Convenient constructor for [`TFIM`](@ref) containing settings for the TFIM.
-The default values are often used and the density matrix is automatically constructed.
-
-# Required Arguments
-- `N`: number of sites in the composite system
-- `Γ`: transversal field strength 
-- `N_A`: number of sites in subsystem A
-
-# Keyword arguments
-- `S`: spin number.
-- `J`: global prefactor in the Hamiltonian.
-- `r_max`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) `r_max = N_A-1` is maximally possible.
-- `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
-- `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
-"""
-=#
 function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool=false,
     J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
 
-    ρ_A = something(ρ_A, rho_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N-N_A+1:N, N))
+   
+    ρ_A = @something ρ_A rho_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N_A)
 
     return TFIM{Rational(S), N_A}(
         N,

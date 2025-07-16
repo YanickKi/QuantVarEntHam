@@ -2,7 +2,7 @@ export AbstractCostFunction, AbstractFreeCostFunction
 export QCFL, Commutator, RelativeEntropy, FixedCost
 export QCFLBuffer, CommutatorBuffer, RelativeEntropyBuffer
 export fill_full_g
-export gradient, gradient!
+export gradient
 export print_blocks, print_observables, print_model
 export getblocks, getobservables, getmodel
 
@@ -38,19 +38,11 @@ function gradient(cost::AbstractCostFunction, g::Vector{<:Real})
     return G 
 end
 
-"""
-    gradient!(G::Vector{<:Real}, cost::AbstractCostFunction, g::Vector{<:Real})
-
-In place version of [`gradient`](@ref). 
-
-Save the gradient in `G` and return it.
-"""
 function gradient!(G::Vector{<:Real}, cost::AbstractCostFunction, g::Vector{<:Real})
     
     free_indices = get_free_indices(cost)
     
-    _gradient!(cost,G,g, free_indices) 
-    return G
+    return _gradient!(cost,G,g, free_indices) 
 end 
 
 include("FixedCost.jl")

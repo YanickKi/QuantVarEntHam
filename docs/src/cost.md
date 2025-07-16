@@ -45,9 +45,6 @@ fill_full_g(fc::FixedCost, g::Vector{Float64})
 ```@docs
 gradient(cost::AbstractCostFunction, g::Vector{<:Real})
 ```
-```@docs
-gradient!(G::Vector{<:Real}, cost::AbstractCostFunction, g::Vector{<:Real})
-```
 
 ## Getter
 ```@docs

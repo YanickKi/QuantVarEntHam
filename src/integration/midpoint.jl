@@ -9,7 +9,7 @@ buffertrait(::MidPointVector) = NoNeedBuffer()
 
 
 """
-    MidPoint
+    MidPoint <: AbstractIntegrator
 
 Contains the step size `dt::Float64` for mid point integration.
 """

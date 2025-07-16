@@ -75,7 +75,7 @@ The gradient is given by
     \\partial_{g_k} \\mathcal{C}(\\vec{g}) = \\frac{4}{T_\\text{max} N_\\text{O}} \\int_0^{T_\\text{max}} t \\, \\text{Im} \\left \\{ \\text{Tr}_{\\text{A}} 
     \\left [ \\mathcal{L}_{e^X} ( - i t  H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}) h_\\text{k} \\right ] \\right   \\} dt ,
 ```
-where ``\\Xi_\\text{A} = \\sum_j ( \\langle \\mathcal{O}_j^\\text{A} \\rangle_t - \\langle)\\mathcal{O}_j^\\text{A} \\rangle_0 \\mathcal{O}_j^\\text{A}``
+where ``\\Xi_\\text{A} = \\sum_j ( \\langle \\mathcal{O}_j^\\text{A} \\rangle_t - \\langle\\mathcal{O}_j^\\text{A} \\rangle_0 ) \\mathcal{O}_j^\\text{A}``
 and ``\\mathcal{L}_{e^X} ( - i t H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A})``
 denotes the Frechet derivative of the matrix exponential at ``- i t H_\\text{A}^\\text{Var}``
 in the direction of ``\\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}``.
@@ -102,14 +102,14 @@ function QCFL(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, T_max
     
     !isnothing(buffer) && @assert length(blocks) == L "The length of the blocks and the buffers need to be the same!"
 
-    observables = something(observables, PauliString{S,N_A}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1])
+    observables = @something observables PauliString{S,N_A}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1]
     
     observables_mat = Matrix.(mat.(observables))
 
     blocks_mat = Matrix.(mat.(blocks))
 
-    integrator = something(integrator, TanhSinh())
-    buffer = something(buffer, QCFLBuffer(blocks))
+    integrator = @something integrator TanhSinh()
+    buffer = @something buffer QCFLBuffer(blocks)
     meas0 = [expect(observable, model.ρ_A) for observable in observables_mat] 
 
     complete_integrator = make_integrator(blocks_mat, integrator)

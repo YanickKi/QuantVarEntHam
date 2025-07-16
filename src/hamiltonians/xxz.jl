@@ -48,7 +48,7 @@ function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::
     J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
     
 
-    ρ_A = something(ρ_A, rho_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S),  N-N_A+1:N, N))
+    ρ_A = @something ρ_A rho_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S), N_A) 
     return XXZ{Rational(S),N_A}(
         N,
         Δ, J, 

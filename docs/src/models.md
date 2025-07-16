@@ -1,9 +1,40 @@
 # Models
 
+For each model, the Hamiltonian and an type, where the model settings are saved, are implemented. 
+
+Instantiating a subtype of [`AbstractModel`](@ref) is fairly simple.
+As an example, if one wants find the EH of the TFIM with 8 sites, Γ=1
+and the provided default values (J=-1, OBC), one can instantiate the [`TFIM`](@ref) object
+```jlcon
+julia> model = TFIM(8,4,1)
+Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix
+TFIM
+
+Spin 1//2
+Number of spins in the composite system N =  8
+Number of spins in the subsystem N_A = 4
+Boundary conditions: open
+Global prefactor J = -1
+Transversal field strength Γ = 1
+
+```
+This object can be passed to the cost functions together with the variational Ansatz.
+
+If you want to obtain the corresponding Hamiltonian of the composite system, you can 
+use  [`H_TFIM`](@ref)
+```jlcon
+julia> H = H_TFIM(8,1)
+Block
+Spin 1//2
+Number of spins: 8
+-Z₁⊗ Z₂ - Z₂⊗ Z₃ - Z₃⊗ Z₄ - Z₄⊗ Z₅ - Z₅⊗ Z₆ - Z₆⊗ Z₇ - Z₇⊗ Z₈ - X₁ - X₂ - X₃ - X₄ - X₅ - X₆ - X₇ - X₈
+```
+
+
 ```@docs 
 AbstractModel
 ```
-## TFIM
+## Transverse field Ising model (TFIM)
 ```@docs 
 H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{Int64, Rational} = 1//2)
 ```
@@ -67,8 +98,8 @@ s.t. the BW violating Ansatz reads
      +  U_{zz} \sum_{i=1}^{N_\text{A}} U_i^{zz} Z_i^2 \right ) 
 ```
 
-# Utils 
+# Getter 
 
 ```@docs 
-rho_A(H::AbstractBlock, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
+getrho_A(model::AbstractModel) 
 ```

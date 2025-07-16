@@ -3,23 +3,22 @@ using LinearAlgebra
 using SparseArrays
 
 export AbstractModel
-export H_A_BW, H_A_notBW, rho_A
+export H_A_BW, H_A_notBW
 export TFIM, XXZ, Pollmann
 export H_XXZ, H_TFIM, H_pollmann
-
+export getrho_A
 
 """
     AbstractModel{S,N_A} end
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
 
-The parameters are spin number `S` and number of  
+Spin number `S` and number of spins in the subsystem `N_A`.
 
-All physical `AbstractModel`s have their own concrete (e.g. `TFIM`).
+All physical `AbstractModel`s have their own concrete (e.g. [`TFIM`](@ref)).
 In general the concrete types will have the same fields besides the model specific Hamiltonian parameters, which are: 
  
 - `N::Int`: number of sites in composite system.
-- `N_A::Int`: number of sites in subsystem A.
 - `J::Float64`: global prefactor in Hamiltonian
 - `S::Rational`: spin number
 - `r_max::Int`: range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) `r_max = N_A-1` corresponds to maximum order.
@@ -29,19 +28,10 @@ In general the concrete types will have the same fields besides the model specif
 abstract type AbstractModel{S,N_A} end
 
 
-"""
-    rho_A(H::AbstractBlock, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2)
+function rho_A(H::AbstractBlock{S,N}, N_A::Int) where {S,N} 
 
-Return the reduced density matrix as either a real or complex matrix of the ground state of Hamiltonian `H` with spins of 
-spin number `S` for `N` sites on subsystem A as complex, dense matrix.
-
-For a Hilbert space dimension of more than 1024, the [krylov subspace method from KrylovKit](https://jutho.github.io/KrylovKit.jl/stable/man/eig/#KrylovKit.eigsolve) is used for 
-extracting the ground state, exact diagonalization otherwise.
-"""
-function rho_A(H::AbstractBlock, A::AbstractVector{Int}, N::Int; S::Union{Rational, Int} = 1//2) 
     H_mat = mat(H)
     d = (Int64(2*S+1))^(N)
-    N_A = length(A)
     if d > 1024
         println("Diagonalizing the Hamitlonian via Krylov subspace method for constructing the ground state density matrix")
         _, vectors = eigsolve(H_mat, 1 ,:SR, ishermitian=true, tol = 1e-16)
@@ -64,7 +54,30 @@ Return a vector with the blocks as its entries as `Block`s.
 The variational Ansatz follows the Bisognano-Wichmann-theorem.
 
 # Example 
-`H_A_BW(model::TFIM)` returns the blocks of the variational Ansatz for the TFIM following the Bisognano-Wichmann-theorem.
+BW Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A`, `Γ =1` and `J=-1`.
+```jlcon
+julia> model = TFIM(8,4,1);
+Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix
+
+julia> blocks = H_A_BW(model)
+Number of blocks: 4
+
+Spin 1//2
+Number of spins: 4
+
+Block 1: 
+	-X₁ - 0.5*Z₁⊗ Z₂
+
+Block 2: 
+	-X₂ - 0.5*Z₁⊗ Z₂ - 0.5*Z₂⊗ Z₃
+
+Block 3: 
+	-X₃ - 0.5*Z₂⊗ Z₃ - 0.5*Z₃⊗ Z₄
+
+Block 4: 
+	-X₄ - 0.5*Z₃⊗ Z₄
+```
+
 """
 function H_A_BW(model::AbstractModel{S,N_A}) where {S,N_A}
     N = model.N
@@ -93,8 +106,40 @@ Return a vector with the blocks as its entries, which are complex dense matrices
 
 The variational Ansatz does not follow the Bisognano-Wichmann-theorem.
 
-# Example 
-`H_A_notBW(model::TFIM)` returns the blocks of  the variational Ansatz for the TFIM not following the Bisognano-Wichmann-theorem.
+# Example  
+BW violating Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A`, `Γ =1` and `J=-1`.
+```jlcon
+julia> model = TFIM(8,4,1);
+Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix
+
+julia> H_A_notBW(model)
+Number of blocks: 7
+
+Spin 1//2
+Number of spins: 4
+
+Block 1: 
+	-X₁
+
+Block 2: 
+	-Z₁⊗ Z₂
+
+Block 3: 
+	-X₂
+
+Block 4: 
+	-Z₂⊗ Z₃
+
+Block 5: 
+	-X₃
+
+Block 6: 
+	-Z₃⊗ Z₄
+
+Block 7: 
+	-X₄
+
+```
 """
 function H_A_notBW(model::AbstractModel{S,N_A}) where {S,N_A}
     r_max = model.r_max

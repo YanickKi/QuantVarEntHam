@@ -1,11 +1,11 @@
 """
-    FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
-    FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+    FixedCost{C<:AbstractFreeCostFunction} <: AbstractCostFunction
+    FixedCost(cost::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
 Wrapper for fixing parameters of a cost function object. 
 
 It stores a given cost function without fixed parameters `c` of the type [`AbstractFreeCostFunction`](@ref) together with the indices (`fixed_indices`) and the values (`fixed_values`) of the fixed parameters.
 """
-struct FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
+struct FixedCost{C<:AbstractFreeCostFunction} <: AbstractCostFunction
     c::C 
     fixed_indices::Vector{Int}
     fixed_values::Vector{Float64}
@@ -14,19 +14,19 @@ struct FixedCost{C <: AbstractFreeCostFunction} <: AbstractCostFunction
 end 
 
 
-function FixedCost(c::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+function FixedCost(cost::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
         
-    c = deepcopy(c)
+    cost = deepcopy(cost)
 
-    full_g = zeros(length(c.blocks))
+    full_g = zeros(length(cost.blocks))
     
     full_g[fixed_indices] .= fixed_values
-    free_indices = setdiff(eachindex(c.blocks), fixed_indices)
+    free_indices = setdiff(eachindex(cost.blocks), fixed_indices)
 
-    shorten_buffers!(c,length(fixed_indices))
+    shorten_buffers!(cost,length(fixed_indices))
 
     return FixedCost(
-        c, 
+        cost, 
         fixed_indices,
         Float64.(fixed_values),
         free_indices,

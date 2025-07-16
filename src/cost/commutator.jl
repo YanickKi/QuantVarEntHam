@@ -56,7 +56,7 @@ struct Commutator{M<:AbstractModel, SB<:AbstractBlock, B<:CommutatorBuffer} <: A
 end 
 
 function Commutator(model::AbstractModel{S,N_A}, blocks::Vector{<:AbstractBlock{S,N_A}}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
-    buffer = something(buffer, CommutatorBuffer(model))
+    buffer = @something buffer CommutatorBuffer(model)
     
     blocks_mat = Matrix.(mat.(blocks))
 
@@ -68,6 +68,7 @@ function Commutator(model::AbstractModel{S,N_A}, blocks::Vector{<:AbstractBlock{
     )
 end 
 
+# f(cost::Commuator, g::Vector{float_to_int})
 
 function (c::Commutator)(g::Vector{<:Real})
     

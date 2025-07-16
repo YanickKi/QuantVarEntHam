@@ -50,7 +50,7 @@ end
 
 function RelativeEntropy(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
     blocks_mat = Matrix.(mat.(blocks))
-    buffer = something(buffer, RelativeEntropyBuffer(model))
+    buffer = @something buffer RelativeEntropyBuffer(model)
     return RelativeEntropy(
         model, 
         blocks_mat,

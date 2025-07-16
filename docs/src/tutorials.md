@@ -30,14 +30,15 @@ Since we chose the BW Ansatz, we have one block for each lattice site in the sub
 julia> g_init = [1,2,3,4];
 
 julia> g_opt, c = optimize(cost, g_init, print_result=false, show_trace = false)
-([1.5440537768894713, 4.345710296202176, 5.809643346495764, 6.1447372596016185], 2.27231324406153e-5)
+([1.5440537768894778, 4.345710296202192, 5.80964334649578, 6.14473725960163], 2.2723132440614417e-5)
+
 ```
 A tuple is returned with an vector containing the optimal parameters and the minimum of the cost function.
 Note that `print_result=false` and `show_trace=false` avoids that the result and the trace of the minimization (info about iterations, etc...) is printed.
 If you want to get the cost function value for a given parameter set you can simply call the cost function object
 ```jlcon
 julia> cost(g_opt)
-2.27231324406153e-5
+2.2723132440614417e-5
 ```
 
 # Fixing parameters
@@ -58,7 +59,7 @@ and run the optimization with some initial parameters
 julia> g_init_fixed = [2,4];
 
 julia> g_opt_fixed, c_fixed = optimize(fixed_cost, g_init_fixed, print_result=false, show_trace = false)
-([3.3723098537936185, 3.978821738787843], 0.0001512490878026331)
+([3.372309853793615, 3.9788217387878415], 0.0001512490878026316)
 ```
 Note that only two initial parameters must be provided since we fixed two out of four parameters.
 To obtain the full parameter set you can use [`fill_full_g`](@ref)
@@ -66,7 +67,7 @@ To obtain the full parameter set you can use [`fill_full_g`](@ref)
 julia> full_g = fill_full_g(fixed_cost, g_opt_fixed)
 4-element Vector{Float64}:
  1.5
- 3.3723098537936185
+ 3.372309853793615
  3.2
- 3.978821738787843
+ 3.9788217387878415
 ```
