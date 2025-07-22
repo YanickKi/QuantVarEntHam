@@ -1,7 +1,6 @@
 """
     XXZ{S,N_A} <: AbstractModel{S,N_A}
-    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false,
-    J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
+    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false, J::Real=+1)
 
 Object containing the settings for the XXZ model
 
@@ -22,11 +21,10 @@ struct XXZ{S,N_A} <: AbstractModel{S,N_A}
     end
 end
 
-function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false,
-    J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
+function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false, J::Real=+1)
     
 
-    ρ_A = @something ρ_A rho_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S), N_A) 
+    ρ_A = rho_A(H_XXZ(N, Δ, periodic=periodic, J=J, S = S), N_A) 
     return XXZ{Rational(S),N_A}(
         N,
         Δ, J, 
@@ -38,7 +36,8 @@ end
 """
     H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{Int64, Rational} = 1//2)
 
-Return the XXZ Hamiltonian ``H=J(\\sum_{i=1}^{N-1}( X_{i}X_{i+1} + Y_{i}Y_{i+1} + Δ Z_{i}Z_{i+1}))`` with `N` sites, anisotropy `Δ` and global prefactor `J` as a sparse matrix.
+Return the XXZ Hamiltonian ``H=J(\\sum_{i=1}^{N-1}( X_{i}X_{i+1} + Y_{i}Y_{i+1} + Δ Z_{i}Z_{i+1}))`` with `N` sites, anisotropy `Δ` and global prefactor `J` 
+as a [`Block`](@ref).
 
 Set `periodic` as true for PBC or as false for OBC and 
 `S` for the spin number.

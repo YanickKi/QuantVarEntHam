@@ -2,8 +2,7 @@ export H_TFIM_blocks
 
 """
     TFIM{S,N_A} <: AbstractModel{S,N_A}
-    TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool=false,
-    J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
+    TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool=false, J::Real=-1)
 
 Object containing the settings for the TFIM.
 
@@ -23,11 +22,10 @@ struct TFIM{S,N_A} <: AbstractModel{S,N_A}
     end
 end
 
-function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool=false,
-    J::Real=-1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
+function TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool=false, J::Real=-1)
 
    
-    ρ_A = @something ρ_A rho_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N_A)
+    ρ_A = rho_A(H_TFIM(N, Γ, periodic = periodic, J=J, S=S),  N_A)
 
     return TFIM{Rational(S), N_A}(
         N,
@@ -41,7 +39,7 @@ end
     H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{Int64, Rational} = 1//2)
 
 Return the TFIM Hamiltonian ``H= J(\\sum_{i=1}^{N-1} Z_{i}Z_{i+1} + Γ \\sum_{i=1}^{N} X_i)`` with `N` sites, transverse field `Γ` and 
-prefactor `J` as a sparse matrix.
+prefactor `J` as a [`Block`](@ref).
 
 Set `periodic` as true for PBC or as false for OBC and 
 `S` for the spin number.

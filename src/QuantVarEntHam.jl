@@ -5,6 +5,7 @@ using LinearAlgebra
 
 function check_S_N_type(S,N)
     isa(S, Rational{Int}) || throw(ArgumentError("wrong type; S must be of type Rational{Int$(Sys.WORD_SIZE)}"))
+    iszero(S % 1//2) || throw(ArgumentError("S must be divisible by two!"))
     isa(N, Int) || throw(ArgumentError("wrong type; N must be of type Int$(Sys.WORD_SIZE)"))
 end 
 

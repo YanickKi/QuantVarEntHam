@@ -1,8 +1,7 @@
-push!(LOAD_PATH,"../src/")
-
 using Documenter, QuantVarEntHam
 
-makedocs(sitename="QuantVarEntHam.jl",  modules = [QuantVarEntHam], 
+makedocs(sitename="QuantVarEntHam.jl",  
+        modules = [QuantVarEntHam], 
         pages = [
                 "Home" => "index.md"
                 "Tutorials" => "tutorials.md"
@@ -13,4 +12,4 @@ makedocs(sitename="QuantVarEntHam.jl",  modules = [QuantVarEntHam],
                 "Integration" => "integration.md"
                 "Optimizer" => "optimizer.md"
         ],
-        repo = "https://gitlab.dlr.de/ma-kind/QuantVarEntHam.git")
+        repo = Documenter.Remotes.GitLab("gitlab.dlr.de", "ma-kind", "QuantVarEntHam"))

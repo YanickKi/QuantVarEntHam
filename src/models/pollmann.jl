@@ -1,7 +1,6 @@
 """
     Pollmann{S,N_A} <: AbstractModel{S,N_A}
-    Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false,
-    J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
+    Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false, J::Real=+1)
     
 Object containing the settings for the Pollmann model
 
@@ -26,10 +25,9 @@ struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
     end
 end
 
-function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false,
-    J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
+function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false, J::Real=+1)
     
-    ρ_A = @something ρ_A rho_A(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N_A)
+    ρ_A = rho_A(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N_A)
     
     return Pollmann{Rational(S),N_A}(
         N,
@@ -43,7 +41,7 @@ end
     H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=false, J::Real = 1, S::Union{Int64, Rational}=1)
 
 Return the pollmann Hamiltonian ``H= J(J_\\text{Heis} \\sum_{i=1}^{N-1} \\vec{S}_i \\cdot \\vec{S}_{i+1} + B_x \\sum_{i=1}^{N} X_i + U_{zz} \\sum_{i=1}^{N} (Z_i)^2 )`` with `N` sites, Heisenberg coupling `J_Heis`,  
-, transverse field strength `B_x`, quare term prefactor `U_{zz}` and global prefactor `J` as a sparse matrix.
+, transverse field strength `B_x`, square term prefactor `Uzz` and global prefactor `J` as a [`Block`](@ref).
 
 Set `periodic` as true for PBC or as false for OBC and 
 `S` for the spin number.
