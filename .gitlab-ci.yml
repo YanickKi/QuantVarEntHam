@@ -26,3 +26,22 @@ Julia 1.6:
   extends:
     - .script
     - .coverage
+
+pages:
+  cache: *juliacache
+  stage: deploy
+  script:
+    - julia --project=@. -e 'using Pkg; Pkg.build();'
+    - |
+      julia --project=docs -e '
+        using Pkg
+        Pkg.develop(PackageSpec(path=pwd()))
+        Pkg.instantiate()'
+    - julia --project=@. --color=yes docs/make.jl
+    - mkdir -p public
+    - mv docs/build public/dev
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
