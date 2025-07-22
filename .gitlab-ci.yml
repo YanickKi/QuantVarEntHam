@@ -1,3 +1,17 @@
+image: julia:latest
+
+variables:
+  CACHE_DIR: "$CI_PROJECT_DIR/julia_pkg"
+
+cache: &juliacache
+  key: "julia-cache"
+  paths:
+    - "$CACHE_DIR"
+
+before_script:
+    - export JULIA_DEPOT_PATH="$CACHE_DIR"
+    - export JULIA_PROJECT="."
+
 .script:
   script:
     - |
@@ -16,13 +30,9 @@
         c, t = get_summary(process_folder())
         using Printf
         @printf "Test coverage %.2f%%\n" 100c / t'
-Julia 1.11:
-  image: julia:1.11
-  extends:
-    - .script
-    - .coverage
-Julia 1.6:
-  image: julia:1.6
+
+test (julia latest):
+  cache: *juliacache
   extends:
     - .script
     - .coverage
@@ -45,3 +55,4 @@ pages:
       - public
   only:
     - main
+
