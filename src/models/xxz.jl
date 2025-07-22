@@ -1,6 +1,6 @@
 """
     XXZ{S,N_A} <: AbstractModel{S,N_A}
-    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false,
     J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
 
 Object containing the settings for the XXZ model
@@ -16,35 +16,13 @@ struct XXZ{S,N_A} <: AbstractModel{S,N_A}
     r_max::Int
     periodic::Bool 
     ρ_A::Matrix{ComplexF64}
-    function XXZ{S,N_A}(N, Δ, J, r_max, periodic, ρ_A) where {S,N_A}
+    function XXZ{S,N_A}(N, Δ, J, periodic, ρ_A) where {S,N_A}
         check_S_N_type(S,N_A)
-        new{S,N_A}(N, Δ, J, r_max, periodic, ρ_A)
+        new{S,N_A}(N, Δ, J, periodic, ρ_A)
     end
 end
 
-#=
-"""
-    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
-    J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
-
-Convenient constructor for [`XXZ`](@ref) containing settings for the XXZ Model.
-The default values are often used and the density matrix is automatically constructed.
-
-
-# Required Arguments
-- `N`: number of sites in the composite system.
-- `Δ`: anisotropy 
-- `N_A`: number of sites in subsystem A.
-
-# Keyword arguments
-- `S`: spin number.
-- `J`: global prefactor in the Hamiltonian.
-- `r_max`: maximum range of interaction (1 for nearest neighbour, 2 for next nearest neighbour, etc..) `r_max = N_A-1` is maximally possible.
-- `periodic`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
-- `ρ_A`: reduced density matrix of ground state of the composite system on subsystem A, by default the subsystem is on the right border.
-"""
-=#
-function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::Int=1, periodic::Bool = false,
+function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false,
     J::Real=+1, ρ_A::Union{Nothing, <:AbstractMatrix} = nothing)
     
 
@@ -52,7 +30,7 @@ function XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, r_max::
     return XXZ{Rational(S),N_A}(
         N,
         Δ, J, 
-        r_max, periodic,
+        periodic,
         ρ_A
     ) 
 end 
@@ -94,7 +72,7 @@ function correction!(blocks::Vector{<:Block{S,N_A}}, model::XXZ{S,N_A}, i::Int, 
     !iszero(model.Δ) && push!(blocks, PauliString(N_A,"Z",(i,i+r), S=S)) 
 end
 
-function H_A_notBW_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::XXZ{S,N_A}) where {S,N_A}
+function H_A_BWV_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::XXZ{S,N_A}) where {S,N_A}
 
     for i ∈ 1:N_A-1 
         push!(blocks, PauliString(N_A,"X",(i,i+1), S=S) + PauliString(N_A,"Y",(i,i+1), S=S))

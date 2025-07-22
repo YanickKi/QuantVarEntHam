@@ -15,7 +15,7 @@ Number of spins in the composite system N =  8
 Number of spins in the subsystem N_A = 4
 Boundary conditions: open
 Global prefactor J = -1
-Transversal field strength Γ = 1
+Transverse field strength Γ = 1
 
 ```
 This object can be passed to the cost functions together with the variational Ansatz.
@@ -42,11 +42,11 @@ H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{Int64, Rat
 TFIM
 ```
 ### Ansätze
-The BW Ansatz has the blocks 
+The BW Ansatz [`H_A_BW`](@ref) has the blocks 
 ```math
 \hat{h}_i = J \left ( \frac{1}{2} \sum_{j \in \langle j,i \rangle \cap \text{A}} Z_j Z_i - \Gamma X_i \right ) 
 ```
-The BW violating Ansatz has the blocks 
+The BW violating Ansatz [`H_A_BWV`](@ref) has the blocks 
 ```math
 \hat{h}_i \in  \{ J Z_j Z_{j+1} |  1 \leq j < N_\text{A}-1 \} \cup \{ J\Gamma X_j | 1 \leq j < N_\text{A}\}
 ```
@@ -62,11 +62,11 @@ H_XXZ(N::Int, Δ::Real; periodic::Bool=false, J::Real = +1, S::Union{Int64, Rati
 XXZ
 ```
 ### Ansätze
-The BW Ansatz has the blocks 
+The BW Ansatz [`H_A_BW`](@ref) has the blocks 
 ```math
 \hat{h}_i = \frac{J}{2} \sum_{j \in \langle j,i \rangle \cap \text{A}} ( X_i X_j + Y_i Y_j + J \Delta Z_i Z_j)
 ```
-The BW violating Ansatz has the blocks 
+The BW violating Ansatz [`H_A_BWV`](@ref) has the blocks 
 ```math
 \hat{h}_i \in \{J X_j X_{j+1}+J Y_j Y_{j+1} | 1 \leq j < N_\text{A}-1\} \cup \{\Delta J Z_j Z_{j+1} | 1 \leq j < N_\text{A}-1\}
 ```
@@ -82,11 +82,11 @@ H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=false, J::R
 Pollmann
 ```
 ### Ansätze
-The BW Ansatz has the blocks 
+The BW Ansatz [`H_A_BW`](@ref) has the blocks 
 ```math
 \hat{h}_i = J \left ( \frac{J_\text{Heis}}{2} \sum_{j \in \langle j,i \rangle \cap \text{A}} \vec{S}_i \cdot \vec{S}_{j} + B_x X_i + U_{zz} Z_i^2 \right )
 ```
-The BW violating Ansatz has the blocks 
+The BW violating Ansatz [`H_A_BWV`](@ref) has the blocks 
 ```math
 \hat{h}_i \in \{J J_\text{Heis} X_j X_{j+1} | 1 \leq j < N_\text{A}-1\} \cup \{J J_\text{Heis} Y_j Y_{j+1} | 1 \leq j < N_\text{A}-1\} \cup \{J J_\text{Heis} Z_j Z_{j+1} | 1 \leq j < N_\text{A}-1\} \cup \{ J B_x X_j | 1 \leq j < N_\text{A}\} \cup \{ J U_{zz} Z_j^2 | 1 \leq j < N_\text{A}\}
 ```

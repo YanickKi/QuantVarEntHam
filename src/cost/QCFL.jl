@@ -45,8 +45,8 @@ function QCFLBuffer(blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
 end 
 
 """
-    QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, SB<:Block, SO<:AbstractBlock} <: AbstractFreeCostFunction
-    QCFL(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
+    QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, SO<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+    QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
     buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
 
 Contains the `model`, `observables`, the `blocks` for the variational Ansatz, integtration settings (`integrator`) and `buffer`s for the QCFL.
@@ -80,7 +80,7 @@ and ``\\mathcal{L}_{e^X} ( - i t H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\te
 denotes the Frechet derivative of the matrix exponential at ``- i t H_\\text{A}^\\text{Var}``
 in the direction of ``\\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}``.
 """
-struct QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, SB<:Block, SO<:AbstractBlock} <: AbstractFreeCostFunction
+struct QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, SO<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
     model::M 
     blocks_mat::Vector{Matrix{ComplexF64}}
     integrator::Integrator{S,V}
@@ -88,7 +88,7 @@ struct QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:Abs
     T_max::Float64
     meas0::Vector{Float64}
     buff::B
-    blocks::Vector{SB}
+    ansatz::A
     observables::Vector{SO}
 end
  
@@ -97,19 +97,19 @@ struct IsDiagonal end
 struct IsNotDiagonal end 
 
 
-function QCFL(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
+function QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
     buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
     
-    !isnothing(buffer) && @assert length(blocks) == L "The length of the blocks and the buffers need to be the same!"
+    !isnothing(buffer) && @assert length(ansatz.blocks) == L "The length of the blocks and the buffers need to be the same!"
 
-    observables = @something observables PauliString{S,N_A}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1]
+    observables = @something observables PauliString{S,N_A,2}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1]
     
     observables_mat = Matrix.(mat.(observables))
 
-    blocks_mat = Matrix.(mat.(blocks))
+    blocks_mat = Matrix.(mat.(ansatz.blocks))
 
     integrator = @something integrator TanhSinh()
-    buffer = @something buffer QCFLBuffer(blocks)
+    buffer = @something buffer QCFLBuffer(ansatz.blocks)
     meas0 = [expect(observable, model.ρ_A) for observable in observables_mat] 
 
     complete_integrator = make_integrator(blocks_mat, integrator)
@@ -122,7 +122,7 @@ function QCFL(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, T_max
         Float64(T_max),
         meas0,
         buffer,
-        blocks, 
+        ansatz, 
         observables
     )
 end 

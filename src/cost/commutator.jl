@@ -17,8 +17,9 @@ function CommutatorBuffer(::AbstractModel{S,N_A}) where {S,N_A}
 end 
 
 """
-    Commutator{M<:AbstractModel} <: AbstractFreeCostFunction
-    Commutator(model::AbstractModel{S,N_A}, blocks_mat::Vector{<:AbstractBlock{S,N_A}}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
+    Commutator{M<:AbstractModel, B<:CommutatorBuffer, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+    Commutator(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
+    buffer = @something buffer CommutatorBuffer(model)
 
 Contains the model, blocks, observables and buffers for the Commutator as a cost function.
 
@@ -48,27 +49,27 @@ Here, `` \\text{Sum}(X) = \\sum_{ij} X_{ij}`` denotes the sum of all matrix elem
 the elementwise product aka Hadamard product is denoted by ``C = A \\, . \\! *B`` s.t. 
 ``C_{ij} = A_{ij} B_{ij}``.
 """
-struct Commutator{M<:AbstractModel, SB<:AbstractBlock, B<:CommutatorBuffer} <: AbstractFreeCostFunction
+struct Commutator{M<:AbstractModel, B<:CommutatorBuffer, A<:AbstractAnsatz} <: AbstractFreeCostFunction
     model::M
     blocks_mat::Vector{Matrix{ComplexF64}}
-    blocks::Vector{SB}
+    ansatz::A
     buff::B
 end 
 
-function Commutator(model::AbstractModel{S,N_A}, blocks::Vector{<:AbstractBlock{S,N_A}}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
+function Commutator(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
     buffer = @something buffer CommutatorBuffer(model)
     
-    blocks_mat = Matrix.(mat.(blocks))
+    blocks_mat = Matrix.(mat.(ansatz.blocks))
 
     return Commutator(
         model, 
         blocks_mat, 
-        blocks,
+        ansatz,
         buffer
     )
 end 
 
-# f(cost::Commuator, g::Vector{float_to_int})
+# calc_cost(cost::Commuator, g::Vector{float64})
 
 function (c::Commutator)(g::Vector{<:Real})
     

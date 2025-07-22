@@ -1,19 +1,20 @@
 """
-    getblocks(cost::AbstractCostFunction)
+    getansatz(cost::AbstractCostFunction)
 
-Return the blocks of a given cost function.
+Return the ansatz of a given cost function.
 """
-getblocks(cost::AbstractCostFunction) = getblocks(cost)
-getblocks(cost::AbstractFreeCostFunction) = cost.blocks
-getblocks(fc::FixedCost) = unwrap(getblocks, fc)
+getansatz(cost::AbstractCostFunction) = getansatz(cost)
+getansatz(cost::AbstractFreeCostFunction) = cost.ansatz
+getansatz(fc::FixedCost) = unwrap(getansatz, fc)
 
 """
     getobservables(cost::AbstractCostFunction)
 
 Return the observables of a given cost function.
 """
-getobservables(cost::AbstractCostFunction) = getobservables(cost)
-getobservables(cost::AbstractFreeCostFunction) = cost.observables
+getobservables(cost::AbstractCostFunction) = getobservables(hasobservables(cost), cost)
+getobservables(::HasObservables, cost::AbstractFreeCostFunction) = cost.observables
+getobservables(::HasNoObservables, cost::AbstractFreeCostFunction) = error("The cost function $(nameof(typeof(cost))) has no observables!")
 getobservables(fc::FixedCost) = unwrap(getobservables, fc)
 
 

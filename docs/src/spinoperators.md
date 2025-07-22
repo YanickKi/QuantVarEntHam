@@ -67,21 +67,21 @@ Z₁⊗ Z₂ + X₁⊗ X₂ - Z₁⊗ Z₂ + X₁⊗ X₂
 
 ```
 
-Multiplication by scalars of the a pauli string or block is defined aswell
+Multiplication by scalars of a pauli string or block is defined aswell
 ```jlcon
 julia> 2*ps1
 Block
 Spin 1//2
 Number of spins: 4
 
-2.0Z₁⊗ Z₂
+2*Z₁⊗ Z₂
 
 julia> 2*block1
 Block
 Spin 1//2
 Number of spins: 4
 
-2.0Z₁⊗ Z₂ + 2*X₁⊗ X₂
+2*Z₁⊗ Z₂ + 2*X₁⊗ X₂
 
 ```
 

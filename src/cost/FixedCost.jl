@@ -18,10 +18,10 @@ function FixedCost(cost::AbstractFreeCostFunction, fixed_indices::Vector{<:Integ
         
     cost = deepcopy(cost)
 
-    full_g = zeros(length(cost.blocks))
+    full_g = zeros(length(cost.ansatz.blocks))
     
     full_g[fixed_indices] .= fixed_values
-    free_indices = setdiff(eachindex(cost.blocks), fixed_indices)
+    free_indices = setdiff(eachindex(cost.ansatz.blocks), fixed_indices)
 
     shorten_buffers!(cost,length(fixed_indices))
 

@@ -10,7 +10,7 @@ end
 
 include("integration/integration.jl")
 include("spinoperators/spinoperators.jl")
-include("hamiltonians/models.jl")
+include("models/models.jl")
 include("frechet_exp/frechet_exp.jl")
 include("cost/cost.jl")
 include("interface_cost_integration.jl")

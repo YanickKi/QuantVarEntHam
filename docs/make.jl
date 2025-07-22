@@ -6,10 +6,10 @@ makedocs(sitename="QuantVarEntHam.jl",  modules = [QuantVarEntHam],
         pages = [
                 "Home" => "index.md"
                 "Tutorials" => "tutorials.md"
+                "Spinoperators" => "spinoperators.md"
                 "Models" => "models.md"
                 "Ansätze" => "ansätze.md"
                 "Cost" => "cost.md"
-                "Spinoperators" => "spinoperators.md"
                 "Integration" => "integration.md"
                 "Optimizer" => "optimizer.md"
         ],

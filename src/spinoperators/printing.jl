@@ -46,7 +46,7 @@ function print_block(io::IO, block::Block)
         print(io, "-")
     end 
 
-    abs(block.prefactors[1]) == 1 ? nothing : print(io, abs(block.prefactors[1]))
+    abs(block.prefactors[1]) == 1 ? nothing : print(io, float_to_int(abs(block.prefactors[1])), "*")
 
     print_pauli_string(io, block.pauli_strings[1])
 
@@ -93,6 +93,22 @@ function Base.show(io::IO, ::MIME"text/plain", pauli_strings::Vector{PauliString
     end 
 end 
 
+function Base.show(io::IO, ::MIME"text/plain", pauli_strings::Vector{PauliString{S,N}}) where {S,N}
+    println(io, "Number of Pauli strings: ", length(pauli_strings))
+    println(io)
+    print_info(io, pauli_strings[1])
+    println(io)
+    for index in eachindex(pauli_strings)
+        println("Pauli string ", index, ": " ) 
+        print(io, "\t \t")
+        print_pauli_string(io, pauli_strings[index])
+        if index != lastindex(pauli_strings)
+            println(io)
+            println(io)
+        end 
+    end 
+end 
+
 function Base.show(io::IO, ::MIME"text/plain", blocks::Vector{Block{S,N}}) where {S,N}
     println(io, "Number of blocks: ", length(blocks))
     println(io)
@@ -109,6 +125,6 @@ function Base.show(io::IO, ::MIME"text/plain", blocks::Vector{Block{S,N}}) where
     end 
 end 
 
-Base.show(io::IO, ablock::AbstractBlock) = show(io, MIME"text/plain"(), ablock)
+Base.show(io::IO, block::AbstractBlock) = show(io, MIME"text/plain"(), block)
 
-Base.show(io::IO, ablocks::Vector{<:AbstractBlock}) = show(io, MIME"text/plain"(), ablocks)
+Base.show(io::IO, blocks::Vector{<:AbstractBlock}) = show(io, MIME"text/plain"(), blocks)

@@ -1,7 +1,7 @@
 # Quick Start 
 
 Let's say you want to learn the Entanglement Hamiltonian (EH) of the [`TFIM`](@ref) with 
-a transversal field strength of `Γ = 1`, `N=8` spins in the composite system, open boundary conditions (default) and `N_A = 4` sites in the subsystem.
+a transverse field strength of `Γ = 1`, `N=8` spins in the composite system, open boundary conditions (default) and `N_A = 4` sites in the subsystem.
 So first of all let's define the model
 ```jl
 using QuantVarEntHam

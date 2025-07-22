@@ -19,8 +19,8 @@ function RelativeEntropyBuffer(::AbstractModel{S,N_A}) where {S,N_A}
 end 
 
 """
-    RelativeEntropy{M<:AbstractModel, SB<:Block} <: AbstractFreeCostFunction
-    RelativeEntropy(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
+    RelativeEntropy{M<:AbstractModel, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+    RelativeEntropy(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
 
 Contains the model, blocks, observables and buffers for the relative entropy as cost function.
 
@@ -40,21 +40,21 @@ The gradient is given by
 {\\text{Tr}_{\\text{A}} [ e^{-H_\\text{A}^\\text{Var}(\\vec{g})}]}.
 ```
 """
-mutable struct RelativeEntropy{M<:AbstractModel, SB<:Block} <: AbstractFreeCostFunction
+mutable struct RelativeEntropy{M<:AbstractModel, A<:AbstractAnsatz} <: AbstractFreeCostFunction
     model::M
     blocks_mat::Vector{Matrix{ComplexF64}}
-    blocks::Vector{SB}
+    ansatz::A
     buff::RelativeEntropyBuffer
     trace_exp_H_A::Float64 # cached variable to save intermediate calculations in gradient for cost
 end 
 
-function RelativeEntropy(model::AbstractModel{S,N_A}, blocks::Vector{<:Block{S,N_A}}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
-    blocks_mat = Matrix.(mat.(blocks))
+function RelativeEntropy(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
+    blocks_mat = Matrix.(mat.(ansatz.blocks))
     buffer = @something buffer RelativeEntropyBuffer(model)
     return RelativeEntropy(
         model, 
         blocks_mat,
-        blocks,
+        ansatz,
         buffer,
         0.
     )

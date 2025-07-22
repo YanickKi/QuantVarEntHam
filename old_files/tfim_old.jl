@@ -29,7 +29,7 @@ The default values are often used and the density matrix is automatically constr
 
 # Required Arguments
 - `N`: number of sites in the composite system
-- `Γ`: transversal field strength 
+- `Γ`: transverse field strength 
 - `N_A`: number of sites in subsystem A
 
 # Keyword arguments
@@ -54,7 +54,7 @@ end
 """
     H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{Int64, Rational} = 1//2)
 
-Return the TFIM Hamiltonian ``H= J(\\sum_{i=1}^{N-1} Z_{i}Z_{i+1} + Γ \\sum_{i=1}^{N} X_i)`` with `N` sites, transversal field `Γ` and 
+Return the TFIM Hamiltonian ``H= J(\\sum_{i=1}^{N-1} Z_{i}Z_{i+1} + Γ \\sum_{i=1}^{N} X_i)`` with `N` sites, transverse field `Γ` and 
 prefactor `J` as a sparse matrix.
 
 Set `periodic` as true for PBC or as false for OBC and 
@@ -66,11 +66,11 @@ function H_TFIM(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{I
         repeat(N,Z,(i,i%N+1), S=S)
     end |> sum
 
-    transversal_term = map(1:N) do i
+    transverse_term = map(1:N) do i
         repeat(N, X, i, S=S)
     end |> sum
 
-    return Float64(J)*(ising_term + Float64(Γ)*transversal_term) 
+    return Float64(J)*(ising_term + Float64(Γ)*transverse_term) 
 end 
 
 function H_TFIM_blocks(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::Union{Int64, Rational} = 1//2)
@@ -79,11 +79,11 @@ function H_TFIM_blocks(N::Int, Γ::Real; J::Real = -1, periodic::Bool=false, S::
         PauliString(N,"Z",(i,i%N+1), S=S)
     end |> sum
 
-    transversal_term = map(1:N) do i
+    transverse_term = map(1:N) do i
         PauliString(N, "X", i, S=S)
     end |> sum
 
-    return Float64(J)*(ising_term + Float64(Γ)*transversal_term) 
+    return Float64(J)*(ising_term + Float64(Γ)*transverse_term) 
 end 
 
 function hi(model::TFIM, i::Int)

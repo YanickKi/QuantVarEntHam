@@ -1,8 +1,8 @@
 """
     Pollmann{S,N_A} <: AbstractModel{S,N_A}
-    Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, r_max::Int=1, periodic::Bool=false,
+    Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false,
     J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
-
+    
 Object containing the settings for the Pollmann model
 
 # Fields 
@@ -20,13 +20,13 @@ struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
     r_max::Int
     periodic::Bool
     ρ_A::Matrix{ComplexF64}
-    function Pollmann{S,N_A}(N, J_Heis, Bx, Uzz, J, r_max, periodic, ρ_A) where {S,N_A}
+    function Pollmann{S,N_A}(N, J_Heis, Bx, Uzz, J, periodic, ρ_A) where {S,N_A}
         check_S_N_type(S,N_A)
-        new{S,N_A}(N, J_Heis, Bx, Uzz, J, r_max, periodic, ρ_A)
+        new{S,N_A}(N, J_Heis, Bx, Uzz, J, periodic, ρ_A)
     end
 end
 
-function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, r_max::Int=1, periodic::Bool=false,
+function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false,
     J::Real=+1, ρ_A::Union{Nothing, Matrix{ComplexF64}}=nothing)
     
     ρ_A = @something ρ_A rho_A(H_pollmann(N, J_Heis , Bx, Uzz, periodic = periodic, J=J, S = S),  N_A)
@@ -34,7 +34,7 @@ function Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{
     return Pollmann{Rational(S),N_A}(
         N,
         J_Heis, Bx, Uzz, J,
-        r_max, periodic,
+        periodic,
         ρ_A
     ) 
 end 
@@ -54,14 +54,14 @@ function H_pollmann(N::Int, J_Heis::Real, Bx::Real, Uzz::Real; periodic::Bool=fa
         PauliString(N,"X",(i,i%N+1), S=S) + PauliString(N,"Y",(i,i%N+1),S=S) +PauliString(N,"Z",(i,i%N+1), S=S)
     end |> sum
 
-    transversal_term = map(1:N) do i
+    transverse_term = map(1:N) do i
         PauliString(N, "X", i, S=S)
     end |> sum
 
     square_term = map(1:N) do i
         PauliString(N, "Z", i, S=S)^2
     end |> sum
-    return Float64(J)*(J_Heis*heisenberg_term + Float64(Bx)*transversal_term + Float64(Uzz)*square_term)         
+    return Float64(J)*(J_Heis*heisenberg_term + Float64(Bx)*transverse_term + Float64(Uzz)*square_term)         
 end 
 
 
@@ -84,7 +84,7 @@ function hi(model::Pollmann{S,N_A}, i::Int) where {S,N_A}
     return hi
 end
 
-function H_A_notBW_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::Pollmann{S,N_A}) where {S,N_A}
+function H_A_BWV_wo_corrections!(blocks::Vector{Block{S,N_A}}, model::Pollmann{S,N_A}) where {S,N_A}
     
     !iszero(model.Bx) && push!(blocks, model.Bx*PauliString(N_A, "X", 1, S=S))
     !iszero(model.Uzz) && push!(blocks, model.Uzz*PauliString(N_A, "Z", 1, S=S)^2) 
@@ -101,9 +101,10 @@ function H_A_notBW_wo_corrections!(blocks::Vector{<:Block{S,N_A}}, model::Pollma
 end
 
 
-function correction!(blocks::Vector{<:Block{S,N_A}}, model::Pollmann{S,N_A}, i::Int, r::Int) where {S,N_A}
+function correction!(blocks::Vector{Block{S,N_A}}, model::Pollmann{S,N_A}, i::Int, r::Int) where {S,N_A}
+    iszero(model.J_Heis) && return nothing 
     for sig in ["X","Y","Z"]
-        !iszero(model.J_Heis) && push!(blocks, PauliString(N_A,sig,(i,i+r), S=S))
+        push!(blocks, PauliString(N_A,sig,(i,i+r), S=S))
     end
 end
 

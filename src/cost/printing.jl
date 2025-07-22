@@ -1,11 +1,22 @@
 """
-    print_blocks(cost::AbstractCostFunction)
+    print_ansatz(cost::AbstractCostFunction)
 
-Print the blocks of a given cost function. 
+Print the ansatz of a given cost function. 
 """
-print_blocks(cost::AbstractCostFunction) = print_blocks(cost)
-print_blocks(cost::AbstractFreeCostFunction) = show(stdout, MIME"text/plain"(),cost.blocks)
-print_blocks(fc::FixedCost) = unwrap(print_blocks, fc)
+print_ansatz(cost::AbstractCostFunction) = print_ansatz(cost)
+
+function print_ansatz(cost::AbstractFreeCostFunction) 
+    print_ansatz_name(stdout, cost.ansatz)
+    println()
+    cost.ansatz.r_max > 1 && println(stdout, "r_max = ", cost.ansatz.r_max)
+    show(stdout, MIME"text/plain"(),cost.ansatz.blocks)
+end 
+
+print_ansatz(fc::FixedCost) = unwrap(print_ansatz, fc)
+
+print_ansatz_name(io::IO, ::H_A_BW) = print(io, "H_A_BW")
+print_ansatz_name(io::IO, ::H_A_BWV) = print(io, "H_A_BWV")
+
 
 
 """
@@ -13,8 +24,9 @@ print_blocks(fc::FixedCost) = unwrap(print_blocks, fc)
 
 Print the observables of a given cost function.
 """
-print_observables(cost::AbstractCostFunction) = print_observables(cost)
-print_observables(cost::AbstractFreeCostFunction) = show(stdout, MIME"text/plain"(),cost.observables)
+print_observables(cost::AbstractCostFunction) = print_observables(hasobservables(cost), cost)
+print_observables(::HasObservables, cost::QCFL) = show(stdout, MIME"text/plain"(),cost.observables)
+print_observables(::HasNoObservables, cost::AbstractFreeCostFunction) = error("The cost function $(nameof(typeof(cost))) has no observables!")
 print_observables(fc::FixedCost) = unwrap(print_observables, fc)
 
 
@@ -33,7 +45,9 @@ function Base.show(io::IO, ::MIME"text/plain", cost::QCFL{S,N_A}) where {S,N_A}
     println(io)
     print_model_short(io, cost.model)
     println(io)
-    print_BW_BWV(io, cost.blocks)
+    print(io, "Ansatz: ")
+    print_ansatz_name(io, cost.ansatz)
+    cost.ansatz.r_max > 1 && print(io, " (r_max = $(cost.ansatz.r_max))")
     println(io)
     print(io, "Integration method: ")
     print_integration_name(io, cost.integrator)
@@ -47,7 +61,9 @@ function Base.show(io::IO, ::MIME"text/plain", cost::Commutator)
     println(io)
     print_model_short(io, cost.model)
     println(io)
-    print_BW_BWV(io, cost.blocks)
+    print(io, "Ansatz: ")
+    print_ansatz_name(io, cost.ansatz)
+    cost.ansatz.r_max > 1 && print(io, " (r_max = $(cost.ansatz.r_max))")
 end 
 
 function Base.show(io::IO, ::MIME"text/plain", cost::RelativeEntropy)
@@ -55,7 +71,9 @@ function Base.show(io::IO, ::MIME"text/plain", cost::RelativeEntropy)
     println(io)
     print_model_short(io, cost.model)
     println(io)
-    print_BW_BWV(io, cost.blocks)
+    print(io, "Ansatz: ")
+    print_ansatz_name(io, cost.ansatz)
+    cost.ansatz.r_max > 1 && print(io, " (r_max = $(cost.ansatz.r_max))")
 end 
 
 function print_model_short(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
@@ -66,10 +84,6 @@ function print_model_short(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
     print_ham_params(io, model)
     print(io, ")")
 end 
-
-function print_BW_BWV(io::IO, blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
-    length(blocks) == N_A ? print(io, "BW Ansatz") : print(io, "BW violating Ansatz")
-end
 
 
 function Base.show(io::IO, ::MIME"text/plain", fc::FixedCost)

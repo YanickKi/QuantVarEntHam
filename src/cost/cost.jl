@@ -3,8 +3,8 @@ export QCFL, Commutator, RelativeEntropy, FixedCost
 export QCFLBuffer, CommutatorBuffer, RelativeEntropyBuffer
 export fill_full_g
 export gradient
-export print_blocks, print_observables, print_model
-export getblocks, getobservables, getmodel
+export print_ansatz, print_observables, print_model
+export getansatz, getobservables, getmodel
 
 """
     AbstractCostFunction
@@ -49,6 +49,7 @@ include("FixedCost.jl")
 include("QCFL.jl")
 include("relative_entropy.jl")
 include("commutator.jl")
+include("traits.jl")
 include("utils.jl")
 include("printing.jl")
 include("getter.jl")

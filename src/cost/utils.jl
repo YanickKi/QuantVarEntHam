@@ -1,7 +1,7 @@
 unwrap(f::Function, fc::FixedCost, args...) = f(fc.c, args...)
 
 get_free_indices(fc::FixedCost) = fc.free_indices
-get_free_indices(c::AbstractFreeCostFunction) = eachindex(c.blocks)
+get_free_indices(c::AbstractFreeCostFunction) = eachindex(c.ansatz.blocks)
 
 
 function fg!(F, G::Union{Vector{<:Real}, Nothing}, c::AbstractCostFunction, g::Vector{<:Real})

@@ -12,7 +12,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::TFIM{S,N_A}) where {S,N_A}
     println()
     print_model(io::IO, model)
     println()
-    print(io, "Transversal field strength Γ = ", float_to_int(model.Γ))
+    print(io, "Transverse field strength Γ = ", float_to_int(model.Γ))
 end 
 
 
@@ -31,7 +31,7 @@ function Base.show(io::IO, ::MIME"text/plain", model::Pollmann{S,N_A}) where {S,
     print_model(io::IO, model)
     println()
     println(io, "Heisenberg coupling J_Heis = ", float_to_int(model.J_Heis))
-    println(io, "Transversal field strength B_x = ", float_to_int(model.Bx))
+    println(io, "Transverse field strength B_x = ", float_to_int(model.Bx))
     print(io, "Square term prefactor Uzz = ", float_to_int(model.Uzz))
 end 
 
@@ -62,3 +62,12 @@ function print_ham_params(io::IO, model::Pollmann)
 end 
 
 Base.show(io::IO, model::AbstractModel) = show(io, MIME"text/plain"(), model)
+
+function Base.show(io::IO, ::MIME"text/plain", ansatz::AbstractAnsatz)
+    print_ansatz_name(io, ansatz)
+    println(io)
+    ansatz.r_max > 1 && println(io, "r_max = $(ansatz.r_max)")
+    show(io, MIME"text/plain"(), ansatz.blocks)
+end 
+
+Base.show(io::IO, ansatz::AbstractAnsatz) = show(io, MIME"text/plain"(), ansatz)

@@ -51,7 +51,7 @@ gradient(cost::AbstractCostFunction, g::Vector{<:Real})
 getmodel(cost::AbstractCostFunction)
 ```
 ```@docs 
-getblocks(cost::AbstractCostFunction)
+getansatz(cost::AbstractCostFunction)
 ```
 ```@docs 
 getobservables(cost::AbstractCostFunction)
@@ -61,7 +61,7 @@ getobservables(cost::AbstractCostFunction)
 print_model(cost::AbstractCostFunction)
 ```
 ```@docs 
-print_blocks(cost::AbstractCostFunction)
+print_ansatz(cost::AbstractCostFunction)
 ```
 ```@docs 
 print_observables(cost::AbstractCostFunction)
