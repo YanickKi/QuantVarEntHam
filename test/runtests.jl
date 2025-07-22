@@ -2,5 +2,5 @@ using QuantVarEntHam
 using Test
 
 @testset "QuantVarEntHam.jl" begin
-    # Write your tests here.
+    @test 1+1==2
 end
