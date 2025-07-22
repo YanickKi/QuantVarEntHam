@@ -23,7 +23,7 @@ end
 
 
 """ 
-    H_A(ansatz::AbstractAnsatz, g::Vector{<:Real})
+    H_A(ansatz::AbstractAnsatz, g::Vector{<:Real}; digits::Int = 16)
 
 Return the variational ansatz for a given parameter set `g` as a [`Block`](@ref).
 
@@ -63,9 +63,9 @@ Number of spins: 4
 -X₁ - 1.5*Z₁⊗ Z₂ - 2*X₂ - 2.5*Z₂⊗ Z₃ - 3*X₃ - 3.5*Z₃⊗ Z₄ - 4*X₄
 ```
 """
-function H_A(ansatz::AbstractAnsatz, g::Vector{<:Real})
+function H_A(ansatz::AbstractAnsatz, g::Vector{<:Real}; digits::Int = 16)
     @assert length(ansatz.blocks) == length(g) "The number of blocks and parameters need to be equal!"
-    return fuse_duplicate_pauli_strings(sum(ansatz.blocks .* g))
+    return fuse_duplicate_pauli_strings(sum(ansatz.blocks .* round.(g, digits=digits)))
 end  
 
 function fuse_duplicate_pauli_strings(block::Block{S,N_A}) where {S,N_A}

@@ -9,17 +9,17 @@ using QuantVarEntHam
 model = TFIM(8, 4, 1)
 ```
 All model spefic settings and the reduced density matrix are saved in `model`.
-Once defining the model, you need to obtain the blocks for the variational Ansatz, which you want to you use.
+Once defining the model, you need to obtain the variational Ansatz, which you want to you use.
 Let's decide for the Ansatz, which follows the Bisognano Wichmman theorem (BW-theorem, see [`H_A_BW`](@ref))
 ```jl
-blocks = H_A_BW(model)
+ansatz = H_A_BW(model)
 ```
 After defining the model and the variational Ansatz you want to learn the EH with, choose the cost function.
 This package spefically focuses on the Quantum Classical Feedback Loop ([`QCFL`](@ref)).
 So let's define an object, which will represent the cost function with the recommended default values.
 ```jl
 T_max = 1
-cost = QCFL(model, blocks, T_max)
+cost = QCFL(model, ansatz, T_max)
 ```
 The (default) observables $\{ Z_i Z_{i+1} | 1 \leq i < N_\text{A} \}$ are monitored up to a time of `T_max = 1`
 and with the Tanh-sinh quadrature as an (default) integration method (see [`TanhSinh`](@ref)).
@@ -35,6 +35,16 @@ julia> g_opt, c = optimize(cost, g_init, print_result=false, show_trace = false)
 ```
 A tuple is returned with an vector containing the optimal parameters and the minimum of the cost function.
 Note that `print_result=false` and `show_trace=false` avoids that the result and the trace of the minimization (info about iterations, etc...) is printed.
+You can obtain the Entanglement Hamiltonian via [`H_A`](@ref)
+```jlcon
+julia> H_A_opt = H_A(ansatz, g_opt, digits = 2)
+Block
+Spin 1//2
+Number of spins: 4
+
+-1.54*X₁ - 2.945*Z₁⊗ Z₂ - 4.35*X₂ - 5.08*Z₂⊗ Z₃ - 5.81*X₃ - 5.975*Z₃⊗ Z₄ - 6.14*X₄
+```
+where we set the number of digits in the coefficients to `digits=2` for readability.
 If you want to get the cost function value for a given parameter set you can simply call the cost function object
 ```jlcon
 julia> cost(g_opt)
