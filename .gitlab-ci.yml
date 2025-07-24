@@ -1,1 +1,4 @@
 image: julia:latest
+
+variables:
+  CACHE_DIR: "$CI_PROJECT_DIR/julia_pkg"
