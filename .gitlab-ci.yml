@@ -49,7 +49,7 @@ pages:
         Pkg.instantiate()'
     - julia --project=@. --color=yes docs/make.jl
     - mkdir -p public
-    - mv docs/build public
+    - mv docs/build* public
   artifacts:
     paths:
       - public
