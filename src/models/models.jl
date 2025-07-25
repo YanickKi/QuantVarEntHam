@@ -10,7 +10,7 @@ export getrho_A, getblocks, getr_max
 export H_A
 
 """
-    AbstractModel{S,N_A} end
+    AbstractModel{S,N_A}
 
 Abstract type to dispatch on the concrete types for the correct variational Ansätze.
 
@@ -21,7 +21,6 @@ In general the concrete types will have the same fields besides the model specif
  
 - `N::Int`: number of sites in composite system.
 - `J::Float64`: global prefactor in Hamiltonian
-- `S::Rational`: spin number
 - `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
 - `ρ_A::Matrix{ComplexF64}`: reduced density matrix of ground state of the composite system on subsystem A.
 """

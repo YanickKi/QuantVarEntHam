@@ -23,7 +23,7 @@ end
 
 """
     QCFLBuffer{O<:AbstractMatrix}
-    QCFLBuffer(blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
+    QCFLBuffer(ansatz::AbstractAnsatz{S,N_A}) where {S,N_A}
 
 Struct containing the buffers for the [`QCFL`](@ref) for given `blocks`.
 """
@@ -34,8 +34,8 @@ struct QCFLBuffer{S,N_A,L}
 end
 
 
-function QCFLBuffer(blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
-    numBlocks = length(blocks) 
+function QCFLBuffer(ansatz::AbstractAnsatz{S,N_A}) where {S,N_A}
+    numBlocks = length(ansatz.blocks) 
     d = Int((2*S+1)^N_A) # Hilbert space dimension
     return QCFLBuffer{S,N_A,numBlocks}(
         QCFLOnlyBuffer(d, numBlocks), 
@@ -45,7 +45,7 @@ function QCFLBuffer(blocks::Vector{<:AbstractBlock{S,N_A}}) where {S,N_A}
 end 
 
 """
-    QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, SO<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+    QCFL{M<:AbstractModel, B<:QCFLBuffer, I<:Integrator, O<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
     QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
     buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
 
@@ -80,21 +80,17 @@ and ``\\mathcal{L}_{e^X} ( - i t H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\te
 denotes the Frechet derivative of the matrix exponential at ``- i t H_\\text{A}^\\text{Var}``
 in the direction of ``\\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}``.
 """
-struct QCFL{M<:AbstractModel, B<:QCFLBuffer, S<:AbstractScalarIntegrator, V<:AbstractVectorIntegrator, SO<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+struct QCFL{M<:AbstractModel, B<:QCFLBuffer, I<:Integrator, O<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
     model::M 
     blocks_mat::Vector{Matrix{ComplexF64}}
-    integrator::Integrator{S,V}
+    integrator::I
     observables_mat::Vector{Matrix{ComplexF64}} 
     T_max::Float64
     meas0::Vector{Float64}
     buff::B
     ansatz::A
-    observables::Vector{SO}
+    observables::Vector{O}
 end
- 
-
-struct IsDiagonal end 
-struct IsNotDiagonal end 
 
 
 function QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
@@ -109,7 +105,7 @@ function QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max:
     blocks_mat = Matrix.(mat.(ansatz.blocks))
 
     integrator = @something integrator TanhSinh()
-    buffer = @something buffer QCFLBuffer(ansatz.blocks)
+    buffer = @something buffer QCFLBuffer(ansatz)
     meas0 = [expect(observable, model.ρ_A) for observable in observables_mat] 
 
     complete_integrator = make_integrator(blocks_mat, integrator)
@@ -137,11 +133,13 @@ function shorten_buffers!(c::QCFL, how_often::Integer)
 end 
 
 
-
-function (c::QCFL)(g::Vector{<:Real})
+function (c::QCFL)(g::Vector{Float64})
     get_H_A!(c, g)
     return c.integrator.scalar_integrate(t -> integrand_cost(c, t), c.T_max)/(length(c.observables)*c.T_max)
 end 
+
+(c::QCFL)(g::Vector{<:Real}) = c(Float64.(g))
+
 
 function _gradient!(c::QCFL, G, g::Vector{<:Real}, free_indices)
     get_H_A!(c, g)

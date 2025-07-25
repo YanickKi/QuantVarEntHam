@@ -61,7 +61,7 @@ function RelativeEntropy(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N
 end 
 
 
-function (c::RelativeEntropy)(g)
+function (c::RelativeEntropy)(g::Vector{Float64})
     buff = c.buff
     ρ_A = c.model.ρ_A
 
@@ -76,6 +76,7 @@ function (c::RelativeEntropy)(g)
     return S1 + S2
 end 
 
+(c::RelativeEntropy)(g::Vector{<:Real}) = c(Float64.(g))
 
 function _gradient!(c::RelativeEntropy, G, g::Vector{<:Real}, free_indices)
     

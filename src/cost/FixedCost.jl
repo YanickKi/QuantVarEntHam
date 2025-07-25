@@ -1,6 +1,8 @@
 """
     FixedCost{C<:AbstractFreeCostFunction} <: AbstractCostFunction
     FixedCost(cost::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
+    FixedCost(c::AbstractFreeCostFunction, fixed_indices::Int, fixed_values::Real)
+
 Wrapper for fixing parameters of a cost function object. 
 
 It stores a given cost function without fixed parameters `c` of the type [`AbstractFreeCostFunction`](@ref) together with the indices (`fixed_indices`) and the values (`fixed_values`) of the fixed parameters.
@@ -42,14 +44,17 @@ FixedCost(c::AbstractFreeCostFunction, fixed_indices::NTuple{L,Int}, fixed_value
 shorten_buffers!(::AbstractFreeCostFunction, ::Integer) = nothing 
 
 """
-    fill_full_g(fc::FixedCost, g::Vector{Float64})
+    fill_full_g(fc::FixedCost, g::Vector{<:Real})
 
 Return the complete parameter vector consisting of the fixed parameter in `fc` and the passed parameters `g`.
 """
+fill_full_g(fc::FixedCost, g::Vector{<:Real}) = fill_full_g(fc, Float64.(g))
+
 function fill_full_g(fc::FixedCost, g::Vector{Float64})
    fc.full_g[fc.free_indices] .= g
    return fc.full_g
 end 
+
 
 function (fc::FixedCost)(g::Vector{<:Real})
     fill_full_g(fc, g)

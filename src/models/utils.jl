@@ -27,6 +27,8 @@ end
 
 Return the variational ansatz for a given parameter set `g` as a [`Block`](@ref).
 
+The number of digits in the prefactors can be set via `digits.`
+
 # Example 
 
 ```jlcon
@@ -55,7 +57,7 @@ Block 4:
 
 julia> g = [1,2,3,4];
 
-julia> H_A = getH_A(ansatz, g)
+julia> H_A = H_A(ansatz, g)
 Block
 Spin 1//2
 Number of spins: 4

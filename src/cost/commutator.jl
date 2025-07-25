@@ -19,7 +19,6 @@ end
 """
     Commutator{M<:AbstractModel, B<:CommutatorBuffer, A<:AbstractAnsatz} <: AbstractFreeCostFunction
     Commutator(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
-    buffer = @something buffer CommutatorBuffer(model)
 
 Contains the model, blocks, observables and buffers for the Commutator as a cost function.
 
@@ -71,7 +70,7 @@ end
 
 # calc_cost(cost::Commuator, g::Vector{float64})
 
-function (c::Commutator)(g::Vector{<:Real})
+function (c::Commutator)(g::Vector{Float64})
     
     comm = c.buff.comm
     H_A = c.buff.H_A
@@ -84,6 +83,7 @@ function (c::Commutator)(g::Vector{<:Real})
     return norm(comm)/(2*norm(H_A)*norm(ρ_A))
 end 
 
+(c::Commutator)(g::Vector{<:Real}) = c(Float64.(g))
 
 function _gradient!(c::Commutator, G::Vector{<:Real}, g::Vector{<:Real}, free_indices)
     

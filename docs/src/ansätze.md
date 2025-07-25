@@ -122,7 +122,7 @@ H_A_BWV
 
 ## Utils 
 ```@docs
-H_A(ansatz::AbstractAnsatz, g::Vector{<:Real})
+H_A(ansatz::AbstractAnsatz, g::Vector{<:Real}; digits::Int = 16)
 ```
 
 ## Getter
