@@ -52,7 +52,7 @@ The BW violating Ansatz [`H_A_BWV`](@ref) has the blocks
 ```
 s.t. the BW violating Ansatz reads
  ```math
-\hat{H}_\text{A}^\text{BWV} = J \left (\sum_{i=1}^{N_\text{A} -1} J_{i,i+1}Z_i Z_{i+1} - \Gamma \sum_{i=1}^{N_\text{A}} \Gamma_i X_i \right )
+\hat{H}_\text{A}^\text{BWV} = J \left (\sum_{i=1}^{N_\text{A} -1} J_{i,i+1}Z_i Z_{i+1} + \Gamma \sum_{i=1}^{N_\text{A}} \Gamma_i X_i \right )
 ```
 ## XXZ model 
 ```@docs 
