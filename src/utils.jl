@@ -5,22 +5,22 @@ function calc_universal_ratios(ξ::Vector{<:AbstractFloat}, α0::Integer, α1::I
     return κ
 end
 
-function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
+function universal_ratios(
+    g::Vector{<:AbstractFloat}, init::Init; α0::Integer=1, α1::Integer=5
+)
     @unpack ρ_A = init.set
-    H_A = @inbounds sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
+    H_A = @inbounds sum(g[i] .* init.blks.matrices[i] for i in eachindex(g))
     H_A_exact = -log(Hermitian(ρ_A))
     #p_ex = eigen(Hermitian(ρ_A)).values
     #ξ_exact = - log.(p_ex.+ 2*abs(minimum(p_ex)))
     ξ_var, v = eigen(Hermitian(H_A))
-    ξ_exact, v =  eigen(Hermitian(H_A_exact))
+    ξ_exact, v = eigen(Hermitian(H_A_exact))
     return calc_universal_ratios(ξ_var, α0, α1), calc_universal_ratios(ξ_exact, α0, α1)
 end
 
-
 function get_H_A(g::Vector{<:AbstractFloat}, init::Init)
-    return sum(g[i].*init.blks.matrices[i] for i in eachindex(g))
-end 
-
+    return sum(g[i] .* init.blks.matrices[i] for i in eachindex(g))
+end
 
 #=
 function universal_ratios(g::Vector{<:AbstractFloat}, init::Init; α0::Integer = 1, α1::Integer = 5)
@@ -35,7 +35,6 @@ end
 =#
 
 #=
-
 
 function plot_universal_ratios(filename::String, universal_ratios...)
     F = Figure()

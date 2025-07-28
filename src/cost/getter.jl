@@ -14,9 +14,10 @@ Return the observables of a given cost function.
 """
 getobservables(cost::AbstractCostFunction) = getobservables(hasobservables(cost), cost)
 getobservables(::HasObservables, cost::AbstractFreeCostFunction) = cost.observables
-getobservables(::HasNoObservables, cost::AbstractFreeCostFunction) = error("The cost function $(nameof(typeof(cost))) has no observables!")
+function getobservables(::HasNoObservables, cost::AbstractFreeCostFunction)
+    error("The cost function $(nameof(typeof(cost))) has no observables!")
+end
 getobservables(fc::FixedCost) = unwrap(getobservables, fc)
-
 
 """
     getmodel(cost::AbstractCostFunction)

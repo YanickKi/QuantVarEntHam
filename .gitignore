@@ -2,8 +2,5 @@
 *.jl.cov
 *.jl.mem
 /Manifest.toml
-benchmark_test
 docs/build
-test_kitaev
-tori_test
-pollmann_test
+benchmark.jl

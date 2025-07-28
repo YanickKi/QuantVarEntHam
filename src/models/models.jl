@@ -26,24 +26,29 @@ In general the concrete types will have the same fields besides the model specif
 """
 abstract type AbstractModel{S,N_A} end
 
-
-function rho_A(H::AbstractBlock{S,N}, N_A::Int) where {S,N} 
-
+function rho_A(H::AbstractBlock{S,N}, N_A::Int) where {S,N}
     H_mat = mat(H)
     d = (Int64(2*S+1))^(N)
     if d > 1024
-        println("Diagonalizing the Hamiltonian via Krylov subspace method for constructing the ground state density matrix")
-        _, vectors = eigsolve(H_mat, 1 ,:SR, ishermitian=true, tol = 1e-16)
-        ρ_A = partial_trace_pure_state(vectors[1], (Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A), trace_subsystem = :B) 
-    return ρ_A
-    else 
-        println("Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix")
-        vectors = eigvecs(Hermitian(Matrix(H_mat)))
-        ρ_A = partial_trace_pure_state(vectors[:,1],(Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A), trace_subsystem = :B) 
+        println(
+            "Diagonalizing the Hamiltonian via Krylov subspace method for constructing the ground state density matrix",
+        )
+        _, vectors = eigsolve(H_mat, 1, :SR; ishermitian=true, tol=1e-16)
+        ρ_A = partial_trace_pure_state(
+            vectors[1], (Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A); trace_subsystem=:B
+        )
         return ρ_A
+    else
+        println(
+            "Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix",
+        )
+        vectors = eigvecs(Hermitian(Matrix(H_mat)))
+        ρ_A = partial_trace_pure_state(
+            vectors[:, 1], (Int64(2*S+1))^(N-N_A), (Int64(2*S+1))^(N_A); trace_subsystem=:B
+        )
+        return Matrix{ComplexF64}(ρ_A)
     end
-end 
-
+end
 
 include("xxz.jl")
 include("tfim.jl")

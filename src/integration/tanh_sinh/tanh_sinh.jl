@@ -9,13 +9,13 @@ struct TanhSinhScalar{N} <: AbstractScalarIntegrator
     integration_table::QuadTS{N}
     atol::Float64
     rtol::Float64
-end 
+end
 struct TanhSinhVector{N} <: AbstractVectorIntegrator
     integration_table::QuadTS{N}
     atol::Float64
     rtol::Float64
     buffer::Vector{Float64}
-end 
+end
 
 """
     TanhSinh <: AbstractIntegrator 
@@ -34,18 +34,22 @@ struct TanhSinh <: AbstractIntegrator
     rtol::Float64
     maxlevel::Int64
     h0::Float64
-end 
+end
 
-function TanhSinh(; atol::Real=0.0, rtol::Real=atol > 0 ? 0. : sqrt(eps(Float64)), maxlevel::Integer=12, h0::Real=1)
-    
+function TanhSinh(;
+    atol::Real=0.0,
+    rtol::Real=atol > 0 ? 0.0 : sqrt(eps(Float64)),
+    maxlevel::Integer=12,
+    h0::Real=1,
+)
     return TanhSinh(Float64(atol), Float64(rtol), maxlevel, Float64(h0))
-end 
+end
 
 buffertrait(::TanhSinhVector) = NeedBuffer()
 
-function integration_tables(;maxlevel::Integer=12, h0::Real=1)
+function integration_tables(; maxlevel::Integer=12, h0::Real=1)
     _h0 = Float64(h0)
-    origin = samplepoint(0.)
+    origin = samplepoint(0.0)
     table0 = generate_table(_h0, 1)
     tables = Vector{Tuple{Float64,Float64}}[]
     for level in 1:maxlevel

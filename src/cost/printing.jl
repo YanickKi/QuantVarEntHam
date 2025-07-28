@@ -5,30 +5,33 @@ Print the ansatz of a given cost function.
 """
 print_ansatz(cost::AbstractCostFunction) = print_ansatz(cost)
 
-function print_ansatz(cost::AbstractFreeCostFunction) 
+function print_ansatz(cost::AbstractFreeCostFunction)
     print_ansatz_name(stdout, cost.ansatz)
     println()
     cost.ansatz.r_max > 1 && println(stdout, "r_max = ", cost.ansatz.r_max)
-    show(stdout, MIME"text/plain"(),cost.ansatz.blocks)
-end 
+    show(stdout, MIME"text/plain"(), cost.ansatz.blocks)
+end
 
 print_ansatz(fc::FixedCost) = unwrap(print_ansatz, fc)
 
 print_ansatz_name(io::IO, ::H_A_BW) = print(io, "H_A_BW")
 print_ansatz_name(io::IO, ::H_A_BWV) = print(io, "H_A_BWV")
 
-
-
 """
     print_observables(cost::AbstractCostFunction)
 
 Print the observables of a given cost function.
 """
-print_observables(cost::AbstractCostFunction) = print_observables(hasobservables(cost), cost)
-print_observables(::HasObservables, cost::QCFL) = show(stdout, MIME"text/plain"(),cost.observables)
-print_observables(::HasNoObservables, cost::AbstractFreeCostFunction) = error("The cost function $(nameof(typeof(cost))) has no observables!")
+function print_observables(cost::AbstractCostFunction)
+    print_observables(hasobservables(cost), cost)
+end
+function print_observables(::HasObservables, cost::QCFL)
+    show(stdout, MIME"text/plain"(), cost.observables)
+end
+function print_observables(::HasNoObservables, cost::AbstractFreeCostFunction)
+    error("The cost function $(nameof(typeof(cost))) has no observables!")
+end
 print_observables(fc::FixedCost) = unwrap(print_observables, fc)
-
 
 """
     print_model(cost::AbstractCostFunction)
@@ -36,9 +39,8 @@ print_observables(fc::FixedCost) = unwrap(print_observables, fc)
 Print the model of a given cost function
 """
 print_model(cost::AbstractCostFunction) = print_model(cost)
-print_model(cost::AbstractFreeCostFunction) = show(stdout,  MIME"text/plain"(), cost.model)
+print_model(cost::AbstractFreeCostFunction) = show(stdout, MIME"text/plain"(), cost.model)
 print_model(fc::FixedCost) = unwrap(print_model, fc)
-
 
 function Base.show(io::IO, ::MIME"text/plain", cost::QCFL{S,N_A}) where {S,N_A}
     println(io, "QCFL")
@@ -54,7 +56,7 @@ function Base.show(io::IO, ::MIME"text/plain", cost::QCFL{S,N_A}) where {S,N_A}
     print_integration_settings_short(io, cost.integrator.scalar_integrate)
     println(io)
     print(io, "T_max=", float_to_int(cost.T_max))
-end 
+end
 
 function Base.show(io::IO, ::MIME"text/plain", cost::Commutator)
     println(io, "Commutator")
@@ -64,7 +66,7 @@ function Base.show(io::IO, ::MIME"text/plain", cost::Commutator)
     print(io, "Ansatz: ")
     print_ansatz_name(io, cost.ansatz)
     cost.ansatz.r_max > 1 && print(io, " (r_max = $(cost.ansatz.r_max))")
-end 
+end
 
 function Base.show(io::IO, ::MIME"text/plain", cost::RelativeEntropy)
     println(io, "Relative entropy")
@@ -74,7 +76,7 @@ function Base.show(io::IO, ::MIME"text/plain", cost::RelativeEntropy)
     print(io, "Ansatz: ")
     print_ansatz_name(io, cost.ansatz)
     cost.ansatz.r_max > 1 && print(io, " (r_max = $(cost.ansatz.r_max))")
-end 
+end
 
 function print_model_short(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
     print(io, "Model: ")
@@ -83,17 +85,16 @@ function print_model_short(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
     print(io, " (S=$S, N=$(model.N), $bc, N_A = $N_A, J=$(float_to_int(model.J)), ")
     print_ham_params(io, model)
     print(io, ")")
-end 
-
+end
 
 function Base.show(io::IO, ::MIME"text/plain", fc::FixedCost)
     print(io, "Fixed cost: ")
     show(io, fc.c)
-    println(io,)
-    println(io,)
+    println(io)
+    println(io)
     println(io, "Fixed indices: ", fc.fixed_indices)
     print(io, "Fixed values: ", float_to_int.(fc.fixed_values))
-end 
+end
 
 function Base.show(io::IO, ::MIME"text/plain", ::QCFLBuffer{S,N_A,L}) where {S,N_A,L}
     println(io, "Buffer for QCFL")
@@ -101,7 +102,7 @@ function Base.show(io::IO, ::MIME"text/plain", ::QCFLBuffer{S,N_A,L}) where {S,N
     println(io, "Spin number ", S)
     println(io, "Number of spins in subsytem: N_A = ", N_A)
     print(io, "Length of buffer L = ", L)
-end 
+end
 
 Base.show(io::IO, buffer::QCFLBuffer) = show(io, MIME"text/plain"(), buffer)
 
@@ -110,7 +111,7 @@ function Base.show(io::IO, ::MIME"text/plain", ::CommutatorBuffer{S,N_A}) where 
     println(io)
     println(io, "Spin number ", S)
     print(io, "Number of spins in subsytem: N_A = ", N_A)
-end 
+end
 
 Base.show(io::IO, buffer::CommutatorBuffer) = show(io, MIME"text/plain"(), buffer)
 
@@ -119,7 +120,7 @@ function Base.show(io::IO, ::MIME"text/plain", ::RelativeEntropyBuffer{S,N_A}) w
     println(io)
     println(io, "Spin number ", S)
     print(io, "Number of spins in subsytem: N_A = ", N_A)
-end 
+end
 
 Base.show(io::IO, buffer::RelativeEntropyBuffer) = show(io, MIME"text/plain"(), buffer)
 

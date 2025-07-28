@@ -3,7 +3,7 @@
 
 Abstract type for the variational ansätze.
 """
-abstract type AbstractAnsatz{S,N_A} end 
+abstract type AbstractAnsatz{S,N_A} end
 
 """
     H_A_BW{S,N_A} <: AbstractAnsatz{S,N_A}
@@ -49,22 +49,22 @@ function H_A_BW(model::AbstractModel{S,N_A}, r_max::Int=1) where {S,N_A}
     N = model.N
     periodic = model.periodic
     J = model.J
-    
-    if 2*N_A != N && periodic == false 
-        @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!" 
-    end 
-    
-    blocks = Block{S, N_A}[]
-    
+
+    if 2*N_A != N && periodic == false
+        @warn "Be aware: The Bisognano-Wichmann theorem for the case of open boundary conditions is only valid for N = 2*N_A i.e. for a half plane!"
+    end
+
+    blocks = Block{S,N_A}[]
+
     H_A_BW_wo_corrections!(blocks, model)
-    
-    blocks *= J  
+
+    blocks *= J
 
     if r_max > 1
         corrections!(blocks, model, r_max)
-    end 
+    end
     return H_A_BW(r_max, blocks)
-end 
+end
 
 """
     H_A_BWV{S,N_A} <: AbstractAnsatz{S,N_A}
@@ -112,36 +112,38 @@ Block 7:
 struct H_A_BWV{S,N_A} <: AbstractAnsatz{S,N_A}
     r_max::Int
     blocks::Vector{Block{S,N_A}}
-end 
+end
 
-
-function H_A_BWV(model::AbstractModel{S,N_A}, r_max::Int = 1) where {S,N_A}
+function H_A_BWV(model::AbstractModel{S,N_A}, r_max::Int=1) where {S,N_A}
     J = model.J
 
-    blocks = Block{S, N_A}[]
-    
+    blocks = Block{S,N_A}[]
+
     H_A_BWV_wo_corrections!(blocks, model)
-    
-    blocks *= J  
+
+    blocks *= J
 
     if r_max > 1
         corrections!(blocks, model, r_max)
-    end 
+    end
 
     return H_A_BWV(r_max, blocks)
-end 
-
-function H_A_BW_wo_corrections!(blocks::Vector{Block{S,N_A}}, model::AbstractModel{S,N_A}) where {S,N_A}
-    for i in 1:N_A 
-        push!(blocks, hi(model, i))
-    end     
 end
 
+function H_A_BW_wo_corrections!(
+    blocks::Vector{Block{S,N_A}}, model::AbstractModel{S,N_A}
+) where {S,N_A}
+    for i in 1:N_A
+        push!(blocks, hi(model, i))
+    end
+end
 
-function corrections!(blocks::Vector{Block{S,N_A}}, model::AbstractModel{S,N_A}, r_max::Int) where {S,N_A}
+function corrections!(
+    blocks::Vector{Block{S,N_A}}, model::AbstractModel{S,N_A}, r_max::Int
+) where {S,N_A}
     for r in 2:r_max
-        for i in 1:N_A-r
+        for i in 1:(N_A - r)
             correction!(blocks, model, i, r)
         end
-    end 
-end 
+    end
+end

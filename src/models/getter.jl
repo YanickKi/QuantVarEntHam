@@ -18,4 +18,3 @@ getblocks(ansatz::AbstractAnsatz) = ansatz.blocks
 Return the maximum range of interaction of the given `ansatz`.
 """
 getr_max(ansatz::AbstractAnsatz) = ansatz.r_max
-

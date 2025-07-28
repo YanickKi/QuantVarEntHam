@@ -17,7 +17,6 @@ The parameter S is for the spin number and N for the number of spins.
 """
 abstract type AbstractBlock{S,N} end
 
-
 """ 
     PauliString{S, N, L} <: AbstractBlock{S,N}
     PauliString(N, sig::String, locs::NTuple{L,Int}; S::Union{Rational, Int} = 1//2) where {L}
@@ -55,25 +54,29 @@ Number of spins: 4
 (Z₁⊗ Z₂)²
 ```
 """
-struct PauliString{S, N, L} <: AbstractBlock{S,N}
+struct PauliString{S,N,L} <: AbstractBlock{S,N}
     sig::String
-    locs::NTuple{L, Int}
+    locs::NTuple{L,Int}
     power::Int
     function PauliString{S,N,L}(sig, locs, power) where {S,N,L}
-        check_S_N_type(S,N)
-        isa(L, Int) || throw(ArgumentError("wrong type; L must be of type Int$(Sys.WORD_SIZE)"))
+        check_S_N_type(S, N)
+        isa(L, Int) ||
+            throw(ArgumentError("wrong type; L must be of type Int$(Sys.WORD_SIZE)"))
         sig ∈ ["X", "Y", "Z"] || throw(ArgumentError("sig must be \"X\", \"Y\" or \"Z\""))
         new{S,N,L}(sig, locs, power)
     end
 end
 
-PauliString(N, sig::String, locs::Int; S::Union{Rational, Int} = 1//2) = PauliString(N, sig, (locs, ), S = S) 
+function PauliString(N::Int, sig::String, locs::Int; S::Union{Rational,Int}=1//2)
+    PauliString(N, sig, (locs,), S=S)
+end
 
-function PauliString(N, sig::String, locs::NTuple{L,Int}; S::Union{Rational, Int} = 1//2) where {L}
-    ps = PauliString{Rational(S),N, L}(sig, locs, 1)
+function PauliString(
+    N::Int, sig::String, locs::NTuple{L,Int}; S::Union{Rational,Int}=1//2
+) where {L}
+    ps = PauliString{Rational(S),N,L}(sig, locs, 1)
     return ps
-end 
-
+end
 
 """
     Block{S,N} <: AbstractBlock{S,N}
@@ -125,25 +128,25 @@ struct Block{S,N} <: AbstractBlock{S,N}
     prefactors::Vector{Float64}
     pauli_strings::Vector{PauliString{S,N}}
     function Block{S,N}(prefactors, pauli_strings) where {S,N}
-        check_S_N_type(S,N)
+        check_S_N_type(S, N)
         new{S,N}(prefactors, pauli_strings)
     end
-end 
+end
 
-
-function Block(prefactors::Vector{<:Real}, pauli_strings::Vector{<:PauliString{S,N}}) where {S,N}
+function Block(
+    prefactors::Vector{<:Real}, pauli_strings::Vector{<:PauliString{S,N}}
+) where {S,N}
     @assert length(prefactors) == length(pauli_strings) "The number of prefactors and Pauli strings need to be equal!"
     Block{S,N}(Float64.(prefactors), pauli_strings)
-end 
+end
 
-function convert(::Type{Block{S,N}}, ps::PauliString{S,N, L}) where {S,N, L}
-    Block{S,N}([1.],[ps])
-end 
+function convert(::Type{Block{S,N}}, ps::PauliString{S,N,L}) where {S,N,L}
+    Block{S,N}([1.0], [ps])
+end
 
 function convert(::Type{Block{S,N}}, block::Block{S,N}) where {S,N}
     return block
-end 
-
+end
 
 include("algebra.jl")
 include("matrices.jl")

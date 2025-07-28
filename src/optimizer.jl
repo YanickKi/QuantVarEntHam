@@ -100,20 +100,34 @@ Iter     Function value   Gradient norm
 ```
 
 """
-function optimize(cost::AbstractCostFunction, g_init::Vector{<:Real}; ∇_tol::Real=1e-16, maxiter::Integer=1000, show_trace::Bool=true, print_result::Bool= true)
-    
+function optimize(
+    cost::AbstractCostFunction,
+    g_init::Vector{<:Real};
+    ∇_tol::Real=1e-16,
+    maxiter::Integer=1000,
+    show_trace::Bool=true,
+    print_result::Bool=true,
+)
     free_indices = get_free_indices(cost)
 
-    @assert length(g_init) == length(free_indices) "You provided $(length(g_init)) initial parameters but there are $(length(free_indices)) free parameters!"  
+    @assert length(g_init) == length(free_indices) "You provided $(length(g_init)) initial parameters but there are $(length(free_indices)) free parameters!"
 
-    result = Optim.optimize(Optim.only_fg!((F, G, g) ->  fg!(F, G, cost, g)), Float64.(g_init), LBFGS(), Optim.Options(g_tol = ∇_tol,
-                                                                store_trace = false,
-                                                                show_trace = show_trace,
-                                                                show_warnings = true, iterations = maxiter))
-    g_opt = Optim.minimizer(result)                                                                
-    if print_result == true                                                   
+    result = Optim.optimize(
+        Optim.only_fg!((F, G, g) -> fg!(F, G, cost, g)),
+        Float64.(g_init),
+        LBFGS(),
+        Optim.Options(;
+            g_tol=∇_tol,
+            store_trace=false,
+            show_trace=show_trace,
+            show_warnings=true,
+            iterations=maxiter,
+        ),
+    )
+    g_opt = Optim.minimizer(result)
+    if print_result == true
         println(result)
         println(g_opt)
-    end 
-    return g_opt, cost(g_opt) 
+    end
+    return g_opt, cost(g_opt)
 end

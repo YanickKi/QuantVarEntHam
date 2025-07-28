@@ -6,20 +6,19 @@ struct QCFLOnlyBuffer{O<:AbstractMatrix}
     direction_frech::Matrix{ComplexF64}
     H_A_forexp::Matrix{ComplexF64}
     sumobs::O
-end 
-
-function QCFLOnlyBuffer(d::Integer, numBlocks::Integer) 
-    return QCFLOnlyBuffer(
-    zeros(Float64, numBlocks+1),
-    zeros(Float64, numBlocks+1),
-    zeros(ComplexF64, d, d), 
-    zeros(ComplexF64, d, d), 
-    zeros(ComplexF64, d, d),
-    zeros(ComplexF64, d, d),
-    zeros(ComplexF64, d, d),
-    )
 end
 
+function QCFLOnlyBuffer(d::Integer, numBlocks::Integer)
+    return QCFLOnlyBuffer(
+        zeros(Float64, numBlocks+1),
+        zeros(Float64, numBlocks+1),
+        zeros(ComplexF64, d, d),
+        zeros(ComplexF64, d, d),
+        zeros(ComplexF64, d, d),
+        zeros(ComplexF64, d, d),
+        zeros(ComplexF64, d, d),
+    )
+end
 
 """
     QCFLBuffer{O<:AbstractMatrix}
@@ -33,16 +32,13 @@ struct QCFLBuffer{S,N_A,L}
     H_A::Matrix{ComplexF64}
 end
 
-
 function QCFLBuffer(ansatz::AbstractAnsatz{S,N_A}) where {S,N_A}
-    numBlocks = length(ansatz.blocks) 
+    numBlocks = length(ansatz.blocks)
     d = Int((2*S+1)^N_A) # Hilbert space dimension
     return QCFLBuffer{S,N_A,numBlocks}(
-        QCFLOnlyBuffer(d, numBlocks), 
-        ExpFrechBuffer(ComplexF64, d), 
-        zeros(ComplexF64, d, d) 
+        QCFLOnlyBuffer(d, numBlocks), ExpFrechBuffer(ComplexF64, d), zeros(ComplexF64, d, d)
     )
-end 
+end
 
 """
     QCFL{M<:AbstractModel, B<:QCFLBuffer, I<:Integrator, O<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
@@ -80,11 +76,13 @@ and ``\\mathcal{L}_{e^X} ( - i t H_\\text{A}^\\text{Var}, \\rho_\\text{A} U_\\te
 denotes the Frechet derivative of the matrix exponential at ``- i t H_\\text{A}^\\text{Var}``
 in the direction of ``\\rho_\\text{A} U_\\text{A}^\\dagger \\Xi_\\text{A}``.
 """
-struct QCFL{M<:AbstractModel, B<:QCFLBuffer, I<:Integrator, O<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
-    model::M 
+struct QCFL{
+    M<:AbstractModel,B<:QCFLBuffer,I<:Integrator,O<:AbstractBlock,A<:AbstractAnsatz
+} <: AbstractFreeCostFunction
+    model::M
     blocks_mat::Vector{Matrix{ComplexF64}}
     integrator::I
-    observables_mat::Vector{Matrix{ComplexF64}} 
+    observables_mat::Vector{Matrix{ComplexF64}}
     T_max::Float64
     meas0::Vector{Float64}
     buff::B
@@ -92,135 +90,142 @@ struct QCFL{M<:AbstractModel, B<:QCFLBuffer, I<:Integrator, O<:AbstractBlock, A<
     observables::Vector{O}
 end
 
+function QCFL(
+    model::AbstractModel{S,N_A},
+    ansatz::AbstractAnsatz{S,N_A},
+    T_max::Real;
+    integrator::Union{Nothing,AbstractIntegrator}=nothing,
+    observables::Union{Nothing,Vector{<:PauliString{S,N_A}}}=nothing,
+    buffer::Union{Nothing,QCFLBuffer{S,N_A,L}}=nothing,
+) where {S,N_A,L}
+    !isnothing(buffer) &&
+        @assert length(ansatz.blocks) == L "The length of the blocks and the buffers need to be the same!"
 
-function QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
-    buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
-    
-    !isnothing(buffer) && @assert length(ansatz.blocks) == L "The length of the blocks and the buffers need to be the same!"
+    observables = @something observables PauliString{S,N_A,2}[
+        PauliString(N_A, "Z", (i, i+1), S=S) for i in 1:(N_A - 1)
+    ]
 
-    observables = @something observables PauliString{S,N_A,2}[PauliString(N_A, "Z", (i,i+1), S = S) for i in 1:N_A-1]
-    
     observables_mat = Matrix.(mat.(observables))
 
     blocks_mat = Matrix.(mat.(ansatz.blocks))
 
     integrator = @something integrator TanhSinh()
     buffer = @something buffer QCFLBuffer(ansatz)
-    meas0 = [expect(observable, model.ρ_A) for observable in observables_mat] 
+    meas0 = [expect(observable, model.ρ_A) for observable in observables_mat]
 
     complete_integrator = make_integrator(blocks_mat, integrator)
-    
+
     return QCFL(
-        model, 
-        blocks_mat, 
+        model,
+        blocks_mat,
         complete_integrator,
         observables_mat,
         Float64(T_max),
         meas0,
         buffer,
-        ansatz, 
-        observables
+        ansatz,
+        observables,
     )
-end 
+end
 
 function shorten_buffers!(c::QCFL, how_often::Integer)
-    shorten_buffer!(buffertrait(c.integrator.vector_integrate),c.integrator.vector_integrate, how_often)
+    shorten_buffer!(
+        buffertrait(c.integrator.vector_integrate), c.integrator.vector_integrate, how_often
+    )
     for _ in 1:how_often
         pop!(c.buff.qcfl_buff.C_G)
         pop!(c.buff.qcfl_buff.C_G_result)
-    end 
-
-end 
-
+    end
+end
 
 function (c::QCFL)(g::Vector{Float64})
     get_H_A!(c, g)
-    return c.integrator.scalar_integrate(t -> integrand_cost(c, t), c.T_max)/(length(c.observables)*c.T_max)
-end 
+    return c.integrator.scalar_integrate(
+        t -> integrand_cost(c, t), c.T_max
+    )/(length(c.observables)*c.T_max)
+end
 
 (c::QCFL)(g::Vector{<:Real}) = c(Float64.(g))
 
-
 function _gradient!(c::QCFL, G, g::Vector{<:Real}, free_indices)
     get_H_A!(c, g)
-    c.integrator.vector_integrate(c.buff.qcfl_buff.C_G_result, t -> integrand_gradient(c, t, free_indices), c.T_max)
+    c.integrator.vector_integrate(
+        c.buff.qcfl_buff.C_G_result, t -> integrand_gradient(c, t, free_indices), c.T_max
+    )
     c.buff.qcfl_buff.C_G_result ./= length(c.observables)*c.T_max
     G[:] .= @view c.buff.qcfl_buff.C_G_result[2:end]
     return c.buff.qcfl_buff.C_G_result[1]
 end
 
-
 function pre_computations_gradient(c::QCFL, t::AbstractFloat)
-    ρ_A = c.model.ρ_A 
+    ρ_A = c.model.ρ_A
     observables = c.observables_mat
-    meas0 = c.meas0 
+    meas0 = c.meas0
     buff = c.buff
 
     qcfl_buff = buff.qcfl_buff
 
-    qcfl_buff.H_A_forexp .=  -1im*t .* buff.H_A 
-    pullback =  own_rrule(exp, qcfl_buff.H_A_forexp, buff.exp_buff)
-    
-    evolve(ρ_A, buff.exp_buff.X, qcfl_buff)  
-    
+    qcfl_buff.H_A_forexp .= -1im*t .* buff.H_A
+    pullback = own_rrule(exp, qcfl_buff.H_A_forexp, buff.exp_buff)
+
+    evolve(ρ_A, buff.exp_buff.X, qcfl_buff)
+
     δ = dev(observables[1], meas0[1], qcfl_buff.ρ_A_evolved)
-    qcfl_buff.sumobs .= δ.*observables[1]
+    qcfl_buff.sumobs .= δ .* observables[1]
     qcfl_buff.C_G[1] = δ^2
 
     @fastmath @inbounds @simd for i in 2:lastindex(observables)
         δ = dev(observables[i], meas0[i], qcfl_buff.ρ_A_evolved)
-        qcfl_buff.sumobs .+= δ.*observables[i]
+        qcfl_buff.sumobs .+= δ .* observables[i]
         qcfl_buff.C_G[1] += δ^2
-    end 
+    end
 
     pullback(mul!(qcfl_buff.direction_frech, qcfl_buff.ρ_A_right, qcfl_buff.sumobs))
-
-end 
+end
 
 function integrand_gradient(c::QCFL, t::AbstractFloat, free_indices)
-
     blocks = c.blocks_mat
 
     pre_computations_gradient(c, t)
 
     @fastmath @inbounds @simd for i in eachindex(free_indices)
-        c.buff.qcfl_buff.C_G[i+1] = gradient_component(c.buff, blocks[free_indices[i]], t)
-    end    
-    
+        c.buff.qcfl_buff.C_G[i + 1] = gradient_component(c.buff, blocks[free_indices[i]], t)
+    end
+
     return c.buff.qcfl_buff.C_G
 end
 
-
 function integrand_cost(c::QCFL, t::AbstractFloat)
-    
-    ρ_A = c.model.ρ_A 
+    ρ_A = c.model.ρ_A
     observables = c.observables_mat
-    meas0 = c.meas0 
+    meas0 = c.meas0
     buff = c.buff
 
     qcfl_buff = buff.qcfl_buff
 
-    qcfl_buff.H_A_forexp .=  -1im*t .* buff.H_A 
+    qcfl_buff.H_A_forexp .= -1im*t .* buff.H_A
     exp_only_buffered!(qcfl_buff.H_A_forexp, buff.exp_buff)
 
-    evolve(ρ_A, buff.exp_buff.X, qcfl_buff)  
+    evolve(ρ_A, buff.exp_buff.X, qcfl_buff)
 
-    c = 0.
+    c = 0.0
     @fastmath @inbounds @simd for i in eachindex(observables)
         c += dev(observables[i], meas0[i], qcfl_buff.ρ_A_evolved)^2
-    end 
+    end
     return c
 end
 
 function evolve(ρ_A::AbstractMatrix, U::AbstractMatrix, qcfl_buff::QCFLOnlyBuffer)
     mul!(qcfl_buff.ρ_A_evolved, U, mul!(qcfl_buff.ρ_A_right, ρ_A, U'))
-end 
+end
 
-function dev(observable::AbstractMatrix, expect_at_0::AbstractFloat, ρ_A_evolved::AbstractMatrix)
-    return  real(dot(observable, ρ_A_evolved)) - expect_at_0
-end 
+function dev(
+    observable::AbstractMatrix, expect_at_0::AbstractFloat, ρ_A_evolved::AbstractMatrix
+)
+    return real(dot(observable, ρ_A_evolved)) - expect_at_0
+end
 
 function gradient_component(buff, block::AbstractMatrix, t::Real)
     frech = buff.exp_buff.∂X
-    return 4*t*imag(dot(block,frech))
+    return 4*t*imag(dot(block, frech))
 end
