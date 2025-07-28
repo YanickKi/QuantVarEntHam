@@ -12,7 +12,6 @@ struct XXZ{S,N_A} <: AbstractModel{S,N_A}
     N::Int
     Δ::Float64
     J::Float64
-    r_max::Int
     periodic::Bool
     ρ_A::Matrix{ComplexF64}
     function XXZ{S,N_A}(N, Δ, J, periodic, ρ_A) where {S,N_A}
