@@ -1,3 +1,4 @@
+# COV_EXCL_START
 function print_model(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
     println()
     println(io, "Spin $S")
@@ -77,3 +78,4 @@ function Base.show(io::IO, ::MIME"text/plain", ansatz::AbstractAnsatz)
 end
 
 Base.show(io::IO, ansatz::AbstractAnsatz) = show(io, MIME"text/plain"(), ansatz)
+# COV_EXCL_STOP

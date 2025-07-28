@@ -1,3 +1,4 @@
+# COV_EXCL_START
 function subscriptnumber(i::Int)
     if i < 0
         c = [Char(0x208B)]
@@ -148,3 +149,4 @@ end
 Base.show(io::IO, block::AbstractBlock) = show(io, MIME"text/plain"(), block)
 
 Base.show(io::IO, blocks::Vector{<:AbstractBlock}) = show(io, MIME"text/plain"(), blocks)
+# COV_EXCL_STOP

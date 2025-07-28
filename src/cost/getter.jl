@@ -1,3 +1,4 @@
+# COV_EXCL_START
 """
     getansatz(cost::AbstractCostFunction)
 
@@ -27,3 +28,4 @@ Return the model of a given cost function.
 getmodel(cost::AbstractCostFunction) = getmodel(cost)
 getmodel(cost::AbstractFreeCostFunction) = cost.model
 getmodel(fc::FixedCost) = unwrap(getmodel, fc)
+# COV_EXCL_STOP

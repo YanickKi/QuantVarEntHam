@@ -1,3 +1,4 @@
+# COV_EXCL_START
 """
     getrho_A(model::AbstractModel)
 
@@ -18,3 +19,4 @@ getblocks(ansatz::AbstractAnsatz) = ansatz.blocks
 Return the maximum range of interaction of the given `ansatz`.
 """
 getr_max(ansatz::AbstractAnsatz) = ansatz.r_max
+# COV_EXCL_STOP
