@@ -1,3 +1,5 @@
+# COV_EXCL_START
+
 function print_integration_name(
     io::IO, integrator::Integrator{S,V}
 ) where {S<:AbstractScalarIntegrator,V<:AbstractVectorIntegrator}
@@ -24,3 +26,4 @@ end
 function print_integration_settings_short(io::IO, scalar_integrate::MidPointScalar)
     print(io, " (dt=", scalar_integrate.dt, ")")
 end
+# COV_EXCL_STOP

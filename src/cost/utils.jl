@@ -15,7 +15,7 @@ function fg!(
     end
 end
 
-function get_H_A!(c::AbstractCostFunction, g::Vector{<:AbstractFloat})
+function get_H_A!(c::AbstractFreeCostFunction, g::Vector{<:AbstractFloat})
     c.buff.H_A .= g[1] .* c.blocks_mat[1]
 
     @fastmath @inbounds @simd for i in 2:length(g)

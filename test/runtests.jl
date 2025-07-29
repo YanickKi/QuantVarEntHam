@@ -76,5 +76,98 @@ end
 
     @test c_mp ≈ c_ts atol = eps(Float64)
     @test g_mp/g_mp[1] ≈ g_ts/g_ts[1] atol = sqrt(eps(Float64))
+end
+
+
+@testset "Corrections push down cost function (H_A_BW version)" begin 
+    model1 = TFIM(8,4,1.2)
+    model2 = XXZ(8,4,)
+
+
 
 end 
+
+
+@testset "H_A function" begin
+    model = TFIM(8,4,1)
+    ansatz = H_A_BWV(model)
+    cost = QCFL(model, ansatz,1)
+    g = rand(0.:1e-16:5., 7)
+
+    EH = H_A(ansatz, g) # this function to be tested
+
+    EH_mat = Matrix(mat(EH))
+
+    correct_EH_mat = QuantVarEntHam.get_H_A!(cost, g) # internal function, needed here for test
+
+    @test EH_mat ≈ correct_EH_mat atol = eps(Float64)
+end
+
+using QuantVarEntHam
+using Test
+
+@testset "Corrections push down cost function" begin 
+    model1 = TFIM(8,4,1.2)
+    model2 = XXZ(8,4,0.5)
+
+    models = [model1, model2]
+
+    costs = AbstractFreeCostFunction[]
+    costs_corrections = AbstractFreeCostFunction[]
+    
+    for model in models 
+        ansatz1 = H_A_BW(model)
+        ansatz2 = H_A_BWV(model)
+        cost1 = QCFL(model, ansatz1, 2)
+        cost2 = QCFL(model, ansatz2, 2)
+        push!(costs, cost1)
+        push!(costs, cost2)
+        ansatz1_corrections = H_A_BW(model, 2)
+        ansatz2_corrections = H_A_BWV(model,2) 
+        cost1_corrections = QCFL(model, ansatz1_corrections, 2)
+        cost2_corrections = QCFL(model, ansatz2_corrections, 2)
+        push!(costs_corrections, cost1_corrections)
+        push!(costs_corrections, cost2_corrections)
+    end 
+
+    g_init = [
+        [1,2,3,4],
+        [1,1,2,2,2,3,3],
+        [1,2,3,4],
+        [1,1,2,2,3,3],
+    ]
+
+    g_init_corrections = [
+        vcat(g_init[1], zeros(2)),
+        vcat(g_init[2], zeros(2)),
+        vcat(g_init[3], zeros(4)),
+        vcat(g_init[4], zeros(4)),
+    ]
+
+    for run in eachindex(g_init)
+        _, c_opt = optimize(costs[run], g_init[run], ∇_tol = 1e-10)
+        _, c_opt_corrections = optimize(costs_corrections[run], g_init_corrections[run], ∇_tol = 1e-10)
+        
+        @test c_opt > c_opt_corrections 
+    end 
+
+end 
+
+
+@testset "H_A_BWV better than H_A_BW for Pollmann model" begin
+    model = Pollmann(6,3,1,0.2,0.1)
+
+    ansatz1 = H_A_BW(model)
+    ansatz2 = H_A_BWV(model)
+    cost1 = QCFL(model, ansatz1, 2)
+    cost2 = QCFL(model, ansatz2, 2)
+  
+    g_init1 = [1,2,3]
+    g_init2 = [1,1,1,1,2,2,2,2,3,3,3,3]
+
+    _, c_opt1 = optimize(cost1, g_init1, ∇_tol = 1e-5)
+    _, c_opt2 = optimize(cost2, g_init2, ∇_tol = 1e-5)
+        
+    @test c_opt1 > c_opt2 
+    
+end  

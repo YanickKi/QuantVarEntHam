@@ -16,7 +16,6 @@ struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
     Bx::Float64
     Uzz::Float64
     J::Float64
-    r_max::Int
     periodic::Bool
     ρ_A::Matrix{ComplexF64}
     function Pollmann{S,N_A}(N, J_Heis, Bx, Uzz, J, periodic, ρ_A) where {S,N_A}
@@ -120,29 +119,3 @@ function correction!(
         push!(blocks, PauliString(N_A, sig, (i, i+r); S=S))
     end
 end
-
-#=
-function H_A_notBW_wo_corrections_I!(blocks::Vector{<:AbstractMatrix}, model::Pollmann)
-    @unpack N_A, J_Heis, Bx, Uzz, S = model
-
-    if iszero(Bx) == false  
-        push!(blocks, Bx*repeat(N_A, X, 1, S=S))
-    end 
-    if iszero(Uzz) == false 
-        push!(blocks, Uzz*repeat(N_A, Z, 1, S=S)^2)
-    end 
-
-    for i ∈ 1:N_A-1 
-        push!(blocks, J_Heis*(repeat(N_A,Z,(i,i+1)) +repeat(N_A,X,(i,i+1), S=S) +repeat(N_A,Y,(i,i+1), S=S)))
-
-        if iszero(Bx) == false 
-            push!(blocks, Bx*repeat(N_A, X, (i+1), S=S))
-        end 
-        if iszero(Uzz) == false 
-            push!(blocks, Uzz*repeat(N_A, Z, (i+1), S=S)^2)
-        end
-    end 
-
-end
-
-=#

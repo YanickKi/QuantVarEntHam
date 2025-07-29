@@ -126,4 +126,3 @@ end
 Base.show(io::IO, buffer::RelativeEntropyBuffer) = show(io, MIME"text/plain"(), buffer)
 
 Base.show(io::IO, cost::AbstractCostFunction) = show(io, MIME"text/plain"(), cost)
-# COV_EXCL_STOP
