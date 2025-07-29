@@ -79,15 +79,6 @@ end
 end
 
 
-@testset "Corrections push down cost function (H_A_BW version)" begin 
-    model1 = TFIM(8,4,1.2)
-    model2 = XXZ(8,4,)
-
-
-
-end 
-
-
 @testset "H_A function" begin
     model = TFIM(8,4,1)
     ansatz = H_A_BWV(model)
@@ -102,9 +93,6 @@ end
 
     @test EH_mat ≈ correct_EH_mat atol = eps(Float64)
 end
-
-using QuantVarEntHam
-using Test
 
 @testset "Corrections push down cost function" begin 
     model1 = TFIM(8,4,1.2)
@@ -145,8 +133,8 @@ using Test
     ]
 
     for run in eachindex(g_init)
-        _, c_opt = optimize(costs[run], g_init[run], ∇_tol = 1e-10)
-        _, c_opt_corrections = optimize(costs_corrections[run], g_init_corrections[run], ∇_tol = 1e-10)
+        _, c_opt = optimize(costs[run], g_init[run], ∇_tol = 1e-10, print_result=false, show_trace = false)
+        _, c_opt_corrections = optimize(costs_corrections[run], g_init_corrections[run], ∇_tol = 1e-10, print_result=false, show_trace = false)
         
         @test c_opt > c_opt_corrections 
     end 
@@ -165,8 +153,8 @@ end
     g_init1 = [1,2,3]
     g_init2 = [1,1,1,1,2,2,2,2,3,3,3,3]
 
-    _, c_opt1 = optimize(cost1, g_init1, ∇_tol = 1e-5)
-    _, c_opt2 = optimize(cost2, g_init2, ∇_tol = 1e-5)
+    _, c_opt1 = optimize(cost1, g_init1, ∇_tol = 1e-5, print_result=false, show_trace = false)
+    _, c_opt2 = optimize(cost2, g_init2, ∇_tol = 1e-5, print_result=false, show_trace = false)
         
     @test c_opt1 > c_opt2 
     
