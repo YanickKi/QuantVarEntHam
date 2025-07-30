@@ -11,5 +11,6 @@ makedocs(sitename="QuantVarEntHam.jl",
                 "Cost" => "cost.md"
                 "Integration" => "integration.md"
                 "Optimizer" => "optimizer.md"
+                "Universal Ratios" => "universal_ratios.md"
         ],
         repo = Documenter.Remotes.GitLab("gitlab.dlr.de", "ma-kind", "QuantVarEntHam"))
