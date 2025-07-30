@@ -1,4 +1,4 @@
-using Optim, LinearAlgebra
+using Optim
 
 export optimize
 

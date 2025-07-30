@@ -1,1 +1,0 @@
-#instead of dot(A, mul!(D,B,C)) do dot(A, B, C) for larger matrices, it is faster (but allocates)
