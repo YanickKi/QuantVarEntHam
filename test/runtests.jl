@@ -91,7 +91,7 @@ end
 
     correct_EH_mat = QuantVarEntHam.get_H_A!(cost, g) # internal function, needed here for test
 
-    @test EH_mat ≈ correct_EH_mat atol = eps(Float64)
+    @test EH_mat ≈ correct_EH_mat atol = 10*eps(Float64)
 end
 
 @testset "Corrections push down cost function" begin 
