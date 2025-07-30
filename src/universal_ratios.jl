@@ -103,6 +103,7 @@ Return the universal ratios of a matrix `A`.
 
 Universal ratios of the variational Ansatz with some arbitrary parameters. 
 
+```jlcon
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
@@ -130,6 +131,7 @@ julia> universal_ratios(H_A_var)
  2.833765063747727
  3.199778160072994
  3.3728963789297537
+```
 """
 function universal_ratios(
     A::AbstractMatrix, α0::Integer=1, α1::Integer=5
