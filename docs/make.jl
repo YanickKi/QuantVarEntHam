@@ -5,11 +5,10 @@ makedocs(sitename="QuantVarEntHam.jl",
         pages = [
                 "Home" => "index.md"
                 "Tutorials" => "tutorials.md"
-                "Spinoperators" => "spinoperators.md"
+                "Spin Operators" => "spinoperators.md"
                 "Models" => "models.md"
                 "Ansätze" => "ansätze.md"
                 "Cost" => "cost.md"
-                "Integration" => "integration.md"
                 "Optimizer" => "optimizer.md"
                 "Universal Ratios" => "universal_ratios.md"
         ],

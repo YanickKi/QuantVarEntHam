@@ -136,7 +136,7 @@ function Base.show(io::IO, ::MIME"text/plain", blocks::Vector{Block{S,N}}) where
     print_info(io, blocks[1])
     println(io)
     for index in eachindex(blocks)
-        println("Block ", index, ": ")
+        println(io, "Block ", index, ": ")
         print(io, "\t")
         print_block(io, blocks[index])
         if index != lastindex(blocks)

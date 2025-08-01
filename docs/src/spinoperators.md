@@ -1,4 +1,4 @@
-# Spinoperators
+# Spin Operators
 
 Pauli strings and their linear combination (blocks) are implemented s.t the user 
 deals with these objects instead of the matrices.
@@ -23,7 +23,9 @@ mat(block::AbstractBlock)
 Adding or subtracting two pauli strings and blocks is possible 
 
 
-```jlcon 
+```jldoctest algebra
+julia> using QuantVarEntHam
+
 julia> ps1 = PauliString(4,"Z", (1,2));
 
 julia> ps2 = PauliString(4,"X", (1,2));
@@ -64,11 +66,10 @@ Spin 1//2
 Number of spins: 4
 
 Z₁⊗ Z₂ + X₁⊗ X₂ - Z₁⊗ Z₂ + X₁⊗ X₂
-
 ```
 
 Multiplication by scalars of a pauli string or block is defined aswell
-```jlcon
+```jldoctest algebra
 julia> 2*ps1
 Block
 Spin 1//2
@@ -87,7 +88,7 @@ Number of spins: 4
 
 Multiplication of pauli strings or blocks is not implemented, since the current models do not need it. 
 However, taking the power of a pauli string is allowed 
-```jlcon 
+```jldoctest algebra 
 julia> ps1^3
 Pauli string
 Spin 1//2

@@ -24,7 +24,9 @@ Finding the Entanglement Hamiltonian of the [`TFIM`](@ref) with `N=8`, OBC, `Γ=
 the [`QCFL`](@ref).
 
 
-```jlcon 
+```jldoctest; filter =r"time: .*"
+julia> using QuantVarEntHam
+
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 

@@ -21,10 +21,12 @@ function QCFLOnlyBuffer(d::Integer, numBlocks::Integer)
 end
 
 """
-    QCFLBuffer{O<:AbstractMatrix}
+    QCFLBuffer{S,N_A,L}
     QCFLBuffer(ansatz::AbstractAnsatz{S,N_A}) where {S,N_A}
 
 Struct containing the buffers for the [`QCFL`](@ref) for given `blocks`.
+
+L is for the length of the buffers.
 """
 struct QCFLBuffer{S,N_A,L}
     qcfl_buff::QCFLOnlyBuffer
@@ -34,14 +36,14 @@ end
 
 function QCFLBuffer(ansatz::AbstractAnsatz{S,N_A}) where {S,N_A}
     numBlocks = length(ansatz.blocks)
-    d = Int((2*S+1)^N_A) # Hilbert space dimension
+    d = Int((2*S+1)^N_A)
     return QCFLBuffer{S,N_A,numBlocks}(
         QCFLOnlyBuffer(d, numBlocks), ExpFrechBuffer(ComplexF64, d), zeros(ComplexF64, d, d)
     )
 end
 
 """
-    QCFL{M<:AbstractModel, B<:QCFLBuffer, I<:Integrator, O<:AbstractBlock, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+    QCFL <: AbstractFreeCostFunction
     QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
     buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
 
@@ -130,7 +132,7 @@ end
 
 function shorten_buffers!(c::QCFL, how_often::Integer)
     shorten_buffer!(
-        buffertrait(c.integrator.vector_integrate), c.integrator.vector_integrate, how_often
+        buffertrait(c.integrator.vector_integrator), c.integrator.vector_integrator, how_often
     )
     for _ in 1:how_often
         pop!(c.buff.qcfl_buff.C_G)
@@ -140,7 +142,7 @@ end
 
 function (c::QCFL)(g::Vector{Float64})
     get_H_A!(c, g)
-    return c.integrator.scalar_integrate(
+    return c.integrator.scalar_integrator(
         t -> integrand_cost(c, t), c.T_max
     )/(length(c.observables)*c.T_max)
 end
@@ -149,7 +151,7 @@ end
 
 function _gradient!(c::QCFL, G, g::Vector{<:Real}, free_indices)
     get_H_A!(c, g)
-    c.integrator.vector_integrate(
+    c.integrator.vector_integrator(
         c.buff.qcfl_buff.C_G_result, t -> integrand_gradient(c, t, free_indices), c.T_max
     )
     c.buff.qcfl_buff.C_G_result ./= length(c.observables)*c.T_max

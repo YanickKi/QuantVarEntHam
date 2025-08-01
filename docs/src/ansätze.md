@@ -10,7 +10,9 @@ In the case of the BW violating Ansatz, it may happen that some blocks are essen
 which is why the number of blocks also depends on the hamilton parameters.
 As an example, consider the TFIM with `N=8` sites in the composite system, `N_A=4` sites in the subsystem and a tranvserse field strength of
 `Γ=1`. 
-```jlcon 
+```jldoctest Ansätze 
+julia> using QuantVarEntHam
+
 julia> model1 = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
@@ -46,7 +48,7 @@ Block 7:
 Since `Γ` is non-zero, the pauli X terms appear.
 However, if one sets `Γ` to zero, the pauli X term does not appear in the composite system hamiltonian.
 Including in the variational Ansatz would not make sense, which is why the number of blocks reduces if one sets `Γ=0`
-```jlcon 
+```jldoctest Ansätze  
 julia> model0 = TFIM(8,4,0);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
@@ -70,7 +72,7 @@ and only the ising coupling part is included in the variational Ansatz.
 
 Including long range corrections can be achived by increasing `r_max`.
 For example including next nearest neighbour corrections in the TFIM
-```jlcon
+```jldoctest Ansätze 
 julia> ansatz1_nnn = H_A_BWV(model1, 2)
 H_A_BWV
 r_max = 2

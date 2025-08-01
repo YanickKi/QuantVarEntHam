@@ -18,7 +18,7 @@ function CommutatorBuffer(::AbstractModel{S,N_A}) where {S,N_A}
 end
 
 """
-    Commutator{M<:AbstractModel, B<:CommutatorBuffer, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+    Commutator <: AbstractFreeCostFunction
     Commutator(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}; buffer::Union{Nothing, CommutatorBuffer{S,N_A}} = nothing) where {S,N_A}
 
 Contains the model, blocks, observables and buffers for the Commutator as a cost function.

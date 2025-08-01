@@ -1,6 +1,6 @@
 # COV_EXCL_START
 function print_model(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
-    println()
+    println(io)
     println(io, "Spin $S")
     println(io, "Number of spins in the composite system N =  ", model.N)
     println(io, "Number of spins in the subsystem N_A = ", N_A)
@@ -10,25 +10,25 @@ end
 
 function Base.show(io::IO, ::MIME"text/plain", model::TFIM{S,N_A}) where {S,N_A}
     print_model_name(io, model)
-    println()
-    print_model(io::IO, model)
-    println()
+    println(io)
+    print_model(io, model)
+    println(io)
     print(io, "Transverse field strength Γ = ", float_to_int(model.Γ))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", model::XXZ{S,N_A}) where {S,N_A}
     print_model_name(io, model)
-    println()
+    println(io)
     print_model(io::IO, model)
-    println()
+    println(io)
     print(io, "Anisotropy = ", float_to_int(model.Δ))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", model::Pollmann{S,N_A}) where {S,N_A}
     print_model_name(io, model)
-    println()
+    println(io)
     print_model(io::IO, model)
-    println()
+    println(io)
     println(io, "Heisenberg coupling J_Heis = ", float_to_int(model.J_Heis))
     println(io, "Transverse field strength B_x = ", float_to_int(model.Bx))
     print(io, "Square term prefactor Uzz = ", float_to_int(model.Uzz))

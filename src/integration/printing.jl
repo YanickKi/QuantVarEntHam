@@ -3,7 +3,7 @@
 function print_integration_name(
     io::IO, integrator::Integrator{S,V}
 ) where {S<:AbstractScalarIntegrator,V<:AbstractVectorIntegrator}
-    print_integration_name(io, integrator.scalar_integrate)
+    print_integration_name(io, integrator.scalar_integrator)
 end
 
 function print_integration_name(io::IO, ::TanhSinhScalar)
@@ -15,15 +15,15 @@ function print_integration_name(io::IO, ::MidPointScalar)
 end
 
 function print_integration_settings_short(
-    io::IO, scalar_integrate::TanhSinhScalar{N}
+    io::IO, scalar_integrator::TanhSinhScalar{N}
 ) where {N}
-    h0 = float_to_int(scalar_integrate.integration_table.h0)
-    atol = float_to_int(scalar_integrate.atol)
-    rtol = float_to_int(scalar_integrate.rtol)
+    h0 = float_to_int(scalar_integrator.integration_table.h0)
+    atol = float_to_int(scalar_integrator.atol)
+    rtol = float_to_int(scalar_integrator.rtol)
     print(io, " (atol=", atol, ", rtol=", rtol, ", h0=", h0, ", maxlevel=", N, ")")
 end
 
-function print_integration_settings_short(io::IO, scalar_integrate::MidPointScalar)
-    print(io, " (dt=", scalar_integrate.dt, ")")
+function print_integration_settings_short(io::IO, scalar_integrator::MidPointScalar)
+    print(io, " (dt=", scalar_integrator.dt, ")")
 end
 # COV_EXCL_STOP

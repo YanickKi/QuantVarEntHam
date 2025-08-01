@@ -5,9 +5,8 @@ struct NoNeedBuffer <: BufferTrait end
 shorten_buffer!(::NoNeedBuffer, ::AbstractVectorIntegrator, ::Integer) = nothing
 
 function shorten_buffer!(
-    ::NeedBuffer, vector_integrate::AbstractVectorIntegrator, how_often::Integer
+    ::NeedBuffer, vector_integrator::AbstractVectorIntegrator, how_often::Integer
 )
-    for _ in 1:how_often
-        pop!(vector_integrate.buffer)
-    end
+    v = vector_integrator.buffer
+    deleteat!(v, (lastindex(v)-how_often+1):lastindex(v))
 end

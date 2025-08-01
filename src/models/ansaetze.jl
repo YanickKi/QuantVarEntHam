@@ -15,9 +15,11 @@ The maximum range of long range corrections is given by `r_max` (`r_max=1` for n
 
 # Example 
 BW Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A`, `Γ =1` and `J=-1`.
-```jlcon
+```jldoctest H_A_BW
+julia> using QuantVarEntHam
+
 julia> model = TFIM(8,4,1);
-Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix
+Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
 julia> ansatz = H_A_BW(model)
 H_A_BW
@@ -46,6 +48,8 @@ struct H_A_BW{S,N_A} <: AbstractAnsatz{S,N_A}
 end
 
 function H_A_BW(model::AbstractModel{S,N_A}, r_max::Int=1) where {S,N_A}
+    check_r_max(r_max, N_A)
+    
     N = model.N
     periodic = model.periodic
     J = model.J
@@ -76,7 +80,9 @@ The maximum range of long range corrections is given by `r_max` (`r_max=1` for n
 
 # Example  
 BW violating Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A`, `Γ =1` and `J=-1`.
-```jlcon
+```jldoctest H_A_BWV
+julia> using QuantVarEntHam
+
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
@@ -115,6 +121,8 @@ struct H_A_BWV{S,N_A} <: AbstractAnsatz{S,N_A}
 end
 
 function H_A_BWV(model::AbstractModel{S,N_A}, r_max::Int=1) where {S,N_A}
+    check_r_max(r_max, N_A)
+    
     J = model.J
 
     blocks = Block{S,N_A}[]
@@ -147,3 +155,8 @@ function corrections!(
         end
     end
 end
+
+function check_r_max(r_max, N_A)
+    r_max < 1 && throw(ArgumentError("r_max needs to be greater than zero!")) 
+    r_max > N_A - 1 && throw(ArgumentError("r_max needs to be less than N_A!")) 
+end 

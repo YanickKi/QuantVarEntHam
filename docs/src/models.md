@@ -5,9 +5,11 @@ For each model, the Hamiltonian and an type, where the model settings are saved,
 Instantiating a subtype of [`AbstractModel`](@ref) is fairly simple.
 As an example, if one wants find the EH of the TFIM with 8 sites, Γ=1
 and the provided default values (J=-1, OBC), one can instantiate the [`TFIM`](@ref) object
-```jlcon
+```jldoctest Models
+julia> using QuantVarEntHam
+
 julia> model = TFIM(8,4,1)
-Diagonalizing the Hamitlonian via exact diagonalization for constructing the ground state density matrix
+Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 TFIM
 
 Spin 1//2
@@ -22,12 +24,14 @@ This object can be passed to the cost functions together with the variational An
 
 If you want to obtain the corresponding Hamiltonian of the composite system, you can 
 use  [`H_TFIM`](@ref)
-```jlcon
+```jldoctest Models
 julia> H = H_TFIM(8,1)
 Block
 Spin 1//2
 Number of spins: 8
+
 -Z₁⊗ Z₂ - Z₂⊗ Z₃ - Z₃⊗ Z₄ - Z₄⊗ Z₅ - Z₅⊗ Z₆ - Z₆⊗ Z₇ - Z₇⊗ Z₈ - X₁ - X₂ - X₃ - X₄ - X₅ - X₆ - X₇ - X₈
+
 ```
 
 

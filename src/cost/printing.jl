@@ -54,7 +54,7 @@ function Base.show(io::IO, ::MIME"text/plain", cost::QCFL{S,N_A}) where {S,N_A}
     println(io)
     print(io, "Integration method: ")
     print_integration_name(io, cost.integrator)
-    print_integration_settings_short(io, cost.integrator.scalar_integrate)
+    print_integration_settings_short(io, cost.integrator.scalar_integrator)
     println(io)
     print(io, "T_max=", float_to_int(cost.T_max))
 end

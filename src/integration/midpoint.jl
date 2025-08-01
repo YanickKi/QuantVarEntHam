@@ -24,8 +24,8 @@ Struct for the integration via mid-point rule.
 
 # Fields 
 -`dt::Float64` : step size
--`scalar_integrate::Function`: function for integrating scalar functions 
--`vector_integrate::Function`: function for integrating vector functions
+-`scalar_integrator::Function`: function for integrating scalar functions 
+-`vector_integrator::Function`: function for integrating vector functions
 
 Allows unified handling of integrating scalar and vector functions as in e.g. ['QCFL'](@ref).
 

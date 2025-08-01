@@ -1,14 +1,14 @@
 export universal_ratios, var_exact_universal_ratios
 
 """
-    var_exact_universal_ratios(cost::AbstractCostFunction, g::Vector{<:AbstractFloat}, α0::Integer=1, α1::Integer=5)
+    var_exact_universal_ratios(cost::AbstractCostFunction, g::Vector{<:Real}, α0::Integer=1, α1::Integer=5)
     var_exact_universal_ratios(model::AbstractModel, ansatz::AbstractAnsatz, g::Vector{<:Real},  α0::Integer=1, α1::Integer=5)
     var_exact_universal_ratios(ρ_A::AbstractMatrix, H_A_var::AbstractMatrix,  α0::Integer=1, α1::Integer=5)
 
 
 Return the exact and variational universal ratios.
 
-The exact density matrix `ρ_A` is contained in `cost` and `model`, where as the variational Entanglement Hamiltonian `H_A`
+The exact density matrix `ρ_A` is contained in `cost` and `model`, where as the variational Entanglement Hamiltonian `H_A_var`
 is obtained with the `ansatz` (saved in `cost` aswell) with a parameter set `g`. 
 
 Handing over the matrices is allowed, too.
@@ -17,7 +17,9 @@ Handing over the matrices is allowed, too.
 
 Variational and exact univeral ratios after an minimization.
 
-```jlcon 
+```jldoctest  
+julia> using QuantVarEntHam
+
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
@@ -89,13 +91,13 @@ end
 function var_exact_universal_ratios(
     ρ_A::AbstractMatrix, H_A_var::AbstractMatrix,  α0::Integer=1, α1::Integer=5
 )
-    H_A_exact = -log(Hermitian(ρ_A))
-    return universal_ratios(H_A_var, α0, α1), universal_ratios(H_A_exact, α0, α1)
+    H_A_exact = -log(Hermitian(Matrix(ρ_A)))
+    return universal_ratios(Matrix(H_A_var), α0, α1), universal_ratios(H_A_exact, α0, α1)
 end
 
 
 """
-    universal_ratios(A::AbstractMatrix; α0::Integer=1, α1::Integer=5)
+    universal_ratios(A::AbstractMatrix, α0::Integer=1, α1::Integer=5)
 
 Return the universal ratios of a matrix `A`. 
 
@@ -103,7 +105,9 @@ Return the universal ratios of a matrix `A`.
 
 Universal ratios of the variational Ansatz with some arbitrary parameters. 
 
-```jlcon
+```jldoctest
+julia> using QuantVarEntHam
+
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
@@ -111,7 +115,7 @@ julia> ansatz = H_A_BW(model);
 
 julia> g = [1,2,3,4];
 
-julia> H_A_var = Matrix(mat(H_A(ansatz, g)));
+julia> H_A_var = mat(H_A(ansatz, g));
 
 julia> universal_ratios(H_A_var)
 16-element Vector{Float64}:
@@ -137,6 +141,6 @@ function universal_ratios(
     A::AbstractMatrix, α0::Integer=1, α1::Integer=5
 )
     #ishermitian(A) || throw(ArgumentError("A must be hermitian!"))
-    ξ, _ = eigen(Hermitian(A))
+    ξ, _ = eigen(Hermitian(Matrix(A)))
     return (ξ .- ξ[α0])/(ξ[α1] - ξ[α0])
 end 

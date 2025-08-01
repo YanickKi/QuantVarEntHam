@@ -18,7 +18,7 @@ function RelativeEntropyBuffer(::AbstractModel{S,N_A}) where {S,N_A}
 end
 
 """
-    RelativeEntropy{M<:AbstractModel, A<:AbstractAnsatz} <: AbstractFreeCostFunction
+    RelativeEntropy <: AbstractFreeCostFunction
     RelativeEntropy(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, buffer::Union{Nothing, RelativeEntropyBuffer{S,N_A}} = nothing) where {S,N_A}
 
 Contains the model, blocks, observables and buffers for the relative entropy as cost function.

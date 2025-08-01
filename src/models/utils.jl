@@ -31,13 +31,14 @@ The number of digits in the prefactors can be set via `digits.`
 
 # Example 
 
-```jlcon
+```jldoctest
+julia> using QuantVarEntHam
+
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
 
 julia> ansatz = H_A_BW(model)
 H_A_BW
-
 Number of blocks: 4
 
 Spin 1//2
@@ -57,7 +58,7 @@ Block 4:
 
 julia> g = [1,2,3,4];
 
-julia> H_A = H_A(ansatz, g)
+julia> H_A_var = H_A(ansatz, g)
 Block
 Spin 1//2
 Number of spins: 4

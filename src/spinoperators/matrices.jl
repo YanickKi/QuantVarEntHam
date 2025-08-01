@@ -68,10 +68,6 @@ end
 function repeat(
     N, sig::Function, locs::NTuple{l,Int}; S::Union{Rational,Int}=1//2
 ) where {l}
-    if maximum(locs) > N || minimum(locs) < 1
-        error("Location out of bounds!")
-    end
-
     d = Int64(2*S+1)
 
     M = spzeros(ComplexF64, d, d)

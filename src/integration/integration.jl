@@ -23,8 +23,8 @@ abstract type AbstractVectorIntegrator end
 Allows unified handling of scalar and vector integration.
 =#
 struct Integrator{S<:AbstractScalarIntegrator,V<:AbstractVectorIntegrator}
-    scalar_integrate::S
-    vector_integrate::V
+    scalar_integrator::S
+    vector_integrator::V
 end
 
 """ 
