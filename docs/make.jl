@@ -1,6 +1,7 @@
 using Documenter, QuantVarEntHam
 
 makedocs(sitename="QuantVarEntHam.jl",  
+        warnonly=:doctest,
         modules = [QuantVarEntHam], 
         pages = [
                 "Home" => "index.md"
