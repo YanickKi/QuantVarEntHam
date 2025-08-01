@@ -47,7 +47,7 @@ Block 7:
 
 Since `Γ` is non-zero, the pauli X terms appear.
 However, if one sets `Γ` to zero, the pauli X term does not appear in the composite system hamiltonian.
-Including in the variational Ansatz would not make sense, which is why the number of blocks reduces if one sets `Γ=0`
+Including the Pauli X terms in the variational Ansatz would not make sense, which is why the number of blocks reduces if one sets `Γ=0`
 ```jldoctest Ansätze  
 julia> model0 = TFIM(8,4,0);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix

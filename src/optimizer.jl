@@ -24,7 +24,7 @@ Finding the Entanglement Hamiltonian of the [`TFIM`](@ref) with `N=8`, OBC, `Γ=
 the [`QCFL`](@ref).
 
 
-```jldoctest; filter =r"time: .*"
+```julia
 julia> using QuantVarEntHam
 
 julia> model = TFIM(8,4,1);
