@@ -15,7 +15,7 @@ Handing over the matrices is allowed, too.
 
 # Example 
 
-Variational and exact univeral ratios after an minimization.
+Variational and exact univeral ratios after a minimization.
 
 ```jldoctest  
 julia> using QuantVarEntHam

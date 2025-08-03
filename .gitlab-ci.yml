@@ -56,7 +56,7 @@ pages:
   only:
     - main
 
-format:
+format check:
   stage: test
   script:
     - |
