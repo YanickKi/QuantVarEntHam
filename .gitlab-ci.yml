@@ -64,7 +64,7 @@ format:
         using Pkg
         Pkg.add("JuliaFormatter")
         using JuliaFormatter
-        not_formatted = format(".", BlueStyle(), verbose = true, overwrite = false)
+        not_formatted = format("src", BlueStyle(), verbose = true, overwrite = false)
         if not_formatted
           @info "Formatting verified."
         else
