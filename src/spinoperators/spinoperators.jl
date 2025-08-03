@@ -73,7 +73,7 @@ struct PauliString{S,N,L} <: AbstractBlock{S,N}
 end
 
 function PauliString(N::Int, sig::String, locs::Int; S::Union{Rational,Int}=1//2)
-    PauliString(N, sig, (locs,), S=S)
+    PauliString(N, sig, (locs,); S=S)
 end
 
 function PauliString(

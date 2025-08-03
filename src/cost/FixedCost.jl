@@ -38,7 +38,9 @@ function FixedCost(cost::AbstractFreeCostFunction, fixed_indices::Int, fixed_val
 end
 
 function FixedCost(
-    cost::AbstractFreeCostFunction, fixed_indices::NTuple{L,Int}, fixed_values::NTuple{L,Int}
+    cost::AbstractFreeCostFunction,
+    fixed_indices::NTuple{L,Int},
+    fixed_values::NTuple{L,Int},
 ) where {L}
     FixedCost(cost, [fixed_indices...], [fixed_values...])
 end

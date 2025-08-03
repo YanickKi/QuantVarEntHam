@@ -57,19 +57,25 @@ function H_pollmann(
     J::Real=1,
     S::Union{Int64,Rational}=1,
 )
-    heisenberg_term = sum(map(1:(periodic ? N : N - 1)) do i
-        PauliString(N, "X", (i, i%N+1); S=S) +
-        PauliString(N, "Y", (i, i%N+1); S=S) +
-        PauliString(N, "Z", (i, i%N+1); S=S)
-    end)
+    heisenberg_term = sum(
+        map(1:(periodic ? N : N - 1)) do i
+            PauliString(N, "X", (i, i%N+1); S=S) +
+            PauliString(N, "Y", (i, i%N+1); S=S) +
+            PauliString(N, "Z", (i, i%N+1); S=S)
+        end,
+    )
 
-    transverse_term = sum(map(1:N) do i
-        PauliString(N, "X", i; S=S)
-    end)
+    transverse_term = sum(
+        map(1:N) do i
+            PauliString(N, "X", i; S=S)
+        end,
+    )
 
-    square_term = sum(map(1:N) do i
-        PauliString(N, "Z", i; S=S)^2
-    end)
+    square_term = sum(
+        map(1:N) do i
+            PauliString(N, "Z", i; S=S)^2
+        end,
+    )
     return Float64(
         J
     )*(J_Heis*heisenberg_term + Float64(Bx)*transverse_term + Float64(Uzz)*square_term)

@@ -81,20 +81,23 @@ function var_exact_universal_ratios(
 end
 
 function var_exact_universal_ratios(
-    model::AbstractModel, ansatz::AbstractAnsatz, g::Vector{<:Real},  α0::Integer=1, α1::Integer=5
+    model::AbstractModel,
+    ansatz::AbstractAnsatz,
+    g::Vector{<:Real},
+    α0::Integer=1,
+    α1::Integer=5,
 )
     ρ_A = model.ρ_A
     H_A_var = Matrix(mat(H_A(ansatz, g)))
     return var_exact_universal_ratios(ρ_A, H_A_var, α0, α1)
-end 
+end
 
 function var_exact_universal_ratios(
-    ρ_A::AbstractMatrix, H_A_var::AbstractMatrix,  α0::Integer=1, α1::Integer=5
+    ρ_A::AbstractMatrix, H_A_var::AbstractMatrix, α0::Integer=1, α1::Integer=5
 )
     H_A_exact = -log(Hermitian(Matrix(ρ_A)))
     return universal_ratios(Matrix(H_A_var), α0, α1), universal_ratios(H_A_exact, α0, α1)
 end
-
 
 """
     universal_ratios(A::AbstractMatrix, α0::Integer=1, α1::Integer=5)
@@ -137,10 +140,8 @@ julia> universal_ratios(H_A_var)
  3.3728963789297537
 ```
 """
-function universal_ratios(
-    A::AbstractMatrix, α0::Integer=1, α1::Integer=5
-)
+function universal_ratios(A::AbstractMatrix, α0::Integer=1, α1::Integer=5)
     #ishermitian(A) || throw(ArgumentError("A must be hermitian!"))
     ξ, _ = eigen(Hermitian(Matrix(A)))
     return (ξ .- ξ[α0])/(ξ[α1] - ξ[α0])
-end 
+end

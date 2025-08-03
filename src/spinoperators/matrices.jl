@@ -62,7 +62,7 @@ function Z(S::Union{Rational,Int})
 end
 
 function repeat(N, sig::Function, locs::Int; S::Union{Rational,Int}=1//2)
-    repeat(N, sig, (locs,), S=S)
+    repeat(N, sig, (locs,); S=S)
 end
 
 function repeat(

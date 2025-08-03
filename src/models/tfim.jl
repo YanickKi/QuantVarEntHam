@@ -42,13 +42,17 @@ Set `periodic` as true for PBC or as false for OBC and
 function H_TFIM(
     N::Int, Γ::Real; J::Real=-1, periodic::Bool=false, S::Union{Int64,Rational}=1//2
 )
-    ising_term = sum(map(1:(periodic ? N : N - 1)) do i
-        PauliString(N, "Z", (i, i%N+1); S=S)
-    end)
+    ising_term = sum(
+        map(1:(periodic ? N : N - 1)) do i
+            PauliString(N, "Z", (i, i%N+1); S=S)
+        end,
+    )
 
-    transverse_term = sum(map(1:N) do i
-        PauliString(N, "X", i; S=S)
-    end)
+    transverse_term = sum(
+        map(1:N) do i
+            PauliString(N, "X", i; S=S)
+        end,
+    )
 
     return Float64(J)*(ising_term + Float64(Γ)*transverse_term)
 end

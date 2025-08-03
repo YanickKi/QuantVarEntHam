@@ -8,5 +8,5 @@ function shorten_buffer!(
     ::NeedBuffer, vector_integrator::AbstractVectorIntegrator, how_often::Integer
 )
     v = vector_integrator.buffer
-    deleteat!(v, (lastindex(v)-how_often+1):lastindex(v))
+    deleteat!(v, (lastindex(v) - how_often + 1):lastindex(v))
 end

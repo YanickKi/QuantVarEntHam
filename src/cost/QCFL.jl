@@ -24,7 +24,7 @@ end
     QCFLBuffer{S,N_A,L}
     QCFLBuffer(ansatz::AbstractAnsatz{S,N_A}) where {S,N_A}
 
-Struct containing the buffers for the [`QCFL`](@ref) for given `blocks`.
+Struct containing the buffers for the [`QCFL`](@ref) for a given `ansatz`.
 
 L is for the length of the buffers.
 """
@@ -47,7 +47,7 @@ end
     QCFL(model::AbstractModel{S,N_A}, ansatz::AbstractAnsatz{S,N_A}, T_max::Real; integrator::Union{Nothing,AbstractIntegrator} = nothing, observables::Union{Nothing, Vector{<:PauliString{S,N_A}}} = nothing,
     buffer::Union{Nothing, QCFLBuffer{S,N_A,L}} = nothing) where {S,N_A,L}
 
-Contains the `model`, `observables`, the `blocks` for the variational Ansatz, integtration settings (`integrator`) and `buffer`s for the QCFL.
+Contains the `model`, `observables`, the variational `ansatz`, integtration settings (`integrator`) and `buffer`s for the QCFL.
 
 The default observables are ``\\{Z_i Z_{i+1} | 1 \\leq i  < N_\\text{A}\\}``.
 Existing buffers can be provided, and are constructed automatically otherwise. 
@@ -94,8 +94,7 @@ end
 
 function QCFL(
     model::AbstractModel{S,N_A},
-    ansatz::AbstractAnsatz{S,N_A},
-    T_max::Real;
+    ansatz::AbstractAnsatz{S,N_A}, T_max::Real;
     integrator::Union{Nothing,AbstractIntegrator}=nothing,
     observables::Union{Nothing,Vector{<:PauliString{S,N_A}}}=nothing,
     buffer::Union{Nothing,QCFLBuffer{S,N_A,L}}=nothing,
@@ -132,7 +131,9 @@ end
 
 function shorten_buffers!(c::QCFL, how_often::Integer)
     shorten_buffer!(
-        buffertrait(c.integrator.vector_integrator), c.integrator.vector_integrator, how_often
+        buffertrait(c.integrator.vector_integrator),
+        c.integrator.vector_integrator,
+        how_often,
     )
     for _ in 1:how_often
         pop!(c.buff.qcfl_buff.C_G)

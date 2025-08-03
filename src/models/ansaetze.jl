@@ -49,7 +49,7 @@ end
 
 function H_A_BW(model::AbstractModel{S,N_A}, r_max::Int=1) where {S,N_A}
     check_r_max(r_max, N_A)
-    
+
     N = model.N
     periodic = model.periodic
     J = model.J
@@ -122,7 +122,7 @@ end
 
 function H_A_BWV(model::AbstractModel{S,N_A}, r_max::Int=1) where {S,N_A}
     check_r_max(r_max, N_A)
-    
+
     J = model.J
 
     blocks = Block{S,N_A}[]
@@ -157,6 +157,6 @@ function corrections!(
 end
 
 function check_r_max(r_max, N_A)
-    r_max < 1 && throw(ArgumentError("r_max needs to be greater than zero!")) 
-    r_max > N_A - 1 && throw(ArgumentError("r_max needs to be less than N_A!")) 
-end 
+    r_max < 1 && throw(ArgumentError("r_max needs to be greater than zero!"))
+    r_max > N_A - 1 && throw(ArgumentError("r_max needs to be less than N_A!"))
+end
