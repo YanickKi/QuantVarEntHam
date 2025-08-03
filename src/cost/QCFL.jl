@@ -94,7 +94,8 @@ end
 
 function QCFL(
     model::AbstractModel{S,N_A},
-    ansatz::AbstractAnsatz{S,N_A}, T_max::Real;
+    ansatz::AbstractAnsatz{S,N_A},
+    T_max::Real;
     integrator::Union{Nothing,AbstractIntegrator}=nothing,
     observables::Union{Nothing,Vector{<:PauliString{S,N_A}}}=nothing,
     buffer::Union{Nothing,QCFLBuffer{S,N_A,L}}=nothing,
