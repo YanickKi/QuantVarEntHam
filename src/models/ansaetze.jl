@@ -14,7 +14,7 @@ BW like ansatz for a given `model`.
 The maximum range of long range corrections is given by `r_max` (`r_max=1` for no corrections).
 
 # Example 
-BW Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A`, `Γ =1` and `J=-1`.
+BW Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A=4`, `Γ =1` and `J=-1`.
 ```jldoctest H_A_BW
 julia> using QuantVarEntHam
 
@@ -79,7 +79,7 @@ BW violating Ansatz for a given `model`.
 The maximum range of long range corrections is given by `r_max` (`r_max=1` for no corrections).
 
 # Example  
-BW violating Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A`, `Γ =1` and `J=-1`.
+BW violating Ansatz for the [`TFIM`](@ref) for `N=8`, `N_A=4`, `Γ=1` and `J=-1`.
 ```jldoctest H_A_BWV
 julia> using QuantVarEntHam
 

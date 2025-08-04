@@ -16,7 +16,9 @@ the optimal parameters and the cost function value at the minimum.
 - `∇_tol`: maximum infinity norm of the gradient in order to stop the minimization.
 - `maxiter`: maximum number of iterations in order to stop minimizing.
 - `show_trace`: true for showing the trace of the minimizing procedure, false otherwise.
-- `print_result` true to print optimal parameters and result, false otherwise.
+- `print_result`: true for printing optimal parameters and minimization report, false otherwise.
+
+Checks wether the number of blocks in the ansatz (contained in `cost`) and the number of initial parameters are the same. 
 
 # Example 
 
