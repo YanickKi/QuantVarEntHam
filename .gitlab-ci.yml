@@ -45,6 +45,8 @@ pages:
     - |
       julia --project=docs -e '
         using Pkg
+        Pkg.add("Documenter")
+        Pkg.add("DocumenterCitations")
         Pkg.develop(PackageSpec(path=pwd()))
         Pkg.instantiate()'
     - julia --project=@. --color=yes docs/make.jl
