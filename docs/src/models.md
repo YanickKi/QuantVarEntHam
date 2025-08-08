@@ -14,10 +14,10 @@ TFIM
 
 Spin 1//2
 Number of spins in the composite system N =  8
-Number of spins in the subsystem N_A = 4
+Number of spins in the subsystem N_A=4
 Boundary conditions: open
 Global prefactor J = -1
-Transverse field strength Γ = 1
+Transverse field strength Γ=1
 
 ```
 This object can be passed to the cost functions together with the variational Ansatz.

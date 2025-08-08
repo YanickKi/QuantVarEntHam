@@ -83,7 +83,7 @@ function print_model_short(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
     print(io, "Model: ")
     print_model_name(io, model)
     bc = (model.periodic == true ? "PBC" : "OBC")
-    print(io, " (S=$S, N=$(model.N), $bc, N_A = $N_A, J=$(float_to_int(model.J)), ")
+    print(io, " (S=$S, N=$(model.N), $bc, N_A=$N_A, J=$(float_to_int(model.J)), ")
     print_ham_params(io, model)
     print(io, ")")
 end
@@ -101,7 +101,7 @@ function Base.show(io::IO, ::MIME"text/plain", ::QCFLBuffer{S,N_A,L}) where {S,N
     println(io, "Buffer for QCFL")
     println(io)
     println(io, "Spin number ", S)
-    println(io, "Number of spins in subsytem: N_A = ", N_A)
+    println(io, "Number of spins in subsytem: N_A=", N_A)
     print(io, "Length of buffer L = ", L)
 end
 
@@ -111,7 +111,7 @@ function Base.show(io::IO, ::MIME"text/plain", ::CommutatorBuffer{S,N_A}) where 
     println(io, "Buffer for Commutator")
     println(io)
     println(io, "Spin number ", S)
-    print(io, "Number of spins in subsytem: N_A = ", N_A)
+    print(io, "Number of spins in subsytem: N_A=", N_A)
 end
 
 Base.show(io::IO, buffer::CommutatorBuffer) = show(io, MIME"text/plain"(), buffer)
@@ -120,7 +120,7 @@ function Base.show(io::IO, ::MIME"text/plain", ::RelativeEntropyBuffer{S,N_A}) w
     println(io, "Buffer for Relative entropy")
     println(io)
     println(io, "Spin number ", S)
-    print(io, "Number of spins in subsytem: N_A = ", N_A)
+    print(io, "Number of spins in subsytem: N_A=", N_A)
 end
 
 Base.show(io::IO, buffer::RelativeEntropyBuffer) = show(io, MIME"text/plain"(), buffer)

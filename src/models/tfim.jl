@@ -17,7 +17,7 @@ struct TFIM{S,N_A} <: AbstractModel{S,N_A}
     periodic::Bool
     ρ_A::Matrix{ComplexF64}
     function TFIM{S,N_A}(N, Γ, J, periodic, ρ_A) where {S,N_A}
-        check_S_N_type(S, N_A)
+        divisible_by_half(S)
         new{S,N_A}(N, Γ, J, periodic, ρ_A)
     end
 end
@@ -44,13 +44,13 @@ function H_TFIM(
 )
     ising_term = sum(
         map(1:(periodic ? N : N - 1)) do i
-            PauliString(N, "Z", (i, i%N+1); S=S)
+            z(N, (i, i%N+1); S=S)
         end,
     )
 
     transverse_term = sum(
         map(1:N) do i
-            PauliString(N, "X", i; S=S)
+            x(N, i; S=S)
         end,
     )
 
@@ -58,13 +58,13 @@ function H_TFIM(
 end
 
 function hi(model::TFIM{S,N_A}, i::Int) where {S,N_A}
-    hi = model.Γ * PauliString(N_A, "X", i; S=S)
+    hi = model.Γ * x(N_A, i; S=S)
 
     if i > 1
-        hi += 1/2 * PauliString(N_A, "Z", (i-1, i); S=S)
+        hi += 1/2 * z(N_A, (i-1, i); S=S)
     end
     if i < N_A
-        hi += 1/2 * PauliString(N_A, "Z", (i, i+1); S=S)
+        hi += 1/2 * z(N_A, (i, i+1); S=S)
     end
     return hi
 end
@@ -72,16 +72,16 @@ end
 function correction!(
     blocks::Vector{Block{S,N_A}}, ::TFIM{S,N_A}, i::Int, r::Int
 ) where {S,N_A}
-    push!(blocks, PauliString(N_A, "Z", (i, i+r); S=S))
+    push!(blocks, z(N_A, (i, i+r); S=S))
 end
 
 function H_A_BWV_wo_corrections!(
     blocks::Vector{Block{S,N_A}}, model::TFIM{S,N_A}
 ) where {S,N_A}
-    !iszero(model.Γ) && push!(blocks, model.Γ*PauliString(N_A, "X", 1; S=S))
+    !iszero(model.Γ) && push!(blocks, model.Γ*x(N_A, 1; S=S))
 
     for i in 1:(N_A - 1)
-        push!(blocks, PauliString(N_A, "Z", (i, i+1); S=S))
-        !iszero(model.Γ) && push!(blocks, model.Γ*PauliString(N_A, "X", i+1; S=S))
+        push!(blocks, z(N_A, (i, i+1); S=S))
+        !iszero(model.Γ) && push!(blocks, model.Γ*x(N_A, i+1; S=S))
     end
 end

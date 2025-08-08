@@ -2,9 +2,9 @@
 
 # What? 
 
-This package aims to find the Entanglement Hamiltonian (EH) of one dimensional spin lattice models with arbitry spin. 
-Kokail et al. presented the algorithm -a Quantum Classical Feedback Loop (QCFL)- , which is the foundation for this package.
-It learns the EH by minimizing the time evolution of observables. 
+This package aims to find the Entanglement Hamiltonian (EH) of one dimensional spin lattice models with arbitrary spin. 
+Kokail et al. presented the algorithm -a Quantum Classical Feedback Loop (QCFL)- , which is the foundation of this package.
+It learns the EH by minimizing the time variation of observables. 
 The time evolution and the monitoring of observables is the quantum part, while the classical minimization of a cost function is the classical part.
 For benchmarking, there are more cost functions implemented besides the [`QCFL`](@ref) (see [`Commutator`](@ref), [`RelativeEntropy`](@ref)).
 
@@ -15,12 +15,12 @@ Clone the repo
 ```
 git clone git@gitlab.dlr.de:ma-kind/QuantVarEntHam.git
 ```
-and navigate in to the folder `QuantVarEntHam`.
+and navigate into the folder `QuantVarEntHam`.
 Add the package via the package manager 
 ```
 ] add .
 ```
-Test wether the installation was succesfull in the REPL
+Test whether the installation was succesfull in the REPL
 ```jldoctest
 julia> using QuantVarEntHam
 
@@ -52,14 +52,16 @@ the reduced density matrix on subsystem A reads
    =\mathrel{\mathop:} e^{-H_\text{A}},
 ``` 
 which defines the EH ``H_\text{A}``on subsystem A.
-Its spectrum -the Entanglement spectrum- ``\{ \xi_{\alpha} \}``is the target quantity of this algorithm and gives insights about topological phases.
+Its spectrum -the Entanglement spectrum- $\{ \xi_{\alpha} \}$ is the target quantity of this algorithm and gives insights about interesting properties such as topological phases.
 
 Obtaining the Entanglement is in general, especially for lattice models, very hard. 
-The QCFL aims to find the EH by monitorng observables after evolvoing the subsystem A under a variational Ansatz.
+The QCFL aims to find the EH by monitorng observables after evolving the subsystem A under a variational Ansatz.
 Of course, one cannot just simply use an arbitrary ansatz.
 
-In a ``d+1``-dimensional relativistic QFT with a local Hamiltonian-density $\mathcal{H}(\vec{x})$, the EH of the ground state for the special case of a bipartition of an infinite system A (A ``= \{ \vec{x} \in \mathbb{R}^d | x_1 > 0\}``)
-the Bisognano-Wichmann theorem (BW theorem)[10.1063/1.522605, 10.1063/1.522898](@cite) predicts the EH to be
+In a ``d+1``-dimensional relativistic QFT with a local Hamiltonian-density $\mathcal{H}(\vec{x})$,
+the Bisognano-Wichmann theorem (BW theorem)[10.1063/1.522605, 10.1063/1.522898](@cite) 
+predicts the  EH of the subsystem A in the ground state for the special case of a bipartition of an infinite system A (A ``= \{ \vec{x} \in \mathbb{R}^d | x_1 > 0\}``),
+to be
 ```math
     H_\text{A} = \int_\text{A} d^dx \, \beta(x_1) \mathcal{H}(\vec{x}) + c
 ```
@@ -98,8 +100,12 @@ and minimizing the cost function by varying the variational parameters ``\vec{g}
 
 ![Quantum Classical Feedback Loop](images/circuit.png)
 
+# Credits
+ 
+Substantial portions of code were extracted and modified from the following packages:
+- from [DoubleExponentialFormulas.jl](@cite DEformulas) for the [`TanhSinh`](@ref) quadrature (extracted the tanh-sinh quadrature and modified to use vector integration).
+- from [ChainRules.jl](@cite ChainRules) for the implementation of the inplace matrix exponential and in place Frechet derivative of the matrix exponential.
+
 # References
 ```@bibliography
-Pages = ["index.md"]
-Canonical = false
 ```

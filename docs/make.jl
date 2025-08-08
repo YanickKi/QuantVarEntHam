@@ -34,7 +34,6 @@ makedocs(;
         "Cost" => "cost.md"
         "Optimizer" => "optimizer.md"
         "Universal Ratios" => "universal_ratios.md"
-        "References" => "references.md"
     ],
     plugins=[bib],
     repo=Documenter.Remotes.GitLab("gitlab.dlr.de", "ma-kind", "QuantVarEntHam"),

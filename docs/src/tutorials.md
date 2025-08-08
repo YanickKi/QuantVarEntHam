@@ -2,7 +2,7 @@
 
 # Quick start
 Let's say you want to learn the Entanglement Hamiltonian (EH) of the [`TFIM`](@ref) with 
-a transverse field strength of `Γ = 1`, `N=8` spins in the composite system, open boundary conditions (default) and `N_A = 4` sites in the subsystem.
+a transverse field strength of `Γ=1`, `N=8` spins in the composite system, open boundary conditions (default) and `N_A=4` sites in the subsystem.
 So first of all let's define the model
 ```jldoctest Tutorial1
 julia> using QuantVarEntHam
@@ -12,19 +12,18 @@ Diagonalizing the Hamiltonian via exact diagonalization for constructing the gro
 ```
 All model spefic settings and the reduced density matrix are saved in `model`.
 Once defining the model, you need to obtain the variational Ansatz, which you want to you use.
-Let's decide for the Ansatz, which follows the Bisognano Wichmman theorem (BW-theorem, see [`H_A_BW`](@ref))
+Let's decide for the Ansatz, which follows the BW-theorem (see [`H_A_BW`](@ref))
 ```jldoctest Tutorial1
 julia> ansatz = H_A_BW(model);
 ```
-After defining the model and the variational Ansatz you want to learn the EH with, choose the cost function.
-This package spefically focuses on the Quantum Classical Feedback Loop ([`QCFL`](@ref)).
+After defining the model and the variational Ansatz you want to learn tuantum Classical Feedback Loop [`QCFL`](@ref).
 So let's define an object, which will represent the cost function with the recommended default values.
 ```jldoctest Tutorial1
 julia> T_max = 1;
 
 julia> cost = QCFL(model, ansatz, T_max);
 ```
-The (default) observables $\{ Z_i Z_{i+1} | 1 \leq i < N_\text{A} \}$ are monitored up to a time of `T_max = 1`
+The (default) observables $\{ Z_i Z_{i+1} | 1 \leq i < N_\text{A} \}$ are monitored up to a time of `T_max=1`
 and with the Tanh-sinh quadrature as an (default) integration method (see [`TanhSinh`](@ref)).
 All model and cost function specific settings are set and now just simply pass the 
 `cost` object to the optimizer (see [`optimize`](@ref)) together with some initial parameters.
@@ -36,7 +35,7 @@ julia> g_opt, c = optimize(cost, g_init, print_result=false, show_trace = false)
 ([1.5440537768894778, 4.345710296202192, 5.80964334649578, 6.14473725960163], 2.2723132440614417e-5)
 
 ```
-A tuple is returned with an vector containing the optimal parameters and the minimum of the cost function.
+A tuple is returned with a vector containing the optimal parameters and the minimum of the cost function.
 Note that `print_result=false` and `show_trace=false` avoids that the result and the trace of the minimization (info about iterations, etc...) is printed.
 You can obtain the Entanglement Hamiltonian via [`H_A`](@ref)
 ```jldoctest Tutorial1

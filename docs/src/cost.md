@@ -36,7 +36,7 @@ As you can see, the ansatz has four blocks s.t. four parameters are needed to ca
 julia> cost = QCFL(model, ansatz, 1)
 QCFL
 
-Model: TFIM (S=1//2, N=8, OBC, N_A = 4, J=-1, Γ=1)
+Model: TFIM (S=1//2, N=8, OBC, N_A=4, J=-1, Γ=1)
 Ansatz: H_A_BW
 Integration method: Tanh-sinh quadrature (atol=0, rtol=1.4901161193847656e-8, h0=1, maxlevel=12)
 T_max=1
@@ -138,7 +138,7 @@ MidPoint(0.01)
 julia> cost_mp = QCFL(model, ansatz, 1, integrator = integrator)
 QCFL
 
-Model: TFIM (S=1//2, N=8, OBC, N_A = 4, J=-1, Γ=1)
+Model: TFIM (S=1//2, N=8, OBC, N_A=4, J=-1, Γ=1)
 Ansatz: H_A_BW
 Integration method: Midpoint method (dt=0.01)
 T_max=1
@@ -150,7 +150,7 @@ If no integrator is provided, it will be automatically set to the [`TanhSinh`](@
 julia> cost_ts = QCFL(model, ansatz, 1)
 QCFL
 
-Model: TFIM (S=1//2, N=8, OBC, N_A = 4, J=-1, Γ=1)
+Model: TFIM (S=1//2, N=8, OBC, N_A=4, J=-1, Γ=1)
 Ansatz: H_A_BW
 Integration method: Tanh-sinh quadrature (atol=0, rtol=1.4901161193847656e-8, h0=1, maxlevel=12)
 T_max=1

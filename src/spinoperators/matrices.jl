@@ -51,7 +51,7 @@ end
 function Z(S::Union{Rational,Int})
     d = Int64(2*S+1)
 
-    Sz = Diagonal{ComplexF64}(zeros(d))
+    Sz = spzeros(ComplexF64, d, d)
 
     for m in (-S):S
         _m = Int64(m+S+1)
@@ -88,7 +88,7 @@ function repeat(
             M = kron(M, sig(S))
         end
     end
-    return sparse(M)
+    return M
 end
 
 function repeat(N, sig::String, locs::NTuple{L,Int}; S::Union{Rational,Int}=1//2) where {L}
@@ -105,7 +105,7 @@ end
 """
     mat(block::AbstractBlock)
 
-Return a complex, sparse matrix of a subtype of [`AbstractBlock`](@ref) (can be either a [`PauliString`](@ref) or a [`Block`](@ref)).
+Return a complex, sparse matrix of an [`AbstractBlock`](@ref).
 """
 mat(block::AbstractBlock) = mat(block)
 

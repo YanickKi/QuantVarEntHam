@@ -19,7 +19,7 @@ struct Pollmann{S,N_A} <: AbstractModel{S,N_A}
     periodic::Bool
     ρ_A::Matrix{ComplexF64}
     function Pollmann{S,N_A}(N, J_Heis, Bx, Uzz, J, periodic, ρ_A) where {S,N_A}
-        check_S_N_type(S, N_A)
+        divisible_by_half(S)
         new{S,N_A}(N, J_Heis, Bx, Uzz, J, periodic, ρ_A)
     end
 end
@@ -59,21 +59,21 @@ function H_pollmann(
 )
     heisenberg_term = sum(
         map(1:(periodic ? N : N - 1)) do i
-            PauliString(N, "X", (i, i%N+1); S=S) +
-            PauliString(N, "Y", (i, i%N+1); S=S) +
-            PauliString(N, "Z", (i, i%N+1); S=S)
+            x(N, (i, i%N+1); S=S) +
+            y(N, (i, i%N+1); S=S) +
+            z(N, (i, i%N+1); S=S)
         end,
     )
 
     transverse_term = sum(
         map(1:N) do i
-            PauliString(N, "X", i; S=S)
+            x(N, i; S=S)
         end,
     )
 
     square_term = sum(
         map(1:N) do i
-            PauliString(N, "Z", i; S=S)^2
+            z(N, i; S=S)^2
         end,
     )
     return Float64(
@@ -82,18 +82,18 @@ function H_pollmann(
 end
 
 function hi(model::Pollmann{S,N_A}, i::Int) where {S,N_A}
-    hi = model.Bx*PauliString(N_A, "X", i; S=S) + model.Uzz*PauliString(N_A, "Z", i; S=S)^2
+    hi = model.Bx*x(N_A, i; S=S) + model.Uzz*z(N_A, i; S=S)^2
 
-    sigs = ["X", "Y", "Z"]
+    sigs = [x, y, z]
 
     if i > 1
         for sig in sigs
-            hi += model.J_Heis/2 * PauliString(N_A, sig, (i, i-1); S=S)
+            hi += model.J_Heis/2 * sig(N_A, (i, i-1); S=S)
         end
     end
     if i < N_A
         for sig in sigs
-            hi += model.J_Heis/2 * PauliString(N_A, sig, (i, i+1); S=S)
+            hi += model.J_Heis/2 * sig(N_A, (i, i+1); S=S)
         end
     end
     return hi
@@ -102,18 +102,18 @@ end
 function H_A_BWV_wo_corrections!(
     blocks::Vector{Block{S,N_A}}, model::Pollmann{S,N_A}
 ) where {S,N_A}
-    !iszero(model.Bx) && push!(blocks, model.Bx*PauliString(N_A, "X", 1; S=S))
-    !iszero(model.Uzz) && push!(blocks, model.Uzz*PauliString(N_A, "Z", 1; S=S)^2)
+    !iszero(model.Bx) && push!(blocks, model.Bx*x(N_A, 1; S=S))
+    !iszero(model.Uzz) && push!(blocks, model.Uzz*z(N_A, 1; S=S)^2)
 
-    sigs = ["X", "Y", "Z"]
+    sigs = [x, y, z]
 
     for i in 1:(N_A - 1)
         for sig in sigs
             !iszero(model.J_Heis) &&
-                push!(blocks, model.J_Heis*PauliString(N_A, sig, (i, i+1); S=S))
+                push!(blocks, model.J_Heis*sig(N_A, (i, i+1); S=S))
         end
-        !iszero(model.Bx) && push!(blocks, model.Bx*PauliString(N_A, "X", (i+1); S=S))
-        !iszero(model.Uzz) && push!(blocks, model.Uzz*PauliString(N_A, "Z", (i+1); S=S)^2)
+        !iszero(model.Bx) && push!(blocks, model.Bx*x(N_A, (i+1); S=S))
+        !iszero(model.Uzz) && push!(blocks, model.Uzz*z(N_A, (i+1); S=S)^2)
     end
 end
 
@@ -121,7 +121,7 @@ function correction!(
     blocks::Vector{Block{S,N_A}}, model::Pollmann{S,N_A}, i::Int, r::Int
 ) where {S,N_A}
     iszero(model.J_Heis) && return nothing
-    for sig in ["X", "Y", "Z"]
-        push!(blocks, PauliString(N_A, sig, (i, i+r); S=S))
+    for sig in [x, y, z]
+        push!(blocks, sig(N_A, (i, i+r); S=S))
     end
 end

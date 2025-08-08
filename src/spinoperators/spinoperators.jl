@@ -1,4 +1,4 @@
-export AbstractBlock, PauliString, Block
+export AbstractBlock, PauliString, Block, x, y, z
 export mat
 
 using SparseArrays
@@ -8,6 +8,18 @@ import Base: +
 import Base: ^
 import Base: -
 import Base: convert
+
+
+
+# NOT USED CURRENTLY, WAY TOO SLOW
+function check_for_duplicate_locs(locs::NTuple{L, <:Any}) where {L}
+    for index in 1:L-1
+        indices = findall(isequal(locs[index]), locs)
+        if !isnothing(indices)
+            length(indices) > 1 && throw(ArgumentError("locs must not contain duplicate locations!"))
+        end
+    end 
+end 
 
 """ 
     AbstractBlock{S,N}
@@ -19,13 +31,17 @@ abstract type AbstractBlock{S,N} end
 
 """ 
     PauliString{S, N, L} <: AbstractBlock{S,N}
-    PauliString(N, sig::String, locs::NTuple{L,Int}; S::Union{Rational, Int} = 1//2) where {L}
-    PauliString(N, sig::String, locs::Int; S::Union{Rational, Int} = 1//2)
+    x(N::Int, locs; S::Union{Rational,Int}=1//2)
+    y(N::Int, locs; S::Union{Rational,Int}=1//2)
+    z(N::Int, locs; S::Union{Rational,Int}=1//2)
 
-Pauli String of spin number `S` with `N` spins on `L` locations.
+Pauli String of spin number `S` with `N` spins on locs.
 
-Checks wether `sig` is either `"X"`, `"Y"` or `"Z"` and 
-if `S`, `N` and `L` are of type `Rational{Int}` and divisible by `1/2`, `Int`, and `Int`, respectively (error thrown if not). 
+`x`, `y` and `z` create Pauli X, Y and Z operators on the `locs`, repspectively.
+
+`locs` can be either a tuple of Int or just a single Int.
+
+Checks wether S is divisble by `1/2`. 
 
 Currently, only one pauli operator per `PauliString` is supported.
 
@@ -39,7 +55,7 @@ Constructing a Pauli string with 4 spins, where the pauli Z operator acts on spi
 ```jldoctest PauliStrings
 julia> using QuantVarEntHam
 
-julia> ps1 = PauliString(4,"Z", (1,2))
+julia> ps = z(4, (1,2))
 Pauli string
 Spin 1//2
 Number of spins: 4
@@ -48,7 +64,7 @@ Z₁⊗ Z₂
 ```
 Squaring it constructs a new `PauliString` object with power of two
 ```jldoctest PauliStrings
-julia> ps1^2
+julia> ps^2
 Pauli string
 Spin 1//2
 Number of spins: 4
@@ -61,7 +77,8 @@ struct PauliString{S,N,L} <: AbstractBlock{S,N}
     locs::NTuple{L,Int}
     power::Int
     function PauliString{S,N,L}(sig, locs, power) where {S,N,L}
-        check_S_N_type(S, N)
+        divisible_by_half(S)
+        #check_for_duplicate_locs(locs)  MAYBE FIND FASTER WAY TO CHECK THIS, TAKES LONG TIME
         isa(L, Int) ||
             throw(ArgumentError("wrong type; L must be of type Int$(Sys.WORD_SIZE)"))
         sig ∈ ["X", "Y", "Z"] || throw(ArgumentError("sig must be \"X\", \"Y\" or \"Z\""))
@@ -96,14 +113,14 @@ Adding two `PauliString`s with `prefactors` returns a `Block`.
 ```jldoctest Block
 julia> using QuantVarEntHam
 
-julia> ps1 = PauliString(4,"Z", (1,2))
+julia> ps1 = z(4, (1,2))
 Pauli string
 Spin 1//2
 Number of spins: 4
 
 Z₁⊗ Z₂
 
-julia> ps2 = PauliString(4,"X", (3,4))
+julia> ps2 = x(4, (3,4))
 Pauli string
 Spin 1//2
 Number of spins: 4
@@ -135,7 +152,7 @@ struct Block{S,N} <: AbstractBlock{S,N}
     prefactors::Vector{Float64}
     pauli_strings::Vector{PauliString{S,N}}
     function Block{S,N}(prefactors, pauli_strings) where {S,N}
-        check_S_N_type(S, N)
+        divisible_by_half(S)
         new{S,N}(prefactors, pauli_strings)
     end
 end
@@ -154,6 +171,29 @@ end
 function convert(::Type{Block{S,N}}, block::Block{S,N}) where {S,N}
     return block
 end
+
+
+function x(N::Int, locs::NTuple{L,Int}; S::Union{Rational,Int}=1//2
+) where {L}
+    ps = PauliString{Rational(S),N,L}("X", locs, 1)
+    return ps
+end 
+
+function y(N::Int, locs::NTuple{L,Int}; S::Union{Rational,Int}=1//2
+) where {L}
+    ps = PauliString{Rational(S),N,L}("Y", locs, 1)
+    return ps
+end 
+
+function z(N::Int, locs::NTuple{L,Int}; S::Union{Rational,Int}=1//2
+) where {L}
+    ps = PauliString{Rational(S),N,L}("Z", locs, 1)
+    return ps
+end 
+
+x(N::Int, loc::Int; S::Union{Rational,Int}=1//2) = x(N, (loc,), S=S)
+y(N::Int, loc::Int; S::Union{Rational,Int}=1//2) = y(N, (loc,), S=S)
+z(N::Int, loc::Int; S::Union{Rational,Int}=1//2) = z(N, (loc,), S=S)
 
 include("algebra.jl")
 include("matrices.jl")

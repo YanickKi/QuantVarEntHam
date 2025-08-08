@@ -49,7 +49,7 @@ end
     @test g_opt_all[2] ≈ g_opt_all[3] atol = 1e-2
 end
 
-@testset "Fixing parameter at Γ = 1 for TFIM" begin
+@testset "Fixing parameter at Γ=1 for TFIM" begin
     model = TFIM(8, 4, 1)
     ansatz = H_A_BWV(model)
     free_cost = QCFL(model, ansatz, 1, integrator=MidPoint(1e-2))

@@ -2,7 +2,7 @@
 
 Pauli strings and their linear combination (blocks) are implemented s.t the user 
 deals with these objects instead of the matrices.
-This allows nice printing and offers an easy overview over the ansätze, hamiltonians and observables. 
+This allows for nice printing and offers an easy overview over the ansätze, hamiltonians and observables. 
 
 ```@docs
 AbstractBlock
@@ -26,46 +26,47 @@ Adding or subtracting two pauli strings and blocks is possible
 ```jldoctest algebra
 julia> using QuantVarEntHam
 
-julia> ps1 = PauliString(4,"Z", (1,2));
+julia> ps1 = z(4, (1,2));
 
-julia> ps2 = PauliString(4,"X", (1,2));
+julia> ps2 = x(4, (3,4));
 
-julia> ps3 = PauliString(4,"Y", (1,2));
+julia> ps3 = z(4,(1,2));
 
 julia> ps1+ps2
 Block
 Spin 1//2
 Number of spins: 4
 
-Z₁⊗ Z₂ + X₁⊗ X₂
+Z₁⊗ Z₂ + X₃⊗ X₄
 
-julia> block1 = ps1+ps2
+julia> block1= ps1+ps2
 Block
 Spin 1//2
 Number of spins: 4
 
-Z₁⊗ Z₂ + X₁⊗ X₂
+Z₁⊗ Z₂ + X₃⊗ X₄
 
 julia> block1 + ps3
 Block
 Spin 1//2
 Number of spins: 4
 
-Z₁⊗ Z₂ + X₁⊗ X₂ + Y₁⊗ Y₂
+Z₁⊗ Z₂ + X₃⊗ X₄ + Z₁⊗ Z₂
 
 julia> block2 = ps1-ps2
 Block
 Spin 1//2
 Number of spins: 4
 
-Z₁⊗ Z₂ - X₁⊗ X₂
+Z₁⊗ Z₂ - X₃⊗ X₄
 
 julia> block1-block2
 Block
 Spin 1//2
 Number of spins: 4
 
-Z₁⊗ Z₂ + X₁⊗ X₂ - Z₁⊗ Z₂ + X₁⊗ X₂
+Z₁⊗ Z₂ + X₃⊗ X₄ - Z₁⊗ Z₂ + X₃⊗ X₄
+
 ```
 
 Multiplication by scalars of a pauli string or block is defined aswell
@@ -82,7 +83,7 @@ Block
 Spin 1//2
 Number of spins: 4
 
-2*Z₁⊗ Z₂ + 2*X₁⊗ X₂
+2*Z₁⊗ Z₂ + 2*X₃⊗ X₄
 
 ```
 

@@ -15,7 +15,7 @@ struct XXZ{S,N_A} <: AbstractModel{S,N_A}
     periodic::Bool
     ρ_A::Matrix{ComplexF64}
     function XXZ{S,N_A}(N, Δ, J, periodic, ρ_A) where {S,N_A}
-        check_S_N_type(S, N_A)
+        divisible_by_half(S)
         new{S,N_A}(N, Δ, J, periodic, ρ_A)
     end
 end
@@ -41,13 +41,13 @@ function H_XXZ(
 )
     XX_term = sum(
         map(1:(periodic ? N : N - 1)) do i
-            PauliString(N, "X", (i, i%N+1); S=S) + PauliString(N, "Y", (i, i%N+1); S=S)
+            x(N, (i, i%N+1); S=S) + y(N, (i, i%N+1); S=S)
         end,
     )
 
     Z_term = sum(
         map(1:(periodic ? N : N - 1)) do i
-            PauliString(N, "Z", (i, i%N+1); S=S)
+            z(N, (i, i%N+1); S=S)
         end,
     )
     return Float64(J)*(XX_term+Float64(Δ)*Z_term)
@@ -56,26 +56,26 @@ end
 function hi(model::XXZ{S,N_A}, i::Int) where {S,N_A}
     if i > 1 && i < N_A
         return 1/2*(
-            PauliString(N_A, "X", (i-1, i); S=S) +
-            PauliString(N_A, "Y", (i-1, i); S=S) +
-            model.Δ*PauliString(N_A, "Z", (i-1, i); S=S)
+            x(N_A, (i-1, i); S=S) +
+            y(N_A, (i-1, i); S=S) +
+            model.Δ*z(N_A, (i-1, i); S=S)
         ) +
                1/2*(
-            PauliString(N_A, "X", (i, i+1); S=S) +
-            PauliString(N_A, "Y", (i, i+1); S=S) +
-            model.Δ*PauliString(N_A, "Z", (i, i+1); S=S)
+            x(N_A, (i, i+1); S=S) +
+            y(N_A, (i, i+1); S=S) +
+            model.Δ*z(N_A, (i, i+1); S=S)
         )
     elseif i > 1
         return 1/2*(
-            PauliString(N_A, "X", (i-1, i); S=S) +
-            PauliString(N_A, "Y", (i-1, i); S=S) +
-            model.Δ*PauliString(N_A, "Z", (i-1, i); S=S)
+            x(N_A, (i-1, i); S=S) +
+            y(N_A, (i-1, i); S=S) +
+            model.Δ*z(N_A, (i-1, i); S=S)
         )
     elseif i < N_A
         return 1/2*(
-            PauliString(N_A, "X", (i, i+1); S=S) +
-            PauliString(N_A, "Y", (i, i+1); S=S) +
-            model.Δ*PauliString(N_A, "Z", (i, i+1); S=S)
+            x(N_A, (i, i+1); S=S) +
+            y(N_A, (i, i+1); S=S) +
+            model.Δ*z(N_A, (i, i+1); S=S)
         )
     end
 end
@@ -84,9 +84,9 @@ function correction!(
     blocks::Vector{<:Block{S,N_A}}, model::XXZ{S,N_A}, i::Int, r::Int
 ) where {S,N_A}
     push!(
-        blocks, PauliString(N_A, "X", (i, i+r); S=S) + PauliString(N_A, "Y", (i, i+r); S=S)
+        blocks, x(N_A, (i, i+r); S=S) + y(N_A, (i, i+r); S=S)
     )
-    !iszero(model.Δ) && push!(blocks, PauliString(N_A, "Z", (i, i+r); S=S))
+    !iszero(model.Δ) && push!(blocks, z(N_A, (i, i+r); S=S))
 end
 
 function H_A_BWV_wo_corrections!(
@@ -95,8 +95,8 @@ function H_A_BWV_wo_corrections!(
     for i in 1:(N_A - 1)
         push!(
             blocks,
-            PauliString(N_A, "X", (i, i+1); S=S) + PauliString(N_A, "Y", (i, i+1); S=S),
+            x(N_A, (i, i+1); S=S) + y(N_A, (i, i+1); S=S),
         )
-        !iszero(model.Δ) && push!(blocks, model.Δ*PauliString(N_A, "Z", (i, i+1); S=S))
+        !iszero(model.Δ) && push!(blocks, model.Δ*z(N_A, (i, i+1); S=S))
     end
 end

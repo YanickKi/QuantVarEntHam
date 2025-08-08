@@ -104,7 +104,7 @@ function QCFL(
         @assert length(ansatz.blocks) == L "The length of the blocks and the buffers need to be the same!"
 
     observables = @something observables PauliString{S,N_A,2}[
-        PauliString(N_A, "Z", (i, i+1), S=S) for i in 1:(N_A - 1)
+        z(N_A, (i, i+1), S=S) for i in 1:(N_A - 1)
     ]
 
     observables_mat = Matrix.(mat.(observables))
