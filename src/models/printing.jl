@@ -2,10 +2,10 @@
 function print_model(io::IO, model::AbstractModel{S,N_A}) where {S,N_A}
     println(io)
     println(io, "Spin $S")
-    println(io, "Number of spins in the composite system N =  ", model.N)
+    println(io, "Number of spins in the composite system N=", model.N)
     println(io, "Number of spins in the subsystem N_A=", N_A)
     println(io, "Boundary conditions: ", model.periodic ? "periodic" : "open")
-    print(io, "Global prefactor J = ", float_to_int(model.J))
+    print(io, "Global prefactor J=", float_to_int(model.J))
 end
 
 function Base.show(io::IO, ::MIME"text/plain", model::TFIM{S,N_A}) where {S,N_A}

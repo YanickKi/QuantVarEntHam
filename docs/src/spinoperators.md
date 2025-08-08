@@ -3,7 +3,7 @@
 Pauli strings and their linear combination (blocks) are implemented s.t the user 
 deals with these objects instead of the matrices.
 This allows for nice printing and offers an easy overview over the ansätze, hamiltonians and observables. 
-
+Pauli strings can have arbitrary spin rather than just spin half.
 ```@docs
 AbstractBlock
 ```

@@ -106,6 +106,48 @@ end
     mat(block::AbstractBlock)
 
 Return a complex, sparse matrix of an [`AbstractBlock`](@ref).
+
+!!! note 
+    The matrix elements look very similar to the well known matrix elements of the spin operators in the z-basis but they differ 
+    by a factor of 2 s.t. the matrices of a [`PauliString`](@ref) for a single spin half will give the well known pauli matrices.  
+
+The matrix elements are given by
+```math   
+\\begin{aligned} 
+\\langle m' | X | m\\rangle &=
+(\\delta_{m',m+1}+\\delta_{m'+1,m})
+\\sqrt{S(S+1)-m'm}\\\\
+\\langle m' | Y | m\\rangle &=
+i(\\delta_{m'+1,m}-\\delta_{m',m+1})
+\\sqrt{S(S+1)-m'm}\\\\
+\\langle m' | Z | m\\rangle &=
+2\\delta_{m',m}m
+\\end{aligned}
+```
+
+# Example 
+
+Matrix representation of the [`PauliString`](@ref)s for a single spin half.
+
+```jldoctest
+julia> using QuantVarEntHam
+
+julia> paulistrings = [x(1,1),y(1,1),z(1,1)];
+
+julia> sparse_mat = mat.(paulistrings)
+3-element Vector{SparseArrays.SparseMatrixCSC{ComplexF64, Int64}}:
+ sparse([2, 1], [1, 2], ComplexF64[1.0 + 0.0im, 1.0 + 0.0im], 2, 2)
+ sparse([2, 1], [1, 2], ComplexF64[0.0 + 1.0im, 0.0 - 1.0im], 2, 2)
+ sparse([1, 2], [1, 2], ComplexF64[1.0 + 0.0im, -1.0 + 0.0im], 2, 2)
+
+julia> dense_mat = Matrix.(sparse_mat)
+3-element Vector{Matrix{ComplexF64}}:
+ [0.0 + 0.0im 1.0 + 0.0im; 1.0 + 0.0im 0.0 + 0.0im]
+ [0.0 + 0.0im 0.0 - 1.0im; 0.0 + 1.0im 0.0 + 0.0im]
+ [1.0 + 0.0im 0.0 + 0.0im; 0.0 + 0.0im -1.0 + 0.0im]
+```
+
+There we see the pauli matrices.
 """
 mat(block::AbstractBlock) = mat(block)
 
