@@ -9,6 +9,7 @@ julia> using QuantVarEntHam
 
 julia> model = TFIM(8, 4, 1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
+Regularizing aka making the exact reduced density matrix positive semidefinite with ϵ_reg=1.0e-8
 ```
 All model spefic settings and the reduced density matrix are saved in `model`.
 Once defining the model, you need to obtain the variational Ansatz, which you want to you use.

@@ -10,6 +10,7 @@ julia> using QuantVarEntHam
 
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
+Regularizing aka making the exact reduced density matrix positive semidefinite with ϵ_reg=1.0e-8
 
 julia> ansatz = H_A_BW(model)
 H_A_BW
@@ -129,6 +130,7 @@ julia> using QuantVarEntHam
 
 julia> model = TFIM(8,4,1);
 Diagonalizing the Hamiltonian via exact diagonalization for constructing the ground state density matrix
+Regularizing aka making the exact reduced density matrix positive semidefinite with ϵ_reg=1.0e-8
 
 julia> ansatz = H_A_BW(model);
 

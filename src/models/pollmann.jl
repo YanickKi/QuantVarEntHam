@@ -1,6 +1,6 @@
 """
     Pollmann{S,N_A} <: AbstractModel{S,N_A}
-    Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false, J::Real=+1)
+    Pollmann(N::Int, N_A::Int, J_Heis::Real, Bx::Real, Uzz::Real; S::Union{Int, Rational}=1, periodic::Bool=false, J::Real=+1, ϵ_reg::Real=1e-8)
     
 Object containing the settings for the Pollmann model
 
@@ -33,8 +33,9 @@ function Pollmann(
     S::Union{Int,Rational}=1,
     periodic::Bool=false,
     J::Real=+1,
+    ϵ_reg::Real=1e-8
 )
-    ρ_A = rho_A(H_pollmann(N, J_Heis, Bx, Uzz; periodic=periodic, J=J, S=S), N_A)
+    ρ_A = rho_A(H_pollmann(N, J_Heis, Bx, Uzz; periodic=periodic, J=J, S=S), N_A, ϵ_reg)
 
     return Pollmann{Rational(S),N_A}(N, J_Heis, Bx, Uzz, J, periodic, ρ_A)
 end
