@@ -144,6 +144,6 @@ julia> universal_ratios(H_A_var)
 """
 function universal_ratios(A::AbstractMatrix, α0::Integer=1, α1::Integer=5)
     #ishermitian(A) || throw(ArgumentError("A must be hermitian!"))
-    ξ, _ = eigen(Hermitian(Matrix(A)))
+    ξ, _ = eigen(Matrix(A))
     return (ξ .- ξ[α0])/(ξ[α1] - ξ[α0])
 end

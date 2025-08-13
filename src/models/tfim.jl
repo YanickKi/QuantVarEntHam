@@ -2,7 +2,7 @@ export H_TFIM_blocks
 
 """
     TFIM{S,N_A} <: AbstractModel{S,N_A}
-    TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool=false, J::Real=-1, ϵ_reg::Real=1e-8)
+    TFIM(N::Int, N_A::Int, Γ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool=false, J::Real=-1, ϵ_reg::Real=1e-16)
 
 Object containing the settings for the TFIM.
 
@@ -23,7 +23,7 @@ struct TFIM{S,N_A} <: AbstractModel{S,N_A}
 end
 
 function TFIM(
-    N::Int, N_A::Int, Γ::Real; S::Union{Int,Rational}=1//2, periodic::Bool=false, J::Real=-1, ϵ_reg::Real=1e-8 
+    N::Int, N_A::Int, Γ::Real; S::Union{Int,Rational}=1//2, periodic::Bool=false, J::Real=-1, ϵ_reg::Real=1e-16 
 )
     ρ_A = rho_A(H_TFIM(N, Γ; periodic=periodic, J=J, S=S), N_A, ϵ_reg)
 

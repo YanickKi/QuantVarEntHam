@@ -1,6 +1,6 @@
 """
     XXZ{S,N_A} <: AbstractModel{S,N_A}
-    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false, J::Real=+1, ϵ_reg::Real=1e-8)
+    XXZ(N::Int, N_A::Int, Δ::Real; S::Union{Int, Rational} = 1//2, periodic::Bool = false, J::Real=+1, ϵ_reg::Real=1e-16)
 
 Object containing the settings for the XXZ model
 
@@ -21,7 +21,7 @@ struct XXZ{S,N_A} <: AbstractModel{S,N_A}
 end
 
 function XXZ(
-    N::Int, N_A::Int, Δ::Real; S::Union{Int,Rational}=1//2, periodic::Bool=false, J::Real=+1, ϵ_reg::Real=1e-8
+    N::Int, N_A::Int, Δ::Real; S::Union{Int,Rational}=1//2, periodic::Bool=false, J::Real=+1, ϵ_reg::Real=1e-16
 )
     ρ_A = rho_A(H_XXZ(N, Δ; periodic=periodic, J=J, S=S), N_A, ϵ_reg)
     return XXZ{Rational(S),N_A}(N, Δ, J, periodic, ρ_A)
