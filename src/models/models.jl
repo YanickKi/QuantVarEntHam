@@ -21,7 +21,7 @@ In general the concrete types will have the same fields besides the model specif
  
 - `N::Int`: number of sites in composite system.
 - `J::Float64`: global prefactor in Hamiltonian
-- `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions, obsolete if an own reduced density matrix ρ_A is provided.
+- `periodic::Bool`: boundary conditions for the system Hamiltonian, false for open and true for periodic boundary conditions.
 - `ρ_A::Matrix{ComplexF64}`: reduced density matrix of ground state of the composite system on subsystem A.
 
 !!! note
@@ -30,9 +30,9 @@ In general the concrete types will have the same fields besides the model specif
     have a huge impact when computing the exact Entanglement Hamiltonian via ``H_\\text{A} = - \\log (ρ_\\text{A})`` and its corresponding 
     Entanglement spectrum.
     If `ϵ_reg` is larger than zero and the smallest eigenvalue of the intermediate exact reduced density matrix is smaller than zero, the reduced density matrix will be regularized by 
-    adding `ϵ_reg` and the smallest eigenvalue of the intermediate exact reduced density matrix to the diagonal, i.e. performing the computation 
+    adding `ϵ_reg` and the absolute value of the smallest eigenvalue of the intermediate exact reduced density matrix to the diagonal, i.e. performing the computation 
     ```math
-    \\rho_\\text{A} = \\rho'_\\text{A} + (\\epsilon_\\text{reg} + \\text{min} (\\text{eigenvalues} (\\rho'_\\text{A} )))I,
+    \\rho_\\text{A} = \\rho'_\\text{A} + (\\epsilon_\\text{reg} - \\text{min} (\\text{eigenvalues} (\\rho'_\\text{A} )))I,
     ```
     where ``I`` is the unit matrix, ``\\rho'_\\text{A}`` the intermediate exact reduced density matrix after the exact diagonalization of the system Hamiltonian and 
     tracing out subsystem B and ``\\rho_\\text{A}`` the returned exact reduced density matrix, which will be actually saved and used for the upcoming computations.
@@ -43,12 +43,12 @@ function regulate!(ρ_A::Matrix, ϵ_reg::Real)
     vals, _ = eigen(Hermitian(ρ_A))
     lowest_val = minimum(vals)
     if lowest_val < 0. 
-        sum_correction = ϵ_reg + lowest_val
+        sum_correction = ϵ_reg - lowest_val
          println(
             "Regularizing aka making the exact reduced density matrix positive semidefinite with ϵ_reg=$(ϵ_reg)",
         )
         ρ_A[diagind(ρ_A)] .+= sum_correction
-    end 
+    end
     ρ_A ./= tr(ρ_A)
     return ρ_A
 end 

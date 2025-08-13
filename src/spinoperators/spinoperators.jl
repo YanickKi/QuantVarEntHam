@@ -35,11 +35,11 @@ abstract type AbstractBlock{S,N} end
     y(N::Int, locs; S::Union{Rational,Int}=1//2)
     z(N::Int, locs; S::Union{Rational,Int}=1//2)
 
-Pauli String of spin number `S` with `N` spins on locs.
+Pauli String of spin number `S` with `N` spins on L sites.
 
 `x`, `y` and `z` create Pauli X, Y and Z operators on the `locs`, repspectively.
 
-`locs` can be either a tuple of Int or just a single Int.
+the locations, `locs`, can be either a tuple of Int or just a single Int.
 
 Checks wether S is divisble by `1/2`. 
 

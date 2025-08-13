@@ -24,7 +24,7 @@ Test whether the installation was succesfull in the REPL
 ```jldoctest
 julia> using QuantVarEntHam
 
-julia> PauliString(4,"Z",(1,2))
+julia> z(4,(1,2))
 Pauli string
 Spin 1//2
 Number of spins: 4
@@ -55,7 +55,7 @@ which defines the EH ``H_\text{A}``on subsystem A.
 Its spectrum -the Entanglement spectrum- $\{ \xi_{\alpha} \}$ is the target quantity of this algorithm and gives insights about interesting properties such as topological phases.
 
 Obtaining the Entanglement is in general, especially for lattice models, very hard. 
-The QCFL aims to find the EH by monitorng observables after evolving the subsystem A under a variational Ansatz.
+The QCFL aims to find the EH by monitoring observables after evolving the subsystem A under a variational Ansatz.
 Of course, one cannot just simply use an arbitrary ansatz.
 
 In a ``d+1``-dimensional relativistic QFT with a local Hamiltonian-density $\mathcal{H}(\vec{x})$,

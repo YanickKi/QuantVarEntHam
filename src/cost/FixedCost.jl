@@ -1,12 +1,15 @@
 """
     FixedCost{C<:AbstractFreeCostFunction} <: AbstractCostFunction
-    FixedCost(cost::AbstractFreeCostFunction, fixed_indices::Vector{<:Integer}, fixed_values::Vector{<:Real})
-    FixedCost(cost::AbstractFreeCostFunction, fixed_indices::Int, fixed_values::Real)
-    FixedCost(cost::AbstractFreeCostFunction, fixed_indices::NTuple{L,Int}, fixed_values::NTuple{L,Int}) where {L}
+    FixedCost(cost::AbstractFreeCostFunction, fixed_indices, fixed_values)
 
 Wrapper for fixing parameters of a cost function object. 
 
+`fixed_indices` and `fixed_values` can be either a tuple, vector or just a single number but they need be of the same type. 
+The elements of `fixed_indices` need to be an `Int`.
+
 It stores a given cost function without fixed parameters `c` of the type [`AbstractFreeCostFunction`](@ref) together with the indices (`fixed_indices`) and the values (`fixed_values`) of the fixed parameters.
+
+
 """
 struct FixedCost{C<:AbstractFreeCostFunction} <: AbstractCostFunction
     c::C
