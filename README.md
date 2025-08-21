@@ -17,14 +17,9 @@ See the [documentation](https://ma-kind.pages.gitlab.dlr.de/QuantVarEntHam/) for
 
 # Installation
 
-Clone the repo 
-```
-git clone git@gitlab.dlr.de:ma-kind/QuantVarEntHam.git
-```
-and navigate into the folder `QuantVarEntHam`.
 Add the package via the package manager 
 ```julia
-] add .
+] add https://gitlab.com/quantum-computing-software/QuantVarEntHam
 ```
 Test whether the installation was succesfull in the REPL
 ```julia
