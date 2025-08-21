@@ -11,14 +11,9 @@ For benchmarking, there are more cost functions implemented besides the [`QCFL`]
 
 # Installation
 
-Clone the repo 
-```
-git clone git@gitlab.dlr.de:ma-kind/QuantVarEntHam.git
-```
-and navigate into the folder `QuantVarEntHam`.
 Add the package via the package manager 
 ```
-] add .
+] add https://gitlab.com/quantum-computing-software/QuantVarEntHam
 ```
 Test whether the installation was succesfull in the REPL
 ```jldoctest
