@@ -3,7 +3,7 @@
 [![Build Status](https://gitlab.dlr.de/ma-kind/QuantVarEntHam/-/badges/release.svg)](https://gitlab.dlr.de/ma-kind/QuantVarEntHam)
 [![pipeline status](https://gitlab.dlr.de/ma-kind/QuantVarEntHam/badges/main/pipeline.svg)](https://gitlab.dlr.de/ma-kind/QuantVarEntHam/-/pipelines)
 [![coverage report](https://gitlab.dlr.de/ma-kind/QuantVarEntHam/badges/main/coverage.svg)](https://gitlab.dlr.de/ma-kind/QuantVarEntHam/-/graphs/main/charts)
-[![documentation (placeholder)](https://img.shields.io/badge/docs-latest-blue.svg)](https://quantvarentham-ma-kind-28334cbd97e4f53ca6d853b2420a209527d76ff3.pages.gitlab.dlr.de/)
+[![documentation (placeholder)](https://img.shields.io/badge/docs-latest-blue.svg)](https://ma-kind.pages.gitlab.dlr.de/QuantVarEntHam/)
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
 
 
@@ -12,6 +12,7 @@ Kokail et al. presented the algorithm -a Quantum Classical Feedback Loop (QCFL)-
 It learns the EH by minimizing the time variation of observables. 
 The time evolution and the monitoring of observables is the quantum part, while the classical minimization of a cost function is the classical part.
 For benchmarking, there are more cost functions implemented besides the QCFL.
+See the [documentation](https://ma-kind.pages.gitlab.dlr.de/QuantVarEntHam/) for more information.
 
 
 # Installation
