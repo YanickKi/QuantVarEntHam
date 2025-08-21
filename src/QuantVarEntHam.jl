@@ -3,7 +3,7 @@ module QuantVarEntHam
 using LinearAlgebra
 
 function divisible_by_half(S)
-    iszero(S % 1//2) || throw(ArgumentError("S must be divisible by two!"))
+    iszero(S % 1//2) || throw(ArgumentError("S must be divisible by one half!"))
 end
 
 include("integration/integration.jl")
