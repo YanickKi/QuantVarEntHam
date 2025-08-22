@@ -36,5 +36,5 @@ makedocs(;
         "Universal Ratios" => "universal_ratios.md"
     ],
     plugins=[bib],
-    repo=Documenter.Remotes.GitLab("gitlab.dlr.de", "ma-kind", "QuantVarEntHam"),
+    repo=Documenter.Remotes.GitLab("gitlab.com", "quantum-computing-software", "QuantVarEntHam"),
 )
